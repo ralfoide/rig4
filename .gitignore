@@ -1,0 +1,6 @@
+*.exe
+*.pyc
+*.o
+*.swp
+bin
+pkg
