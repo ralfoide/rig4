@@ -1,3 +1,10 @@
 #!/bin/bash
 if [[ -z "$GOPATH" ]]; then . ./_setup.sh; fi
-go test -v src/rig4/*.go
+set -e
+for dir in config rig4; do
+    echo
+    echo "[[[ $dir ]]]"
+    echo
+    go test -v src/$dir/*.go
+    echo
+done
