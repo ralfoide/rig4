@@ -3,7 +3,7 @@ package config
 import (
     "bufio"
     "flag"
-    "fmt"
+    "log"
     "io"
     "os"
     "regexp"
@@ -24,14 +24,14 @@ func (c *Config) Read(r io.Reader) error {
 }
 
 func (c *Config) ReadFile(filename string) error {
-    fmt.Printf("[CONFIG] filename: %s\n", filename)
+    log.Printf("[CONFIG] filename: %s\n", filename)
     f, err := os.Open(filename)
     if err != nil {
         if os.IsNotExist(err) {
-            fmt.Printf("[CONFIG] %s not found\n", filename)
+            log.Printf("[CONFIG] %s not found\n", filename)
             return nil
         } else {
-            panic(fmt.Sprintf("[CONFIG] Error reading %v: %#v", filename, err))
+            log.Panicf("[CONFIG] Error reading %v: %#v", filename, err)
         }
     }
     defer f.Close()
@@ -44,7 +44,7 @@ func (c *Config) parse(r *bufio.Reader) error {
         if err == io.EOF {
             break
         } else if err != nil {
-            panic(fmt.Sprintf("[CONFIG] Error reading config file: %v", err))
+            log.Panicf("[CONFIG] Error reading config file: %v", err)
         }
         line = strings.TrimSpace(line)
         if line != "" {
@@ -52,7 +52,7 @@ func (c *Config) parse(r *bufio.Reader) error {
             (*c)[fields[1]] = fields[2]
         }
     }
-    fmt.Printf("[CONFIG] Read %d key/values from config file\n", len(*c))
+    log.Printf("[CONFIG] Read %d key/values from config file\n", len(*c))
     return nil
 }
 
@@ -75,7 +75,7 @@ func (c *Config) UpdateFlags(fs *flag.FlagSet) {
         if _, visited := actual[f.Name]; !visited {
             if value, ok := (*c)[f.Name]; ok {
                 fs.Set(f.Name, value)
-                //--fmt.Printf("[CONFIG] DEBUG: SET %s = %s\n", f.Name, value)
+                //--log.Printf("[CONFIG] DEBUG: SET %s = %s\n", f.Name, value)
             }
         }
     })

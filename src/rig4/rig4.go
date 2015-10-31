@@ -3,26 +3,24 @@ package rig4
 import (
     "config"
     "flag"
-    "os/user"
-    "path/filepath"
+    "utils"
+
+    "rig4/source"
 )
 
-var CONFIG_FILE string
+var CONFIG_FILE = flag.String("config", "~/.rig4rc", "Config file to read")
 var CONFIG = config.NewConfig()
 
 func init() {
-    filename := "~/.rig4rc"
-    if usr, err := user.Current(); err == nil {
-        filename = filepath.Join(usr.HomeDir, filename[2:])
-    }
-    flag.StringVar(&CONFIG_FILE, "config", filename, "Config file to read")
 }
 
 // ----
 
 func Main() {
     flag.Parse()
-    CONFIG.ReadFile(CONFIG_FILE)
+    CONFIG.ReadFile(utils.ExpandUserPath(*CONFIG_FILE))
     CONFIG.UpdateFlags(flag.CommandLine)
+
+    source.InitSources()
 }
 
