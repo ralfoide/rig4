@@ -22,6 +22,7 @@ var GDOC_PATH_CLIENT_SECRET_JSON = flag.String("gdoc_path_client_secret_json", "
 var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc_path_credentials_token", "~/.rig4/drive-api-token.json", 
                                                "Path to save the Drive API credential token.")
 
+// -----
 
 type GDocSource struct {
     drive   *drive.Service
