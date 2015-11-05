@@ -6,7 +6,7 @@ import (
 )
 
 func ExpandUserPath(path string) string {
-    if path[:2] == "~/" {
+    if len(path) >= 2 && path[:2] == "~/" {
         if usr, err := user.Current(); err == nil {
             path = filepath.Join(usr.HomeDir, path[2:])
         }
