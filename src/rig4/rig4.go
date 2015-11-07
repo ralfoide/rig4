@@ -5,7 +5,7 @@ import (
     "flag"
     "utils"
 
-    "rig4/source"
+    "rig4/reader"
 )
 
 var CONFIG_FILE = flag.String("config", "~/.rig4rc", "Config file to read")
@@ -21,6 +21,6 @@ func Main() {
     CONFIG.ReadFile(utils.ExpandUserPath(*CONFIG_FILE))
     CONFIG.UpdateFlags(flag.CommandLine)
 
-    source.InitSources()
+    reader.InitReaders()
 }
 

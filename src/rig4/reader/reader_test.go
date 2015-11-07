@@ -9,16 +9,16 @@ import (
 
 // -----
 
-type MockSource struct {
+type MockReader struct {
     data int
 }
 
-func (m *MockSource) Init() error {
+func (m *MockReader) Init() error {
     m.data = 1
     return nil
 }
 
-func (m *MockSource) ReadAll(uri string) (string, error) {
+func (m *MockReader) ReadAll(uri string) (string, error) {
     s := uri + "/" + strconv.Itoa(m.data)
     var e error
     if m.data == 42 {
@@ -29,10 +29,10 @@ func (m *MockSource) ReadAll(uri string) (string, error) {
 
 // -----
 
-func TestMockSource_Init(t *testing.T) {
+func TestMockReader_Init(t *testing.T) {
     assert := assert.New(t)
 
-    m := &MockSource{}
+    m := &MockReader{}
 
     assert.Equal(0, m.data)
 

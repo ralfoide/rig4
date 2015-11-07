@@ -24,23 +24,23 @@ var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc_path_credentials_token", "~
 
 // -----
 
-type GDocSource struct {
+type GDocReader struct {
     drive   *drive.Service
     client  *http.Client
 }
 
-func (g *GDocSource) Init() (err error) {
+func (g *GDocReader) Init() (err error) {
     g.drive, g.client, err = g.getDriveService()
     return err
 }
 
-func (g *GDocSource) ReadAll(uri string) (string, error) {
+func (g *GDocReader) ReadAll(uri string) (string, error) {
     return "", nil
 }
 
 // -----
 
-func (g *GDocSource) getDriveService() (*drive.Service, *http.Client, error) {
+func (g *GDocReader) getDriveService() (*drive.Service, *http.Client, error) {
     ctx := context.Background()
     
     b, err := ioutil.ReadFile(utils.ExpandUserPath(*GDOC_PATH_CLIENT_SECRET_JSON))
@@ -76,7 +76,7 @@ func (g *GDocSource) getDriveService() (*drive.Service, *http.Client, error) {
 
 // getClient uses a Context and Config to retrieve a Token
 // then generate a Client. It returns the generated Client.
-func (g *GDocSource) getClient(ctx context.Context, config *oauth2.Config) (*http.Client, error) {
+func (g *GDocReader) getClient(ctx context.Context, config *oauth2.Config) (*http.Client, error) {
     var err error
     cacheFile, err := g.tokenCacheFile()
     if err != nil {
@@ -96,7 +96,7 @@ func (g *GDocSource) getClient(ctx context.Context, config *oauth2.Config) (*htt
 
 // getTokenFromWeb uses Config to request a Token.
 // It returns the retrieved Token.
-func (g *GDocSource) getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
+func (g *GDocReader) getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
     authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
     fmt.Printf("Go to the following link in your browser then type the "+
       "authorization code: \n%v\n", authURL)
@@ -115,7 +115,7 @@ func (g *GDocSource) getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, erro
 
 // tokenCacheFile generates credential file path/filename.
 // It returns the generated credential path/filename.
-func (g *GDocSource) tokenCacheFile() (string, error) {
+func (g *GDocReader) tokenCacheFile() (string, error) {
     path := utils.ExpandUserPath(*GDOC_PATH_CREDENTIALS_TOKEN)
     dir  := filepath.Dir(path)
     err  := os.MkdirAll(dir, 0700)
@@ -124,7 +124,7 @@ func (g *GDocSource) tokenCacheFile() (string, error) {
 
 // tokenFromFile retrieves a Token from a given file path.
 // It returns the retrieved Token and any read error encountered.
-func (g *GDocSource) tokenFromFile(file string) (*oauth2.Token, error) {
+func (g *GDocReader) tokenFromFile(file string) (*oauth2.Token, error) {
     f, err := os.Open(file)
     if err != nil {
       return nil, fmt.Errorf("[GDOC] %v", err)
@@ -137,7 +137,7 @@ func (g *GDocSource) tokenFromFile(file string) (*oauth2.Token, error) {
 
 // saveToken uses a file path to create a file and store the
 // token in it.
-func (g *GDocSource) saveToken(file string, token *oauth2.Token) error {
+func (g *GDocReader) saveToken(file string, token *oauth2.Token) error {
     fmt.Printf("Saving credential file to: %s\n", file)
     f, err := os.Create(file)
     if err != nil {
@@ -150,7 +150,7 @@ func (g *GDocSource) saveToken(file string, token *oauth2.Token) error {
 
 // ----
 
-func (g *GDocSource) findIzuFiles(d *drive.Service) *drive.File {
+func (g *GDocReader) findIzuFiles(d *drive.Service) *drive.File {
     var firstFile *drive.File
     q := "title contains '[izumi]' and fullText contains '[izu:'"
     fmt.Println("File query: ", q)
@@ -183,7 +183,7 @@ func (g *GDocSource) findIzuFiles(d *drive.Service) *drive.File {
     return firstFile
 }
 
-func (g *GDocSource) getFileContent(h *http.Client, f *drive.File) {
+func (g *GDocReader) getFileContent(h *http.Client, f *drive.File) {
     fmt.Println("File title       : ", f.Title)
     fmt.Println("File description : ", f.Description)
     fmt.Println("File download URL: ", f.DownloadUrl)
@@ -201,7 +201,7 @@ func (g *GDocSource) getFileContent(h *http.Client, f *drive.File) {
     }
 }
 
-func (g *GDocSource) downloadContent(h *http.Client, url string) {
+func (g *GDocReader) downloadContent(h *http.Client, url string) {
     resp, err := h.Get(url)
     if err != nil {
         log.Printf("Request error: %v", err)
