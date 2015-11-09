@@ -3,14 +3,23 @@ package rig4
 import (
     "testing"
     "github.com/stretchr/testify/assert"
-    "strconv"
-    "errors"
     "rig4/reader"
 )
 
 // -----
 
-func InitMockReaders(t *testing.T) {
-    reader.AddReader(&reader.NewMockReader("gdoc"))
-    reader.AddReader(&reader.NewMockReader("file"))
+func InitMockReaders() {
+    reader.AddReader(reader.NewMockReader("gdoc"))
+    reader.AddReader(reader.NewMockReader("file"))
+}
+
+func TestInitMockReaders(t *testing.T) {
+    assert := assert.New(t)
+
+    InitMockReaders()
+
+    assert.NotNil(reader.GetReader("gdoc"))
+    assert.NotNil(reader.GetReader("file"))
+    assert.Nil(reader.GetReader("mock"))
+    assert.Nil(reader.GetReader("whatever"))
 }
