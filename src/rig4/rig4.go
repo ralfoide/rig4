@@ -21,6 +21,9 @@ func Main() {
     CONFIG.ReadFile(utils.ExpandUserPath(*CONFIG_FILE))
     CONFIG.UpdateFlags(flag.CommandLine)
 
-    reader.InitReaders()
+    InitReaders()
 }
 
+func InitReaders() {
+    reader.AddReader(&reader.NewGDocReader())
+}

@@ -1,4 +1,4 @@
-package source
+package reader
 
 import (
     "encoding/json"
@@ -24,9 +24,18 @@ var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc_path_credentials_token", "~
 
 // -----
 
+// Implements IReader
 type GDocReader struct {
     drive   *drive.Service
     client  *http.Client
+}
+
+func NewGDocReader() *GDocReader {
+    return &GDocReader{}
+}
+
+func (g *GDocReader) Name() string {
+    return "gdoc";
 }
 
 func (g *GDocReader) Init() (err error) {

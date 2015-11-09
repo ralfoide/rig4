@@ -1,21 +1,27 @@
-package source
+package reader
 
 import (
     "log"
 )
 
-type Reader interface {
+type IReader interface {
     Init() error
+    Name() string
     ReadAll(uri string) (string, error)
 }
 
-var sources = map[string] Reader {}
+var readers = map[string]IReader{}
 
-func InitReaders() {
-    sources["gdoc"] = &GDocReader{}
-    if err := sources["gdoc"].Init(); err != nil {
-        log.Fatalf("%s", err)
+func AddReader(r IReader) {
+    readers[r.Name()] = r
+    if err := r.Init(); err != nil {
+        log.Fatalf("[%s] %s", r.Name(), err)
     }
 }
 
-
+func GetReader(name string) IReader {
+    if v, ok := readers[name]; ok {
+        return v
+    }
+    return nil
+}
