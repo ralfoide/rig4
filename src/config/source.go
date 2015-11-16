@@ -6,14 +6,28 @@ import (
     "regexp"
 )
 
+// Sources syntax:
+// - "sources" config line contains either literal URI definitions or source references.
+// - a source reference is another source config line that can also contain either URI
+//   definitions or more source references.
+type Sources []*Source
+
+// A source represents an origin where to read Rig data from.
+// A source has a kind (its type) and a URI. The kind represents the
+// reader kind -- the actual object used to read from the source.
+// The URI is an "opaque" data string passed to the reader as-is.
 type Source struct{
     kind string
     uri string
 }
 
-type Sources []*Source
-
-// Line syntax:
+// Source Line syntax BNF:
+// SOURCE_LINE  := ( LITERAL | REF ) ( "," SOURCE_LINE )
+// REF          := [a-z]+[a-zA-Z0-9_-]+
+// LITERAL      := UNQUOTED | QUOTED
+// UNQUOTED     := [a-z]+ ":" [^,]+
+// QUOTED       := [a-z]+ ":" \" [^"]+ \"
+//
 // kind : uri with spaces but no commas [, another source]
 // kind : "uri, with commas" [, another source]
 // FindStringSubmatch substrings:
@@ -22,17 +36,25 @@ type Sources []*Source
 // 2 = "kind" part of the subgroup #1, not valid if empty.
 // 3 = "uri" part of the subgroup #1, not valid if empty. Maybe be double-quoted.
 // 4 = the rest of the line, with a possible leading comma.
-var re_source = regexp.MustCompile("^\\s*(([a-z]+)\\s*:\\s*([^\"][^,]+|\"[^\"]+\")|[^,]*)\\s*(,?.*)")
+var re_source = regexp.MustCompile("^\\s*(([a-z]+)\\s*:\\s*([^\"][^,]+|\"[^\"]+\")|[a-z]+|[^,]*)\\s*(,?.*)")
 
-func NewSources(config_line string) (Sources, error) {
+func NewSources() Sources {
+    return make(Sources, 0)
+}
+
+func NewSource(kind, uri string) *Source {
+    return &Source{kind, uri}
+}
+
+func ParseSources(sources string) (Sources, error) {
     var err error
     s := make(Sources, 0)
 
-    config_line = strings.Replace(config_line, "\n", " ", -1)
-    config_line = strings.Replace(config_line, "\r", " ", -1)
+    sources = strings.Replace(sources, "\n", " ", -1)
+    sources = strings.Replace(sources, "\r", " ", -1)
 
-    for config_line != "" {
-        m := re_source.FindStringSubmatch(config_line)
+    for sources != "" {
+        m := re_source.FindStringSubmatch(sources)
 
         if m[1] != "" {
             kind := strings.TrimSpace(m[2])
@@ -51,17 +73,17 @@ func NewSources(config_line string) (Sources, error) {
             s = append(s, &Source{kind, uri})
         }
 
-        config_line = m[4]
-        if config_line == "" {
+        sources = m[4]
+        if sources == "" {
             break
         }
 
-        if config_line[0] == ',' {
-            config_line = config_line[1:]
+        if sources[0] == ',' {
+            sources = sources[1:]
             continue
         }
 
-        err = errors.New("[CONFIG] Extra source trailing content: '" + config_line + "'. Did you forget a comma?")
+        err = errors.New("[CONFIG] Extra source trailing content: '" + sources + "'. Did you forget a comma?")
         break;
     }
 
