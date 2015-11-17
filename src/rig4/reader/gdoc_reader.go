@@ -15,6 +15,8 @@ import (
     "golang.org/x/oauth2"
     "golang.org/x/oauth2/google"
     "google.golang.org/api/drive/v2"
+
+    "rig4/doc"
 )
 
 var GDOC_PATH_CLIENT_SECRET_JSON = flag.String("gdoc_path_client_secret_json", "~/.rig4/client_secret.json", 
@@ -34,7 +36,7 @@ func NewGDocReader() *GDocReader {
     return &GDocReader{}
 }
 
-func (g *GDocReader) Name() string {
+func (g *GDocReader) Kind() string {
     return "gdoc";
 }
 
@@ -43,8 +45,8 @@ func (g *GDocReader) Init() (err error) {
     return err
 }
 
-func (g *GDocReader) ReadAll(uri string) (string, error) {
-    return "", nil
+func (g *GDocReader) ReadDocuments(uri string) (<-chan doc.IDocument, error) {
+    return nil, nil
 }
 
 // -----

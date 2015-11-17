@@ -20,13 +20,27 @@ import (
 //   definitions or more source references.
 type Sources []*Source
 
+type ISource interface {
+    Kind() string
+    URI()  string
+}
+
 // A source represents an origin where to read Rig data from.
 // A source has a kind (its type) and a URI. The kind represents the
 // reader kind -- the actual object used to read from the source.
 // The URI is an "opaque" data string passed to the reader as-is.
+// Implements ISource
 type Source struct{
     kind string
     uri string
+}
+
+func (s *Source) Kind() string {
+    return s.kind
+}
+
+func (s *Source) URI() string {
+    return s.uri
 }
 
 // ---- Lexer ----
@@ -145,7 +159,7 @@ func ParseSources(sources string, config IConfigGetter) (Sources, error) {
 
 func addSource(x sourceLexer, kind, uri string) {
     lexer := x.(*sourceLex)
-    lexer.sources = append(lexer.sources, &Source{kind, uri})
+    lexer.sources = append(lexer.sources, &Source{ kind, uri })
     if sourceDebug >= 1 {
         fmt.Printf("[SOURCE] Add %s:%s for config %s\n", kind, uri, lexer.key)
     }

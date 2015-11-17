@@ -6,6 +6,16 @@ import (
     "errors"
 )
 
+func TestSource(t *testing.T) {
+    assert := assert.New(t)
+
+    var s ISource
+    s = &Source{ "kind" , "some uri" }
+
+    assert.Equal("kind", s.Kind())
+    assert.Equal("some uri", s.URI())
+}
+
 func TestParseSources_Empty(t *testing.T) {
     assert := assert.New(t)
 
