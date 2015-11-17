@@ -65,10 +65,10 @@ A quoted URI is parsed til the next double-quote.
 
 Here's an example of sources defined in a configuration file:
 
-> sources = source1, source2
-> source1 = file:/var/local/content/myblog.izu, more_izu_files
-> source2 = gdoc:"title contains '[izumi]' and fullText contains '[izu:'"
-> more_izu_files = file:/var/local/content/articles_*.izu
+    sources = source1, source2
+    source1 = file:/var/local/content/myblog.izu, more_izu_files
+    source2 = gdoc:"title contains '[izumi]' and fullText contains '[izu:'"
+    more_izu_files = file:/var/local/content/articles_*.izu
 
 
 ## Rendering
