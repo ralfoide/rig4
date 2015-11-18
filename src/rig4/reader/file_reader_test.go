@@ -4,12 +4,11 @@ import (
     "testing"
     "github.com/stretchr/testify/assert"
     "os"
-    "io/ioutil"
-    "log"
     "fmt"
     "strings"
     "sort"
     "strconv"
+    "utils"
 )
 
 // -----
@@ -17,7 +16,7 @@ import (
 func TestFileReader_1(t *testing.T) {
     assert := assert.New(t)
 
-    p := mkTempFile("some content")
+    p := utils.MkTempFile("some content")
     defer os.Remove(p)
 
     fr := NewFileReader()
@@ -46,7 +45,7 @@ func TestFileReader_3(t *testing.T) {
     p := make([]string, 0)
     for i := 0; i < n; i++ {
         s := strconv.Itoa(i)
-        p = append(p, mkTempFileInfix(s, "content #" + s))
+        p = append(p, utils.MkTempFileInfix(s, "content #" + s))
     }
     sort.Strings(p)
     defer func () {
@@ -80,28 +79,4 @@ func TestFileReader_3(t *testing.T) {
     d, ok := <-c
     assert.Nil(d)
     assert.False(ok)
-}
-
-// Creates a temp file with the given content.
-// Panics if the file cannot be created.
-// Returns the file path, with a name pattern TEMPDIR/rig4test_<random>.
-// Caller must delete the file e.g.
-//   defer os.Remove(filepath)
-func mkTempFile(content string) string {
-    return mkTempFileInfix("", content)
-}
-
-// Creates a temp file with the given content.
-// Panics if the file cannot be created.
-// Returns the file path, with a name pattern TEMPDIR/rig4test_<infix><random>.
-// Caller must delete the file e.g.
-//   defer os.Remove(filepath)
-func mkTempFileInfix(infix, content string) string {
-    f, err := ioutil.TempFile("" /*dir*/, "rig4test_" + infix /*prefix*/)
-    if err != nil {
-        log.Panicf("mkTempFile failed: %#v\n", err)
-    }
-    defer f.Close()
-    f.WriteString(content)
-    return f.Name()
 }
