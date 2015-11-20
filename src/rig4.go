@@ -1,11 +1,10 @@
 package main
 
 import (
-    "rig4"
+    "rig4/main"
 )
 
-
 func main() {
-    rig4.Main()
+    main.Main()
 }
 

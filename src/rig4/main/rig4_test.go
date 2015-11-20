@@ -1,4 +1,4 @@
-package rig4
+package main
 
 import (
     "testing"
