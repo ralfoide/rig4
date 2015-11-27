@@ -4,24 +4,23 @@ import (
     "encoding/json"
     "flag"
     "fmt"
+    "golang.org/x/net/context"
+    "golang.org/x/oauth2"
+    "golang.org/x/oauth2/google"
+    "google.golang.org/api/drive/v2"
     "io/ioutil"
     "log"
     "net/http"
     "os"
     "path/filepath"
-    "utils"
-
-    "golang.org/x/net/context"
-    "golang.org/x/oauth2"
-    "golang.org/x/oauth2/google"
-    "google.golang.org/api/drive/v2"
-
     "rig4/doc"
+    "utils"
 )
 
-var GDOC_PATH_CLIENT_SECRET_JSON = flag.String("gdoc_path_client_secret_json", "~/.rig4/client_secret.json", 
+var GDOC_AUTH_INIT = flag.String("gdoc-auth-init", "", "Interactive initialization of OAuth web token.")
+var GDOC_PATH_CLIENT_SECRET_JSON = flag.String("gdoc-path-client-secret-json", "~/.rig4/client_secret.json",
                                                "Path to load client_secret.json from Google Drive API.")
-var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc_path_credentials_token", "~/.rig4/drive-api-token.json", 
+var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc-path-credentials-token", "~/.rig4/drive-api-token.json",
                                                "Path to save the Drive API credential token.")
 
 // -----
@@ -99,27 +98,60 @@ func (g *GDocReader) getClient(ctx context.Context, config *oauth2.Config) (*htt
         tok, err = g.getTokenFromWeb(config)
         if err == nil {
             err = g.saveToken(cacheFile, tok)
+            if err == nil {
+                log.Printf("[GDOC] Saved credential\n")
+            } else {
+                log.Printf("[GDOC] Error saving credential file: %v\n", err)
+            }
         }
     }
     return config.Client(ctx, tok), err
 }
 
-
 // getTokenFromWeb uses Config to request a Token.
 // It returns the retrieved Token.
 func (g *GDocReader) getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
-    authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-    fmt.Printf("Go to the following link in your browser then type the "+
-      "authorization code: \n%v\n", authURL)
 
-    var code string
-    if _, err := fmt.Scan(&code); err != nil {
-      err = fmt.Errorf("[GDOC] Unable to read authorization code %v", err)
+    authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+
+    code := *GDOC_AUTH_INIT
+    if code == "" {
+        log.Printf(`
+[GDOC] Please indicate how you want to generate and enter the auth code.
+The program will print a URL which, once used, gives you an auth code
+that you need to input back here.
+Option 1: Use --gdoc-auth-init=interactive flag to read the auth code from stdin.
+Option 2: Use --gdoc-auth-init=<code> using the code given on the web page.
+You only need to do that once -- after that a token is stored in the file
+indicated by --gdoc-path-credentials-token.
+
+For option 2, go to the following link in your browser, then invoke this
+again with --gdoc-auth-init=<code>:
+
+%v
+
+`, authURL)
+        return nil, fmt.Errorf("[GDOC] Please provide a --gdoc-auth-init flag.")
+    }
+
+    if code == "interactive" {
+        log.Printf(`
+Go to the following link in your browser:
+
+%v
+
+Then type the authorization code:
+
+`, authURL)
+
+        if _, err := fmt.Scan(&code); err != nil {
+            return nil, fmt.Errorf("[GDOC] Unable to read authorization code: %v", err)
+        }
     }
 
     tok, err := config.Exchange(oauth2.NoContext, code)
     if err != nil {
-      err = fmt.Errorf("[GDOC] Unable to retrieve token from web %v", err)
+      err = fmt.Errorf("[GDOC] Unable to retrieve token from web: %v", err)
     }
     return tok, err
 }
@@ -138,25 +170,25 @@ func (g *GDocReader) tokenCacheFile() (string, error) {
 func (g *GDocReader) tokenFromFile(file string) (*oauth2.Token, error) {
     f, err := os.Open(file)
     if err != nil {
-      return nil, fmt.Errorf("[GDOC] %v", err)
+      return nil, err
     }
     t := &oauth2.Token{}
     err = json.NewDecoder(f).Decode(t)
     defer f.Close()
-    return t, fmt.Errorf("[GDOC] %v", err)
+    return t, err
 }
 
 // saveToken uses a file path to create a file and store the
 // token in it.
 func (g *GDocReader) saveToken(file string, token *oauth2.Token) error {
-    fmt.Printf("Saving credential file to: %s\n", file)
+    log.Printf("[GDOC] Saving credential file to: %s\n", file)
     f, err := os.Create(file)
     if err != nil {
-      log.Printf("Unable to cache oauth token: %v", err)
       return err
     }
     defer f.Close()
-    return json.NewEncoder(f).Encode(token)
+    err = json.NewEncoder(f).Encode(token)
+    return err
 }
 
 // ----
@@ -164,7 +196,7 @@ func (g *GDocReader) saveToken(file string, token *oauth2.Token) error {
 func (g *GDocReader) findIzuFiles(d *drive.Service) *drive.File {
     var firstFile *drive.File
     q := "title contains '[izumi]' and fullText contains '[izu:'"
-    fmt.Println("File query: ", q)
+    log.Println("[GDOC] File query: ", q)
     pageToken := ""
     for {
         query := d.Files.List().Q(q)
@@ -176,18 +208,18 @@ func (g *GDocReader) findIzuFiles(d *drive.Service) *drive.File {
             log.Panicf("Error in list query: %v", err)
         }
         if len(reply.Items) > 0 {
-          for _, i := range reply.Items {
-            fmt.Printf("%s (%s)\n", i.Title, i.Id)
-            if firstFile == nil {
-                firstFile = i
+            for _, i := range reply.Items {
+                log.Printf("[GDOC] %s (%s)\n", i.Title, i.Id)
+                if firstFile == nil {
+                    firstFile = i
+                }
             }
-          }
         } else {
-          fmt.Println("No files found.")
+            log.Println("No files found.")
         }
         pageToken := reply.NextPageToken
         if pageToken == "" {
-            fmt.Println("Last page")
+            log.Println("Last page")
             break
         }
     }
@@ -195,16 +227,16 @@ func (g *GDocReader) findIzuFiles(d *drive.Service) *drive.File {
 }
 
 func (g *GDocReader) getFileContent(h *http.Client, f *drive.File) {
-    fmt.Println("File title       : ", f.Title)
-    fmt.Println("File description : ", f.Description)
-    fmt.Println("File download URL: ", f.DownloadUrl)
-    fmt.Println("File Export Links: ", len(f.ExportLinks))
+    log.Println("File title       : ", f.Title)
+    log.Println("File description : ", f.Description)
+    log.Println("File download URL: ", f.DownloadUrl)
+    log.Println("File Export Links: ", len(f.ExportLinks))
     for k, v := range f.ExportLinks {
-        fmt.Printf("- [%v] : %v\n", k, v)
+        log.Printf("- [%v] : %v\n", k, v)
     }
     for _, k := range []string { "text/plain", "application/rtf", "text/html" } {
         url := f.ExportLinks[k]
-        fmt.Printf("\n===== [%v] : %v\n\n", k, url)
+        log.Printf("\n===== [%v] : %v\n\n", k, url)
         if url == "" {
             continue
         }
@@ -223,6 +255,6 @@ func (g *GDocReader) downloadContent(h *http.Client, url string) {
     if err != nil {
         log.Printf("Read body error: %v", err)
     }
-    fmt.Printf("Content:\n%v\n", string(body))
+    log.Printf("Content:\n%v\n", string(body))
 }
 

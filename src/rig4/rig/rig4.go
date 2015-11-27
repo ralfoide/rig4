@@ -1,14 +1,13 @@
-package main
+package rig
 
 import (
     "config"
     "flag"
-    "utils"
-
-    "rig4/reader"
-    "log"
-    "rig4/doc"
     "fmt"
+    "log"
+    "rig4/reader"
+    "rig4/doc"
+    "utils"
 )
 
 var CONFIG_FILE = flag.String("config", "~/.rig4rc", "Config file to read")
@@ -43,6 +42,7 @@ func Main() {
 }
 
 func initReaders() {
+    log.Println("[READERS] Initialize")
     reader.AddReader(reader.NewGDocReader())
     reader.AddReader(reader.NewFileReader())
 }
@@ -52,9 +52,13 @@ func getConfigSources() (config.Sources, error) {
 }
 
 func checkSources(sources config.Sources) error {
+    log.Printf("[READERS] Checking %d sources\n", len(sources))
+    if len(sources) == 0 {
+        return fmt.Errorf("[READERS] No sources configured. Check your config file.")
+    }
     for _, s := range sources {
         if r := reader.GetReader(s.Kind()); r == nil {
-            return fmt.Errorf("[MAIN] No reader '%s' exists for source '%s'\n", s.Kind(), s.URI())
+            return fmt.Errorf("[READERS] No reader '%s' exists for source '%s'\n", s.Kind(), s.URI())
         }
     }
     return nil
@@ -74,6 +78,7 @@ func readSources(sources config.Sources) (<-chan doc.IDocument, <-chan error) {
 }
 
 func readSource(s config.ISource, docs chan doc.IDocument) error {
+    log.Printf("[READERS] Read source %s:%s\n", s.Kind(), s.URI())
     r := reader.GetReader(s.Kind())
     dr, err := r.ReadDocuments(s.URI())
     if err != nil {
