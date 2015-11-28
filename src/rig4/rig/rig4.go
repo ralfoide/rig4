@@ -73,7 +73,6 @@ func readSources(sources config.Sources) ([]doc.IDocument, error) {
         if docs, err = readSource(s, docs); err != nil {
             return docs, err
         }
-        log.Printf("[DEBUG] C %s doc len: %d\n", s.Kind(), len(docs))
     }
     return docs, nil
 }
@@ -83,10 +82,7 @@ func readSource(s config.ISource, docs []doc.IDocument) ([]doc.IDocument, error)
     r := reader.GetReader(s.Kind())
     dr, err := r.ReadDocuments(s.URI())
     for _, d := range dr {
-        log.Printf("[DEBUG] add doc: %s\n", d)
         docs = append(docs, d)
-        log.Printf("[DEBUG] A %s doc len: %d\n", s.Kind(), len(docs))
     }
-    log.Printf("[DEBUG] B %s doc len: %d\n", s.Kind(), len(docs))
     return docs, err
 }

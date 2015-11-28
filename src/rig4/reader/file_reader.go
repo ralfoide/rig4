@@ -39,9 +39,10 @@ func (g *FileReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
     if err == nil {
         sort.Strings(matches)
         for _, match := range matches {
-            content, err := ioutil.ReadFile(match)
-            if err != nil {
-                log.Printf("[FILE] Failed to read '%s': %s\n", match, err)
+            content, err2 := ioutil.ReadFile(match)
+            if err2 != nil {
+                log.Printf("[FILE] Failed to read '%s': %s\n", match, err2)
+                err = err2
                 break
             } else {
                 log.Printf("[FILE] Reading '%s'\n", match)

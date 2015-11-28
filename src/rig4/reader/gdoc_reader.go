@@ -50,9 +50,10 @@ func (g *GDocReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
     files, err := g.findIzuFiles(uri)
     if err == nil {
         for _, file := range files {
-            d, err := g.getFileAsDocument(file)
-            if err != nil {
-                log.Println(err)
+            d, err2 := g.getFileAsDocument(file)
+            if err2 != nil {
+                log.Println(err2)
+                err = err2
                 break
             }
             docs = append(docs, d)
@@ -163,11 +164,11 @@ Then type the authorization code:
         }
     }
 
-    tok, err := config.Exchange(oauth2.NoContext, code)
-    if err != nil {
-      err = fmt.Errorf("[GDOC] Unable to retrieve token from web: %v", err)
+    tok, err2 := config.Exchange(oauth2.NoContext, code)
+    if err2 != nil {
+      err2 = fmt.Errorf("[GDOC] Unable to retrieve token from web: %v", err2)
     }
-    return tok, err
+    return tok, err2
 }
 
 // tokenCacheFile generates credential file path/filename.
@@ -254,7 +255,6 @@ func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
         return nil, fmt.Errorf("[GDOC] Error reading file '%s': %v", f.Title, err)
     }
 
-    log.Printf("[DEBUG] Document len: %d bytes", len(body)) // DEBUG
     return doc.NewDocument(g.Kind(), string(body)), nil
 }
 

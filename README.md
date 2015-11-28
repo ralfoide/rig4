@@ -121,7 +121,7 @@ A site can have 3 kind of pages:
 
 Source code style where it significantly differs from the recommended Go style:
 
-- Interfaces are prefixed with a "I". In practice, I see a lot of value in explicitely
+- Interfaces are prefixed with a "I". In practice, I see a lot of value in explicitly
   knowing whether a type is an interface vs a struct.
     - Methods that receive an interface should not try to receive it as a pointer.
       This avoids the usual "pointer to interface" error message that so easily
@@ -136,6 +136,13 @@ Source code style where it significantly differs from the recommended Go style:
   that feature should not be abused. It's a lot harder to understand and debug
   asynchronous behavior, especially when it provides no clear benefit over
   returning a slice of objects.
+- One of the issues I find too often is variable shadowing, for example when using
+  variable affectation in a "if" statement inside a loop with same variable names.
+  It is a common mistake to assume that "v,err := foo()" will reassign to a previously
+  defined "err" variable: the spec says this is the case ONLY within the same scope.
+  When used in different scopes, the creates a new shadow variable.
+  So the rule is to never reuse the same variable name, like Java forces ones to do:
+  any variable on the left of := cannot match one used in an immediate outer scope.
 
 ~~
 
