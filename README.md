@@ -116,5 +116,26 @@ A site can have 3 kind of pages:
 - The generator computes a graph of pages & entries to render.
 - It then invokes the **page generators** which in turn invoke the HTML **renderers**.
 
+
+## Golang Style
+
+Source code style where it significantly differs from the recommended Go style:
+
+- Interfaces are prefixed with a "I". In practice, I see a lot of value in explicitely
+  knowing whether a type is an interface vs a struct.
+    - Methods that receive an interface should not try to receive it as a pointer.
+      This avoids the usual "pointer to interface" error message that so easily
+      confuses developers.
+    - Once it's clear an argument is an interface, it's equaly clear that the
+      method will only access methods on the interface and not fields.
+- Struct types have a clear comment indicating which interface they implement.
+  I still consider it a failure that Go offers no way to provide that hint to the
+  compiler -- which could then warn upfront whether the interface implementation is
+  complete.
+- Channels offers a convenient way to implement asynchronous generators. However
+  that feature should not be abused. It's a lot harder to understand and debug
+  asynchronous behavior, especially when it provides no clear benefit over
+  returning a slice of objects.
+
 ~~
 
