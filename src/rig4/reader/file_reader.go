@@ -33,7 +33,7 @@ func (g *FileReader) Init() (err error) {
 // This returns one document per file matched using the glob pattern.
 // The glob results are sorted using sort.Strings() for a consistent result.
 func (g *FileReader) ReadDocuments(uri string) (<-chan doc.IDocument, error) {
-    // Creates a unbuffered (blocking) channel
+    // Creates an unbuffered (blocking) channel
     c := make(chan doc.IDocument, 0)
 
     matches, err := filepath.Glob(uri)

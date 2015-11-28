@@ -45,7 +45,25 @@ func (g *GDocReader) Init() (err error) {
 }
 
 func (g *GDocReader) ReadDocuments(uri string) (<-chan doc.IDocument, error) {
-    return nil, nil
+    // Creates an unbuffered (blocking) channel
+    c := make(chan doc.IDocument, 0)
+
+    files, err := g.findIzuFiles(uri)
+    if err != nil {
+        close(c)
+    } else {
+        go func() {
+            for _, file := range files {
+                d, err := g.getFileAsDocument(file)
+                if err != nil {
+                    log.Println(err)
+                }
+                c <- d
+            }
+        }()
+    }
+
+    return c, err
 }
 
 // -----
@@ -193,68 +211,53 @@ func (g *GDocReader) saveToken(file string, token *oauth2.Token) error {
 
 // ----
 
-func (g *GDocReader) findIzuFiles(d *drive.Service) *drive.File {
-    var firstFile *drive.File
-    q := "title contains '[izumi]' and fullText contains '[izu:'"
+func (g *GDocReader) findIzuFiles(q string) ([]*drive.File, error) {
+    files := make([]*drive.File, 0)
     log.Println("[GDOC] File query: ", q)
     pageToken := ""
     for {
-        query := d.Files.List().Q(q)
+        query := g.drive.Files.List().Q(q)
         if pageToken != "" {
             query = query.PageToken(pageToken)
         }
         reply, err := query.Do()
         if err != nil {
-            log.Panicf("Error in list query: %v", err)
+            return files, err
         }
         if len(reply.Items) > 0 {
             for _, i := range reply.Items {
                 log.Printf("[GDOC] %s (%s)\n", i.Title, i.Id)
-                if firstFile == nil {
-                    firstFile = i
-                }
+                files = append(files, i)
             }
         } else {
-            log.Println("No files found.")
+            log.Println("[GDOC] No files found.")
         }
         pageToken := reply.NextPageToken
         if pageToken == "" {
-            log.Println("Last page")
+            log.Println("[GDOC] Last page")
             break
         }
     }
-    return firstFile
+    return files, nil
 }
 
-func (g *GDocReader) getFileContent(h *http.Client, f *drive.File) {
-    log.Println("File title       : ", f.Title)
-    log.Println("File description : ", f.Description)
-    log.Println("File download URL: ", f.DownloadUrl)
-    log.Println("File Export Links: ", len(f.ExportLinks))
-    for k, v := range f.ExportLinks {
-        log.Printf("- [%v] : %v\n", k, v)
+func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
+    // Typical export choices are text/plain, application/rtf, text/html
+    url, ok := f.ExportLinks["text/plain"]
+    if !ok {
+        return nil, fmt.Errorf("[GDOC] No text/plain for file '%s'", f.Title)
     }
-    for _, k := range []string { "text/plain", "application/rtf", "text/html" } {
-        url := f.ExportLinks[k]
-        log.Printf("\n===== [%v] : %v\n\n", k, url)
-        if url == "" {
-            continue
-        }
-        g.downloadContent(h, url)
-    }
-}
 
-func (g *GDocReader) downloadContent(h *http.Client, url string) {
-    resp, err := h.Get(url)
+    resp, err := g.client.Get(url)
     if err != nil {
-        log.Printf("Request error: %v", err)
-        return
+        return nil, fmt.Errorf("[GDOC] Error downloading file '%s': %v", f.Title, err)
     }
     defer resp.Body.Close()
     body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-        log.Printf("Read body error: %v", err)
+        return nil, fmt.Errorf("[GDOC] Error reading file '%s': %v", f.Title, err)
     }
-    log.Printf("Content:\n%v\n", string(body))
+
+    return doc.NewDocument(g.Kind(), string(body)), nil
 }
 
