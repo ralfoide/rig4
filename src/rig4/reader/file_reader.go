@@ -32,31 +32,26 @@ func (g *FileReader) Init() (err error) {
 // URI is a path or a glob pattern compatible with Go's filepath.Glob()
 // This returns one document per file matched using the glob pattern.
 // The glob results are sorted using sort.Strings() for a consistent result.
-func (g *FileReader) ReadDocuments(uri string) (<-chan doc.IDocument, error) {
-    // Creates an unbuffered (blocking) channel
-    c := make(chan doc.IDocument, 0)
+func (g *FileReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
+    docs := make([]doc.IDocument, 0)
 
     matches, err := filepath.Glob(uri)
-    if err != nil {
-        close(c)
-    } else {
+    if err == nil {
         sort.Strings(matches)
-        go func() {
-            defer close(c)
-            for _, match := range matches {
-                content, err := ioutil.ReadFile(match)
-                if err != nil {
-                    log.Printf("[FILE] Failed to read '%s': %s\n", match, err)
-                } else {
-                    log.Printf("[FILE] Reading '%s'\n", match)
-                    d := doc.NewDocument(g.Kind(), string(content))
-                    c <- d
-                }
+        for _, match := range matches {
+            content, err := ioutil.ReadFile(match)
+            if err != nil {
+                log.Printf("[FILE] Failed to read '%s': %s\n", match, err)
+                break
+            } else {
+                log.Printf("[FILE] Reading '%s'\n", match)
+                d := doc.NewDocument(g.Kind(), string(content))
+                docs = append(docs, d)
             }
-        }()
+        }
     }
 
-    return c, err
+    return docs, err
 }
 
 // -----

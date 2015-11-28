@@ -44,26 +44,22 @@ func (g *GDocReader) Init() (err error) {
     return err
 }
 
-func (g *GDocReader) ReadDocuments(uri string) (<-chan doc.IDocument, error) {
-    // Creates an unbuffered (blocking) channel
-    c := make(chan doc.IDocument, 0)
+func (g *GDocReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
+    docs := make([]doc.IDocument, 0)
 
     files, err := g.findIzuFiles(uri)
-    if err != nil {
-        close(c)
-    } else {
-        go func() {
-            for _, file := range files {
-                d, err := g.getFileAsDocument(file)
-                if err != nil {
-                    log.Println(err)
-                }
-                c <- d
+    if err == nil {
+        for _, file := range files {
+            d, err := g.getFileAsDocument(file)
+            if err != nil {
+                log.Println(err)
+                break
             }
-        }()
+            docs = append(docs, d)
+        }
     }
 
-    return c, err
+    return docs, err
 }
 
 // -----
@@ -258,6 +254,7 @@ func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
         return nil, fmt.Errorf("[GDOC] Error reading file '%s': %v", f.Title, err)
     }
 
+    log.Printf("[DEBUG] Document len: %d bytes", len(body)) // DEBUG
     return doc.NewDocument(g.Kind(), string(body)), nil
 }
 

@@ -27,23 +27,17 @@ func (m *MockReader) Init() error {
     return nil
 }
 
-func (m *MockReader) ReadDocuments(uri string) (<-chan doc.IDocument, error) {
-    // Creates a unbuffered (blocking) channel
-    c := make(chan doc.IDocument, 0)
+func (m *MockReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
+    docs := make([]doc.IDocument, 0)
 
-    // A goroutine asynchronously creates and add the document to the channel.
-    // The channel is closed once the last document has been sent.
-    go func() {
-        content := uri + "/" + strconv.Itoa(m.data)
-        d := doc.NewDocument(m.kind, content)
-        c <- d
-        close(c)
-    }()
+    content := uri + "/" + strconv.Itoa(m.data)
+    d := doc.NewDocument(m.kind, content)
+    docs = append(docs, d)
 
     var e error
     if m.data == 42 {
         e = errors.New("Error " + m.kind + " " + strconv.Itoa(m.data))
     }
 
-    return c, e
+    return docs, e
 }

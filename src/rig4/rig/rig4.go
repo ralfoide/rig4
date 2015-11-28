@@ -29,16 +29,18 @@ func Main() {
         log.Fatalln(err)
     }
 
+    // Check sources are properly configured and valid
     err = checkSources(sources)
     if err != nil {
         log.Fatalln(err)
     }
 
-    _, errors := readSources(sources)
-
-    for err := range errors {
-        log.Fatalln(err.Error())
+    // Read all documents from the given sources
+    docs, err := readSources(sources)
+    if err != nil {
+        log.Fatalln(err)
     }
+    log.Printf("Found %d documents\n", len(docs))
 }
 
 func initReaders() {
@@ -64,30 +66,27 @@ func checkSources(sources config.Sources) error {
     return nil
 }
 
-func readSources(sources config.Sources) (<-chan doc.IDocument, <-chan error) {
-    docs := make(chan doc.IDocument, 0)
-    errors := make(chan error, 0)
+func readSources(sources config.Sources) ([]doc.IDocument, error) {
+    docs := make([]doc.IDocument, 0)
     for _, s := range sources {
-        go func() {
-            if err := readSource(s, docs); err != nil {
-                errors <- err
-            }
-        }()
+        var err error
+        if docs, err = readSource(s, docs); err != nil {
+            return docs, err
+        }
+        log.Printf("[DEBUG] C %s doc len: %d\n", s.Kind(), len(docs))
     }
-    return docs, errors
+    return docs, nil
 }
 
-func readSource(s config.ISource, docs chan doc.IDocument) error {
+func readSource(s config.ISource, docs []doc.IDocument) ([]doc.IDocument, error) {
     log.Printf("[READERS] Read source %s:%s\n", s.Kind(), s.URI())
     r := reader.GetReader(s.Kind())
     dr, err := r.ReadDocuments(s.URI())
-    if err != nil {
-        return err
+    for _, d := range dr {
+        log.Printf("[DEBUG] add doc: %s\n", d)
+        docs = append(docs, d)
+        log.Printf("[DEBUG] A %s doc len: %d\n", s.Kind(), len(docs))
     }
-    for d := range dr {
-        // TODO read document headers
-        // TODO split entries
-        docs <- d
-    }
-    return nil
+    log.Printf("[DEBUG] B %s doc len: %d\n", s.Kind(), len(docs))
+    return docs, err
 }

@@ -19,26 +19,23 @@ func TestMockReader_Init(t *testing.T) {
     assert.Nil(m.Init())
     assert.Equal(1, m.data)
 
-    c, err := m.ReadDocuments("blah:://foo")
+    docs, err := m.ReadDocuments("blah:://foo")
     assert.Nil(err)
-    d := <-c
+    assert.NotNil(docs)
+    assert.Equal(1, len(docs))
+    d := docs[0]
     assert.NotNil(d)
     assert.Equal("mock", d.Kind())
     assert.Equal("blah:://foo/1", d.Content())
-    d, ok := <- c
-    assert.Nil(d)
-    assert.False(ok) // channel was closed and can't be read anymore
 
     m.data = 42
-    c, err = m.ReadDocuments("blah:://foo")
-    d = <-c
+    docs, err = m.ReadDocuments("blah:://foo")
+    assert.Equal(1, len(docs))
+    d = docs[0]
     assert.NotNil(d)
     assert.Equal(errors.New("Error mock 42"), err)
     assert.Equal("mock", d.Kind())
     assert.Equal("blah:://foo/42", d.Content())
-    d, ok = <- c
-    assert.Nil(d)
-    assert.False(ok) // channel was closed and can't be read anymore
 }
 
 // -----

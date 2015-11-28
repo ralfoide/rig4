@@ -14,10 +14,8 @@ type IReader interface {
     // Returns the kind of that reader.
     Kind() string
 
-    // Read and returns a channel of documents and/or a read error.
-    // The channel must be properly closed once the last document has been sent.
-    // Callers can only receive (<-c) from the returned channel.
-    ReadDocuments(uri string) (<-chan doc.IDocument, error)
+    // Read and returns a slice of documents and/or a read error.
+    ReadDocuments(uri string) ([]doc.IDocument, error)
 }
 
 var readers = map[string]IReader{}

@@ -23,19 +23,14 @@ func TestFileReader_1(t *testing.T) {
     assert.Nil(fr.Init())
     assert.Equal("file", fr.Kind())
 
-    c, err := fr.ReadDocuments(p)
+    docs, err := fr.ReadDocuments(p)
     assert.Nil(err)
-    assert.NotNil(c)
-    // expect one document
-    d, ok := <-c
+    assert.NotNil(docs)
+    assert.Equal(1, len(docs))
+    d := docs[0]
     assert.NotNil(d)
-    assert.True(ok)
     assert.Equal("file", d.Kind())
     assert.Equal("some content", d.Content())
-    // no more documents
-    d, ok = <-c
-    assert.Nil(d)
-    assert.False(ok)
 }
 
 func TestFileReader_3(t *testing.T) {
@@ -64,19 +59,14 @@ func TestFileReader_3(t *testing.T) {
     assert.Nil(fr.Init())
     assert.Equal("file", fr.Kind())
 
-    c, err := fr.ReadDocuments(glob)
+    docs, err := fr.ReadDocuments(glob)
     assert.Nil(err)
-    assert.NotNil(c)
+    assert.NotNil(docs)
+    assert.Equal(n, len(docs))
     for i := 0; i < n; i++ {
-        // expect one document
-        d, ok := <-c
+        d := docs[i]
         assert.NotNil(d)
-        assert.True(ok)
         assert.Equal("file", d.Kind())
         assert.Equal(fmt.Sprintf("content #%d", i), d.Content())
     }
-    // no more documents
-    d, ok := <-c
-    assert.Nil(d)
-    assert.False(ok)
 }
