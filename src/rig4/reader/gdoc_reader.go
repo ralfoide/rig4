@@ -29,10 +29,20 @@ var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc-path-credentials-token", "~
 type GDocReader struct {
     drive   *drive.Service
     client  *http.Client
+
+    // Returns the result of File.List().Query.Do()
+    // Used to override it in unit tests.
+    queryDo func(query *drive.FilesListCall) (*drive.FileList, error)
 }
 
 func NewGDocReader() *GDocReader {
-    return &GDocReader{}
+    r := &GDocReader{}
+
+    r.queryDo = func(query *drive.FilesListCall) (*drive.FileList, error) {
+        return query.Do()
+    }
+
+    return r
 }
 
 func (g *GDocReader) Kind() string {
@@ -217,7 +227,7 @@ func (g *GDocReader) findIzuFiles(q string) ([]*drive.File, error) {
         if pageToken != "" {
             query = query.PageToken(pageToken)
         }
-        reply, err := query.Do()
+        reply, err := g.queryDo(query)
         if err != nil {
             return files, err
         }
@@ -229,7 +239,7 @@ func (g *GDocReader) findIzuFiles(q string) ([]*drive.File, error) {
         } else {
             log.Println("[GDOC] No files found.")
         }
-        pageToken := reply.NextPageToken
+        pageToken = reply.NextPageToken
         if pageToken == "" {
             log.Println("[GDOC] Last page")
             break
@@ -249,6 +259,11 @@ func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
     if err != nil {
         return nil, fmt.Errorf("[GDOC] Error downloading file '%s': %v", f.Title, err)
     }
+
+    // TODO: Test what happens when Get returns 404 or equivalent. Is there a body?
+    // TODO: Capture and use resp.StatusCode, e.g. 304 and the Header eTag
+    // can be useful to use later combined with a local cache.
+
     defer resp.Body.Close()
     body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
