@@ -43,14 +43,16 @@ func TestMockReader_Init(t *testing.T) {
 func TestAddReader_ClearReaders(t *testing.T) {
     assert := assert.New(t)
 
-    assert.Equal(0, len(readers))
-    assert.Nil(GetReader("mock"))
+    rr := NewReaders()
 
-    AddReader(NewMockReader("mock"))
-    assert.NotNil(GetReader("mock"))
-    assert.Equal(1, len(readers))
+    assert.Equal(0, len(*rr))
+    assert.Nil(rr.GetReader("mock"))
 
-    ClearReaders()
-    assert.Equal(0, len(readers))
-    assert.Nil(GetReader("mock"))
+    rr.AddReader(NewMockReader("mock"))
+    assert.NotNil(rr.GetReader("mock"))
+    assert.Equal(1, len(*rr))
+
+    rr.ClearReaders()
+    assert.Equal(0, len(*rr))
+    assert.Nil(rr.GetReader("mock"))
 }

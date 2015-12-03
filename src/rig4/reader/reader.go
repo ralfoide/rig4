@@ -18,24 +18,28 @@ type IReader interface {
     ReadDocuments(uri string) ([]doc.IDocument, error)
 }
 
-var readers = map[string]IReader{}
+type Readers map[string]IReader
 
-func AddReader(r IReader) {
-    readers[r.Kind()] = r
+func NewReaders() *Readers {
+    return &Readers{}
+}
+
+func (rr *Readers) AddReader(r IReader) {
+    (*rr)[r.Kind()] = r
     if err := r.Init(); err != nil {
         log.Fatalf("[%s] %s", r.Kind(), err)
     }
 }
 
-func GetReader(name string) IReader {
-    if v, ok := readers[name]; ok {
+func (rr *Readers) GetReader(name string) IReader {
+    if v, ok := (*rr)[name]; ok {
         return v
     }
     return nil
 }
 
-func ClearReaders() {
-    for k, _ := range readers {
-        delete(readers, k)
+func (rr *Readers) ClearReaders() {
+    for k, _ := range (*rr) {
+        delete((*rr), k)
     }
 }
