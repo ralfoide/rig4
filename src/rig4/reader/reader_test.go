@@ -14,10 +14,10 @@ func TestMockReader_Init(t *testing.T) {
     m := NewMockReader("mock")
 
     assert.Equal("mock", m.Kind())
-    assert.Equal(0, m.data)
+    assert.Equal(0, m.Data)
 
     assert.Nil(m.Init())
-    assert.Equal(1, m.data)
+    assert.Equal(1, m.Data)
 
     docs, err := m.ReadDocuments("blah:://foo")
     assert.Nil(err)
@@ -28,7 +28,7 @@ func TestMockReader_Init(t *testing.T) {
     assert.Equal("mock", d.Kind())
     assert.Equal("blah:://foo/1", d.Content())
 
-    m.data = 42
+    m.Data = 42
     docs, err = m.ReadDocuments("blah:://foo")
     assert.Equal(1, len(docs))
     d = docs[0]
@@ -40,11 +40,17 @@ func TestMockReader_Init(t *testing.T) {
 
 // -----
 
-func TestAddReader(t *testing.T) {
+func TestAddReader_ClearReaders(t *testing.T) {
     assert := assert.New(t)
 
     assert.Equal(0, len(readers))
     assert.Nil(GetReader("mock"))
+
     AddReader(NewMockReader("mock"))
     assert.NotNil(GetReader("mock"))
+    assert.Equal(1, len(readers))
+
+    ClearReaders()
+    assert.Equal(0, len(readers))
+    assert.Nil(GetReader("mock"))
 }

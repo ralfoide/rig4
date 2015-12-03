@@ -11,7 +11,7 @@ import (
 // Implements IReader
 type MockReader struct {
     kind string
-    data int
+    Data int
 }
 
 func NewMockReader(name string) *MockReader {
@@ -23,20 +23,20 @@ func (m *MockReader) Kind() string {
 }
 
 func (m *MockReader) Init() error {
-    m.data = 1
+    m.Data = 1
     return nil
 }
 
 func (m *MockReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
     docs := make([]doc.IDocument, 0)
 
-    content := uri + "/" + strconv.Itoa(m.data)
+    content := uri + "/" + strconv.Itoa(m.Data)
     d := doc.NewDocument(m.kind, content)
     docs = append(docs, d)
 
     var e error
-    if m.data == 42 {
-        e = errors.New("Error " + m.kind + " " + strconv.Itoa(m.data))
+    if m.Data == 42 {
+        e = errors.New("Error " + m.kind + " " + strconv.Itoa(m.Data))
     }
 
     return docs, e

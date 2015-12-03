@@ -35,6 +35,10 @@ type Source struct{
     uri string
 }
 
+func NewSource(kind, uri string) *Source {
+    return &Source{kind, uri}
+}
+
 func (s *Source) Kind() string {
     return s.kind
 }
@@ -159,7 +163,7 @@ func ParseSources(sources string, config IConfigGetter) (Sources, error) {
 
 func addSource(x sourceLexer, kind, uri string) {
     lexer := x.(*sourceLex)
-    lexer.sources = append(lexer.sources, &Source{ kind, uri })
+    lexer.sources = append(lexer.sources, NewSource(kind, uri))
     if sourceDebug >= 1 {
         fmt.Printf("[SOURCE] Add %s:%s for config %s\n", kind, uri, lexer.key)
     }

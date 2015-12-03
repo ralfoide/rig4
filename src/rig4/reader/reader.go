@@ -33,3 +33,9 @@ func GetReader(name string) IReader {
     }
     return nil
 }
+
+func ClearReaders() {
+    for k, _ := range readers {
+        delete(readers, k)
+    }
+}

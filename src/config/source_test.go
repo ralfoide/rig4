@@ -10,7 +10,7 @@ func TestSource(t *testing.T) {
     assert := assert.New(t)
 
     var s ISource
-    s = &Source{ "kind" , "some uri" }
+    s = NewSource("kind" , "some uri")
 
     assert.Equal("kind", s.Kind())
     assert.Equal("some uri", s.URI())

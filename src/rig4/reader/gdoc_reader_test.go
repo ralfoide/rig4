@@ -197,7 +197,7 @@ func TestGDocReader_getFileAsDocument_noTextPlain(t *testing.T) {
     doc, err := g.getFileAsDocument(f)
     assert.Nil(doc)
     assert.NotNil(err)
-    assert.True(strings.Contains(err.Error(), "No text/plain for file"))
+    assert.Contains(err.Error(), "No text/plain for file")
 }
 
 func TestGDocReader_getFileAsDocument_error(t *testing.T) {
@@ -215,7 +215,7 @@ func TestGDocReader_getFileAsDocument_error(t *testing.T) {
     doc, err := g.getFileAsDocument(f)
     assert.Nil(doc)
     assert.NotNil(err)
-    assert.True(strings.Contains(err.Error(), "Error downloading file"))
+    assert.Contains(err.Error(), "Error downloading file")
 }
 
 func TestGDocReader_ReadDocuments(t *testing.T) {
