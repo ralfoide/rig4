@@ -30,22 +30,21 @@ func TestCheckSources(t *testing.T) {
     assert := assert.New(t)
 
     r := NewRig4()
-    s := config.NewSources()
 
-    err := r.checkSources(s)
+    err := r.checkSources()
     assert.NotNil(err)
     assert.Contains(err.Error(), "No sources configured")
 
-    s = append(s, config.NewSource("abc", "some uri 1"))
-    s = append(s, config.NewSource("def", "some uri 2"))
+    r.sources = append(r.sources, config.NewSource("abc", "some uri 1"))
+    r.sources = append(r.sources, config.NewSource("def", "some uri 2"))
 
-    err = r.checkSources(s)
+    err = r.checkSources()
     assert.NotNil(err)
     assert.Contains(err.Error(), "No reader 'abc' exists for source 'some uri 1'")
 
     InitMockReaders(r)
 
-    err = r.checkSources(s)
+    err = r.checkSources()
     assert.Nil(err)
 }
 
@@ -54,16 +53,15 @@ func TestReadSources(t *testing.T) {
 
     r := NewRig4()
 
-    s := config.NewSources()
-    s = append(s, config.NewSource("abc", "some uri 1"))
-    s = append(s, config.NewSource("def", "some uri 2"))
+    r.sources = append(r.sources, config.NewSource("abc", "some uri 1"))
+    r.sources = append(r.sources, config.NewSource("def", "some uri 2"))
 
     InitMockReaders(r)
 
     r.readers.GetReader("abc").(*reader.MockReader).Data = 12
     r.readers.GetReader("def").(*reader.MockReader).Data = 14
 
-    docs, err := r.readSources(s)
+    docs, err := r.readSources()
     assert.Nil(err)
     assert.Equal(2, len(docs))
     assert.Equal("abc", docs[0].Kind())

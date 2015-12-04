@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
-    rig.Main()
+    r := rig.NewRig4()
+    r.Main()
 }
 

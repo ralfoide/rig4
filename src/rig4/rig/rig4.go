@@ -18,36 +18,36 @@ var CONFIG = config.NewConfig()
 
 type Rig4 struct {
     readers *reader.Readers
+    sources config.Sources
 }
 
 func NewRig4() *Rig4 {
-    return &Rig4{readers: reader.NewReaders()}
+    return &Rig4{readers: reader.NewReaders(), sources: config.NewSources()}
 }
 
 // ----
 
-func Main() {
+func (r *Rig4) Main() {
     flag.Parse()
     CONFIG.ReadFile(utils.ExpandUserPath(*CONFIG_FILE))
     CONFIG.UpdateFlags(flag.CommandLine)
 
-    r := NewRig4()
-
     r.initReaders()
 
-    sources, err := r.getConfigSources()
+    var err error
+    r.sources, err = r.getConfigSources()
     if err != nil {
         log.Fatalln(err)
     }
 
     // Check sources are properly configured and valid
-    err = r.checkSources(sources)
+    err = r.checkSources()
     if err != nil {
         log.Fatalln(err)
     }
 
     // Read all documents from the given sources
-    docs, err := r.readSources(sources)
+    docs, err := r.readSources()
     if err != nil {
         log.Fatalln(err)
     }
@@ -64,12 +64,12 @@ func (r *Rig4) getConfigSources() (config.Sources, error) {
     return config.ParseSources(*SOURCES, CONFIG)
 }
 
-func (r *Rig4) checkSources(sources config.Sources) error {
-    log.Printf("[READERS] Checking %d sources\n", len(sources))
-    if len(sources) == 0 {
+func (r *Rig4) checkSources() error {
+    log.Printf("[READERS] Checking %d sources\n", len(r.sources))
+    if len(r.sources) == 0 {
         return fmt.Errorf("[READERS] No sources configured. Check your config file.")
     }
-    for _, s := range sources {
+    for _, s := range r.sources {
         if r := r.readers.GetReader(s.Kind()); r == nil {
             return fmt.Errorf("[READERS] No reader '%s' exists for source '%s'\n", s.Kind(), s.URI())
         }
@@ -77,9 +77,9 @@ func (r *Rig4) checkSources(sources config.Sources) error {
     return nil
 }
 
-func (r *Rig4) readSources(sources config.Sources) ([]doc.IDocument, error) {
+func (r *Rig4) readSources() ([]doc.IDocument, error) {
     docs := make([]doc.IDocument, 0)
-    for _, s := range sources {
+    for _, s := range r.sources {
         var err error
         if docs, err = r.readSource(s, docs); err != nil {
             return docs, err
