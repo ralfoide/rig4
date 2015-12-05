@@ -233,6 +233,10 @@ func (g *GDocReader) findIzuFiles(q string) ([]*drive.File, error) {
         }
         if len(reply.Items) > 0 {
             for _, i := range reply.Items {
+                if labels := i.Labels; i.ExplicitlyTrashed || (labels != nil && labels.Trashed) {
+                    log.Printf("[GDOC] Ignore trashed file: %s (%s)\n", i.Title, i.Id)
+                    continue
+                }
                 log.Printf("[GDOC] %s (%s)\n", i.Title, i.Id)
                 files = append(files, i)
             }
