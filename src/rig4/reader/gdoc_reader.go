@@ -274,6 +274,6 @@ func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
         return nil, fmt.Errorf("[GDOC] Error reading file '%s': %v", f.Title, err)
     }
 
-    return doc.NewDocument(g.Kind(), string(body)), nil
+    return doc.NewDocument(g.Kind(), f.Id, string(body)), nil
 }
 

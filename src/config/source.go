@@ -36,7 +36,7 @@ type Source struct{
 }
 
 func NewSource(kind, uri string) *Source {
-    return &Source{kind, uri}
+    return &Source{kind: kind, uri: uri}
 }
 
 func (s *Source) Kind() string {

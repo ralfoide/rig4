@@ -10,12 +10,13 @@ func TestDocument(t *testing.T) {
     assert := assert.New(t)
 
     var d IDocument
-    d = NewDocument("kind", "the content")
+    d = NewDocument("kind", "some id", "the content")
 
     assert.Equal("kind", d.Kind())
+    assert.Equal("some id", d.Id())
     assert.Equal("the content", d.Content())
 
     // d is an interface, which underlying type is a Document pointer
     assert.NotNil(d.(*Document))
-    assert.Equal("&doc.Document{kind:\"kind\", content:\"the content\"}", fmt.Sprintf("%#v", d))
+    assert.Equal("&doc.Document{kind:\"kind\", content:\"the content\", id:\"some id\"}", fmt.Sprintf("%#v", d))
 }

@@ -46,7 +46,7 @@ func (g *FileReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
                 break
             } else {
                 log.Printf("[FILE] Reading '%s'\n", match)
-                d := doc.NewDocument(g.Kind(), string(content))
+                d := doc.NewDocument(g.Kind(), match, string(content))
                 docs = append(docs, d)
             }
         }

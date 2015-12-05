@@ -15,7 +15,7 @@ type MockReader struct {
 }
 
 func NewMockReader(name string) *MockReader {
-    return &MockReader{name, 0}
+    return &MockReader{kind: name, Data: 0}
 }
 
 func (m *MockReader) Kind() string {
@@ -31,7 +31,7 @@ func (m *MockReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
     docs := make([]doc.IDocument, 0)
 
     content := uri + "/" + strconv.Itoa(m.Data)
-    d := doc.NewDocument(m.kind, content)
+    d := doc.NewDocument(m.kind, uri, content)
     docs = append(docs, d)
 
     var e error
