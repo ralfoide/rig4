@@ -38,6 +38,54 @@ func TestConfig_Content(t *testing.T) {
     assert.Equal("default", c.Get("key4", "default"))
 }
 
+func TestConfig_Comments(t *testing.T) {
+    assert := assert.New(t)
+
+    r := strings.NewReader("key1=value1\n" +
+    "    // key_2 = \t some other value     \n" +
+    "    # __KEY-3__   = value for 3  \t   \n" +
+    "    ####this_is_a_comment_too \n" +
+    "    ///////// also a comment \n" +
+    "    \n" +
+    "    key4 = value 4  \n")
+
+    c := NewConfig()
+    assert.Nil(c.Read(r))
+    assert.Equal(2, len(*c))
+    assert.Equal("value1", (*c)["key1"])
+    assert.Equal("value 4", (*c)["key4"])
+}
+
+func TestConfig_ErrorMissingEqual(t *testing.T) {
+    assert := assert.New(t)
+
+    r := strings.NewReader("key1: value1\n")
+    c := NewConfig()
+    err := c.Read(r)
+    assert.NotNil(err)
+    assert.Contains(err.Error(), "Invalid config line:")
+}
+
+func TestConfig_ErrorMissingKey(t *testing.T) {
+    assert := assert.New(t)
+
+    r := strings.NewReader("   = value1\n")
+    c := NewConfig()
+    err := c.Read(r)
+    assert.NotNil(err)
+    assert.Contains(err.Error(), "Invalid config line:")
+}
+
+func TestConfig_InvalidKey(t *testing.T) {
+    assert := assert.New(t)
+
+    r := strings.NewReader(" $key#1! = value1\n")
+    c := NewConfig()
+    err := c.Read(r)
+    assert.NotNil(err)
+    assert.Contains(err.Error(), "Invalid config line:")
+}
+
 func TestConfig_Flags(t *testing.T) {
     assert := assert.New(t)
 

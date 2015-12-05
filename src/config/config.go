@@ -8,6 +8,7 @@ import (
     "os"
     "regexp"
     "strings"
+    "fmt"
 )
 
 // IConfigGetter interface represents an object that allows to get config values.
@@ -18,6 +19,9 @@ type IConfigGetter interface {
 // Config implements IConfigGetter
 type Config map[string] string
 
+// Line syntax
+// 1: Key
+// 2: Value
 var CONFIG_LINE_RE *regexp.Regexp = regexp.MustCompile("^\\s*([a-zA-Z0-9_.-]+)\\s*=\\s*(.*?)\\s*$")
 
 // Creates a new Config object
@@ -57,9 +61,19 @@ func (c *Config) parse(r *bufio.Reader) error {
             log.Panicf("[CONFIG] Error reading config file: %v", err)
         }
         line = strings.TrimSpace(line)
-        if line != "" {
-            fields := CONFIG_LINE_RE.FindStringSubmatch(line)
+        if line == "" {
+            continue
+        }
+        if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+            // Ignore comment
+            continue
+        }
+
+        fields := CONFIG_LINE_RE.FindStringSubmatch(line)
+        if fields != nil && len(fields) == 3 {
             (*c)[fields[1]] = fields[2]
+        } else {
+            return fmt.Errorf("Invalid config line: %s\n", line)
         }
     }
     log.Printf("[CONFIG] Read %d key/values from config file\n", len(*c))
