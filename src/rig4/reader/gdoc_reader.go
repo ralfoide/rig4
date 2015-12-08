@@ -54,23 +54,27 @@ func (g *GDocReader) Init() (err error) {
     return err
 }
 
-func (g *GDocReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
-    docs := make([]doc.IDocument, 0)
-
+func (g *GDocReader) ReadDocuments(docs doc.IDocuments, uri string) error {
     files, err := g.findIzuFiles(uri)
     if err == nil {
         for _, file := range files {
+            id := g.getId(file)
+            if docs.Contains(id) {
+                log.Printf("[GDOC] Ignoring duplicated '%s'\n", id)
+                continue
+            }
+
             d, err2 := g.getFileAsDocument(file)
             if err2 != nil {
                 log.Println(err2)
                 err = err2
                 break
             }
-            docs = append(docs, d)
+            docs.Add(d)
         }
     }
 
-    return docs, err
+    return err
 }
 
 // -----
@@ -274,6 +278,10 @@ func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
         return nil, fmt.Errorf("[GDOC] Error reading file '%s': %v", f.Title, err)
     }
 
-    return doc.NewDocument(g.Kind(), f.Id, string(body)), nil
+    return doc.NewDocument(g.Kind(), g.getId(f), string(body)), nil
+}
+
+func (g *GDocReader) getId(f *drive.File) string {
+    return g.Kind() + ":" + f.Id
 }
 

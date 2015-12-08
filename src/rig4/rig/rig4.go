@@ -19,10 +19,15 @@ var CONFIG = config.NewConfig()
 type Rig4 struct {
     readers *reader.Readers
     sources config.Sources
+    docs    doc.IDocuments
 }
 
 func NewRig4() *Rig4 {
-    return &Rig4{readers: reader.NewReaders(), sources: config.NewSources()}
+    return &Rig4{
+        readers: reader.NewReaders(),
+        sources: config.NewSources(),
+        docs: doc.NewDocuments(),
+    }
 }
 
 // ----
@@ -47,11 +52,11 @@ func (r *Rig4) Main() {
     }
 
     // Read all documents from the given sources
-    docs, err := r.readSources()
+    err = r.readSources()
     if err != nil {
         log.Fatalln(err)
     }
-    log.Printf("Found %d documents\n", len(docs))
+    log.Printf("Found %d documents\n", len(r.docs.Range()))
 }
 
 func (r *Rig4) initReaders() {
@@ -77,23 +82,18 @@ func (r *Rig4) checkSources() error {
     return nil
 }
 
-func (r *Rig4) readSources() ([]doc.IDocument, error) {
-    docs := make([]doc.IDocument, 0)
+func (r *Rig4) readSources() error {
     for _, s := range r.sources {
-        var err error
-        if docs, err = r.readSource(s, docs); err != nil {
-            return docs, err
+        if err := r.readSource(s); err != nil {
+            return err
         }
     }
-    return docs, nil
+    return nil
 }
 
-func (r *Rig4) readSource(s config.ISource, docs []doc.IDocument) ([]doc.IDocument, error) {
+func (r *Rig4) readSource(s config.ISource) error {
     log.Printf("[READERS] Read source %s:%s\n", s.Kind(), s.URI())
     reader_ := r.readers.GetReader(s.Kind())
-    dr, err := reader_.ReadDocuments(s.URI())
-    for _, d := range dr {
-        docs = append(docs, d)
-    }
-    return docs, err
+    err := reader_.ReadDocuments(r.docs, s.URI())
+    return err
 }

@@ -4,6 +4,7 @@ import (
     "testing"
     "github.com/stretchr/testify/assert"
     "errors"
+    "rig4/doc"
 )
 
 // -----
@@ -19,20 +20,20 @@ func TestMockReader_Init(t *testing.T) {
     assert.Nil(m.Init())
     assert.Equal(1, m.Data)
 
-    docs, err := m.ReadDocuments("blah:://foo")
+    docs := doc.NewDocuments()
+    err := m.ReadDocuments(docs, "blah:://foo")
     assert.Nil(err)
-    assert.NotNil(docs)
-    assert.Equal(1, len(docs))
-    d := docs[0]
+    assert.Equal(1, len(docs.Range()))
+    d := docs.Range()[0]
     assert.NotNil(d)
     assert.Equal("mock", d.Kind())
     assert.Equal("blah:://foo/1", d.Content())
 
     m.Data = 42
-    docs, err = m.ReadDocuments("blah:://foo")
-    assert.Equal(1, len(docs))
-    d = docs[0]
-    assert.NotNil(d)
+    docs = doc.NewDocuments()
+    err = m.ReadDocuments(docs, "blah:://foo")
+    assert.Equal(1, len(docs.Range()))
+    d = docs.Range()[0]
     assert.Equal(errors.New("Error mock 42"), err)
     assert.Equal("mock", d.Kind())
     assert.Equal("blah:://foo/42", d.Content())

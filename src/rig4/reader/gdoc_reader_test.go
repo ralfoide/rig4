@@ -11,6 +11,7 @@ import (
     "regexp"
     "strings"
     "testing"
+    "rig4/doc"
 )
 
 // -----
@@ -244,18 +245,18 @@ func TestGDocReader_ReadDocuments(t *testing.T) {
     g.trip.On("RoundTrip", "http://www.example.com/2").Return(200, "body response 2", nil)
     g.trip.On("RoundTrip", "http://www.example.com/3").Return(200, "body response 3", nil)
 
-    docs, err := g.ReadDocuments("some query")
+    docs := doc.NewDocuments()
+    err := g.ReadDocuments(docs, "some query")
     assert.Nil(err)
-    assert.NotNil(docs)
-    assert.NotEmpty(docs)
-    assert.Equal(3, len(docs))
+    assert.NotEmpty(docs.Range())
+    assert.Equal(3, len(docs.Range()))
 
-    assert.Equal("gdoc", docs[0].Kind())
-    assert.Equal("gdoc", docs[1].Kind())
-    assert.Equal("gdoc", docs[2].Kind())
+    assert.Equal("gdoc", docs.Range()[0].Kind())
+    assert.Equal("gdoc", docs.Range()[1].Kind())
+    assert.Equal("gdoc", docs.Range()[2].Kind())
 
-    assert.Equal("body response 1", docs[0].Content())
-    assert.Equal("body response 2", docs[1].Content())
-    assert.Equal("body response 3", docs[2].Content())
+    assert.Equal("body response 1", docs.Range()[0].Content())
+    assert.Equal("body response 2", docs.Range()[1].Content())
+    assert.Equal("body response 3", docs.Range()[2].Content())
 }
 

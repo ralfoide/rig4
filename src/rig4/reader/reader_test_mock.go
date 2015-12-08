@@ -27,17 +27,19 @@ func (m *MockReader) Init() error {
     return nil
 }
 
-func (m *MockReader) ReadDocuments(uri string) ([]doc.IDocument, error) {
-    docs := make([]doc.IDocument, 0)
-
+func (m *MockReader) ReadDocuments(docs doc.IDocuments, uri string) error {
     content := uri + "/" + strconv.Itoa(m.Data)
-    d := doc.NewDocument(m.kind, uri, content)
-    docs = append(docs, d)
+    id := uri
+    if docs.Contains(id) {
+        return nil
+    }
+    d := doc.NewDocument(m.kind, id, content)
+    docs.Add(d)
 
     var e error
     if m.Data == 42 {
         e = errors.New("Error " + m.kind + " " + strconv.Itoa(m.Data))
     }
 
-    return docs, e
+    return e
 }

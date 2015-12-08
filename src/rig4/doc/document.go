@@ -31,3 +31,4 @@ func (d *Document) Content() string {
 func (d *Document) Id() string {
     return d.id
 }
+

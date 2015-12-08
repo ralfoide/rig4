@@ -9,6 +9,7 @@ import (
     "sort"
     "strconv"
     "utils"
+    "rig4/doc"
 )
 
 // -----
@@ -23,11 +24,11 @@ func TestFileReader_1(t *testing.T) {
     assert.Nil(fr.Init())
     assert.Equal("file", fr.Kind())
 
-    docs, err := fr.ReadDocuments(p)
+    docs := doc.NewDocuments()
+    err := fr.ReadDocuments(docs, p)
     assert.Nil(err)
-    assert.NotNil(docs)
-    assert.Equal(1, len(docs))
-    d := docs[0]
+    assert.Equal(1, len(docs.Range()))
+    d := docs.Range()[0]
     assert.NotNil(d)
     assert.Equal("file", d.Kind())
     assert.Equal("some content", d.Content())
@@ -59,12 +60,12 @@ func TestFileReader_3(t *testing.T) {
     assert.Nil(fr.Init())
     assert.Equal("file", fr.Kind())
 
-    docs, err := fr.ReadDocuments(glob)
+    docs := doc.NewDocuments()
+    err := fr.ReadDocuments(docs, glob)
     assert.Nil(err)
-    assert.NotNil(docs)
-    assert.Equal(n, len(docs))
+    assert.Equal(n, len(docs.Range()))
     for i := 0; i < n; i++ {
-        d := docs[i]
+        d := docs.Range()[i]
         assert.NotNil(d)
         assert.Equal("file", d.Kind())
         assert.Equal(fmt.Sprintf("content #%d", i), d.Content())

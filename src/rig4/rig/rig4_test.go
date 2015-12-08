@@ -61,12 +61,37 @@ func TestReadSources(t *testing.T) {
     r.readers.GetReader("abc").(*reader.MockReader).Data = 12
     r.readers.GetReader("def").(*reader.MockReader).Data = 14
 
-    docs, err := r.readSources()
+    err := r.readSources()
     assert.Nil(err)
-    assert.Equal(2, len(docs))
-    assert.Equal("abc", docs[0].Kind())
-    assert.Equal("some uri 1/12", docs[0].Content())
+    assert.Equal(2, len(r.docs.Range()))
+    assert.Equal("abc", r.docs.Range()[0].Kind())
+    assert.Equal("some uri 1/12", r.docs.Range()[0].Content())
 
-    assert.Equal("def", docs[1].Kind())
-    assert.Equal("some uri 2/14", docs[1].Content())
+    assert.Equal("def", r.docs.Range()[1].Kind())
+    assert.Equal("some uri 2/14", r.docs.Range()[1].Content())
+}
+
+func TestReadSources_Duplicates(t *testing.T) {
+    assert := assert.New(t)
+
+    r := NewRig4()
+
+    r.sources = append(r.sources, config.NewSource("abc", "some uri 1"))
+    r.sources = append(r.sources, config.NewSource("abc", "some uri 1"))
+    r.sources = append(r.sources, config.NewSource("def", "some uri 2"))
+    r.sources = append(r.sources, config.NewSource("def", "some uri 2"))
+
+    InitMockReaders(r)
+
+    r.readers.GetReader("abc").(*reader.MockReader).Data = 12
+    r.readers.GetReader("def").(*reader.MockReader).Data = 14
+
+    err := r.readSources()
+    assert.Nil(err)
+    assert.Equal(2, len(r.docs.Range()))
+    assert.Equal("abc", r.docs.Range()[0].Kind())
+    assert.Equal("some uri 1/12", r.docs.Range()[0].Content())
+
+    assert.Equal("def", r.docs.Range()[1].Kind())
+    assert.Equal("some uri 2/14", r.docs.Range()[1].Content())
 }

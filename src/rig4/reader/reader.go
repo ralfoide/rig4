@@ -14,8 +14,8 @@ type IReader interface {
     // Returns the kind of that reader.
     Kind() string
 
-    // Read and returns a slice of documents and/or a read error.
-    ReadDocuments(uri string) ([]doc.IDocument, error)
+    // Reads and creates documents and/or a read error.
+    ReadDocuments(docs doc.IDocuments, uri string) error
 }
 
 type Readers map[string]IReader
