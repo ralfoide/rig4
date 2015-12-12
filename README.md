@@ -143,6 +143,10 @@ Source code style where it significantly differs from the recommended Go style:
   When used in different scopes, the creates a new shadow variable.
   So the rule is to never reuse the same variable name, like Java forces ones to do:
   any variable on the left of := cannot match one used in an immediate outer scope.
+- When initializing structs, do NOT use implicit field assignments; instead solely
+  rely on explicit field names. E.g &Struct{a: A, b: B} instead of &Struct{A, B}.
+  Most of the time it's rather redundant (e.g. "fieldA: fieldA") but the point is that
+  when adding fields later you won't get tricked by field ordering.
 
 ~~
 

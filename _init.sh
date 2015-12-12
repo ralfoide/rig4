@@ -25,3 +25,5 @@ function checkout() {
 }
 
 checkout src/github.com/stretchr/testify https://github.com/stretchr/testify.git
+checkout src/github.com/stretchr/objx https://github.com/stretchr/objx.git
+
