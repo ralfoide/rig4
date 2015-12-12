@@ -64,7 +64,7 @@ func (g *GDocReader) ReadDocuments(docs doc.IDocuments, uri string) error {
                 continue
             }
 
-            d, err2 := g.getFileAsDocument(file)
+            d, err2 := g.getFileAsDocument(file, "text/plain")
             if err2 != nil {
                 log.Println(err2)
                 err = err2
@@ -75,6 +75,16 @@ func (g *GDocReader) ReadDocuments(docs doc.IDocuments, uri string) error {
     }
 
     return err
+}
+
+// Utility method for experimenting
+func (g *GDocReader) ReadFileById(id string, mimetype string) (doc.IDocument, error) {
+    file, err := g.drive.Files.Get(id).Do()
+    if err != nil {
+        return nil, err
+    }
+
+    return g.getFileAsDocument(file, mimetype)
 }
 
 // -----
@@ -256,9 +266,9 @@ func (g *GDocReader) findIzuFiles(q string) ([]*drive.File, error) {
     return files, nil
 }
 
-func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
+func (g *GDocReader) getFileAsDocument(f *drive.File, mimetype string) (doc.IDocument, error) {
     // Typical export choices are text/plain, application/rtf, text/html
-    url, ok := f.ExportLinks["text/plain"]
+    url, ok := f.ExportLinks[mimetype]
     if !ok {
         return nil, fmt.Errorf("[GDOC] No text/plain for file '%s'", f.Title)
     }
@@ -278,7 +288,14 @@ func (g *GDocReader) getFileAsDocument(f *drive.File) (doc.IDocument, error) {
         return nil, fmt.Errorf("[GDOC] Error reading file '%s': %v", f.Title, err)
     }
 
-    return doc.NewDocument(g.Kind(), g.getId(f), string(body)), nil
+    d := doc.NewDocument(g.Kind(), g.getId(f), string(body))
+    tags := d.Tags()
+    tags["gdoc-id"] = f.Id
+    tags["gdoc-etag"] = f.Etag
+    tags["gdoc-title"] = f.Title
+    tags["gdoc-mimetype"] = mimetype
+
+    return d, nil
 }
 
 func (g *GDocReader) getId(f *drive.File) string {
