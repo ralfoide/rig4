@@ -31,7 +31,7 @@ func MainExp() {
         log.Fatalln(err2)
     }
 
-    line_re := regexp.MustCompile("^([a-z0-9]+.html)\\s+([a-zA-Z0-9_-]+)\\s*")
+    line_re := regexp.MustCompile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*")
 
     dest_dir := *EXP_DEST_DIR
 
