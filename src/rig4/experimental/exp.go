@@ -1,13 +1,15 @@
 package experimental
 import (
     "flag"
-    "rig4/reader"
-    "log"
-    "strings"
-    "regexp"
-    "io/ioutil"
-    "path/filepath"
     "golang.org/x/net/html"
+    "io/ioutil"
+    "log"
+    "net/url"
+    "os"
+    "path/filepath"
+    "regexp"
+    "rig4/reader"
+    "strings"
 )
 
 
@@ -15,6 +17,7 @@ var EXP = flag.Bool("exp", false, "Enable experimental")
 var EXP_GDOC_ID = flag.String("exp-doc-id", "", "Exp gdoc id")
 var EXP_DEST_DIR= flag.String("exp-dest-dir", ".", "Exp dest dir")
 var EXP_GA_UID= flag.String("exp-ga-uid", "", "Exp GA UID")
+var EXP_DEBUG = flag.Bool("exp-debug", false, "Debug experimental")
 
 func MainExp() {
 
@@ -52,6 +55,12 @@ func MainExp() {
         str_html := doc_html.Content()
         title := doc_html.Tags()["gdoc-title"]
 
+        if *EXP_DEBUG {
+            tmp_name := filepath.Join("/tmp/", dest_name)
+            log.Printf("         DEBUG  : %s [len: %d]\n", tmp_name, len(str_html))
+            ioutil.WriteFile(filepath.Join(os.TempDir(), dest_name), []byte(str_html), 0644)
+        }
+
         str_html = rewriteHtml(str_html, title)
 
         if dest_dir != "" {
@@ -65,7 +74,9 @@ func MainExp() {
     }
 }
 
-var HREF_RE = regexp.MustCompile(
+var HREF_RE1 = regexp.MustCompile(
+    `href="(https://www.google.com/url\?q=http[^&]+&amp;sa=D&amp;usg=[a-zA-Z0-9_-]+)"`)
+var HREF_RE2 = regexp.MustCompile(
     `href="https://www.google.com/url\?q=(http[^&]+)&amp;sa=D&amp;usg=[a-zA-Z0-9_-]+"`)
 
 var GA_SCRIPT = `<script>
@@ -81,7 +92,18 @@ var GA_SCRIPT = `<script>
 
 func rewriteHtml(str_html, title string) string {
     str_html = strings.Replace(str_html, "</p>", "</p>\n", -1)
-    str_html = HREF_RE.ReplaceAllString(str_html, `href="$1"`)
+    str_html = HREF_RE1.ReplaceAllStringFunc(str_html, func(s string) string {
+        m := HREF_RE1.FindStringSubmatch(s)
+        if u, err := url.Parse(m[1]); err == nil {
+            // Valid URL. Extract 'q' parameter.
+            q := u.Query().Get("q")
+            return `href="` + q + `"`
+        } else {
+            // Invalid URL. Just raw-transform.
+            r := HREF_RE2.FindStringSubmatch(s)
+            return `href="` + r[1] + `"`
+        }
+    })
 
     if title != "" {
         title_html := html.EscapeString(title)
