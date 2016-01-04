@@ -27,3 +27,7 @@ function checkout() {
 checkout src/github.com/stretchr/testify https://github.com/stretchr/testify.git
 checkout src/github.com/stretchr/objx https://github.com/stretchr/objx.git
 
+. _setup.sh
+go get -u golang.org/x/oauth2/...
+go get -u google.golang.org/api/drive/v2
+

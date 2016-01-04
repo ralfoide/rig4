@@ -6,3 +6,5 @@ bin
 pkg
 .idea
 *.iml
+google.golang.org
+golang.org
