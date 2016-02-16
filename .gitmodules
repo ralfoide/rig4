@@ -4,3 +4,6 @@
 [submodule "src/github.com/stretchr/objx"]
 	path = src/github.com/stretchr/objx
 	url = https://github.com/stretchr/objx.git
+[submodule "src/github.com/sergi/go-diff"]
+	path = src/github.com/sergi/go-diff
+	url = https://github.com/sergi/go-diff.git

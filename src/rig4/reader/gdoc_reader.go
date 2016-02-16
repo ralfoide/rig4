@@ -25,7 +25,12 @@ var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc-path-credentials-token", "~
 
 // -----
 
-// Implements IReader
+type IGDocReader interface {
+    IReader
+    ReadFileById(id string, mimetype string) (doc.IDocument, error)
+}
+
+// Implements IReader, IGDocReader
 type GDocReader struct {
     drive   *drive.Service
     client  *http.Client

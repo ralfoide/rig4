@@ -24,10 +24,15 @@ function checkout() {
     git submodule update --init $ROOT/$DIR
 }
 
+# Note: we do this to not copy what is a git repo (as go get will do).
+# Instead we manually recreate the matching git submodule.
 checkout src/github.com/stretchr/testify https://github.com/stretchr/testify.git
 checkout src/github.com/stretchr/objx https://github.com/stretchr/objx.git
+checkout src/github.com/stretchr/objx https://github.com/stretchr/objx.git
+checkout src/github.com/sergi/go-diff https://github.com/sergi/go-diff.git
 
 . _setup.sh
 go get -u golang.org/x/oauth2/...
+go get -u golang.org/x/net/html
 go get -u google.golang.org/api/drive/v2
 
