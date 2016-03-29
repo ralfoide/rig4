@@ -39,6 +39,7 @@ func (r *Rig4) Main() {
     CONFIG.UpdateFlags(flag.CommandLine)
 
     if *experimental.EXP == true {
+        log.Printf("Experimental\n")
         experimental.MainExp()
         return
     }

@@ -28,6 +28,7 @@ var GDOC_PATH_CREDENTIALS_TOKEN  = flag.String("gdoc-path-credentials-token", "~
 type IGDocReader interface {
     IReader
     ReadFileById(id string, mimetype string) (doc.IDocument, error)
+    Get(url string) ([]byte, error)
 }
 
 // Implements IReader, IGDocReader
@@ -278,19 +279,9 @@ func (g *GDocReader) getFileAsDocument(f *drive.File, mimetype string) (doc.IDoc
         return nil, fmt.Errorf("[GDOC] No text/plain for file '%s'", f.Title)
     }
 
-    resp, err := g.client.Get(url)
+    body, err := g.Get(url)
     if err != nil {
         return nil, fmt.Errorf("[GDOC] Error downloading file '%s': %v", f.Title, err)
-    }
-
-    // TODO: Test what happens when Get returns 404 or equivalent. Is there a body?
-    // TODO: Capture and use resp.StatusCode, e.g. 304 and the Header eTag
-    // can be useful to use later combined with a local cache.
-
-    defer resp.Body.Close()
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        return nil, fmt.Errorf("[GDOC] Error reading file '%s': %v", f.Title, err)
     }
 
     d := doc.NewDocument(g.Kind(), g.getId(f), string(body))
@@ -301,6 +292,18 @@ func (g *GDocReader) getFileAsDocument(f *drive.File, mimetype string) (doc.IDoc
     tags["gdoc-mimetype"] = mimetype
 
     return d, nil
+}
+
+func (g *GDocReader) Get(url string) ([]byte, error) {
+    var body []byte
+    resp, err := g.client.Get(url)
+
+    if err == nil {
+        defer resp.Body.Close()
+        body, err = ioutil.ReadAll(resp.Body)
+    }
+
+    return body, err
 }
 
 func (g *GDocReader) getId(f *drive.File) string {

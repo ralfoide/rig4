@@ -4,6 +4,8 @@ import (
     "flag"
     "golang.org/x/net/html"
     "golang.org/x/net/html/atom"
+    "image"
+    "image/png"
     "io/ioutil"
     "log"
     "net/url"
@@ -12,9 +14,11 @@ import (
     "regexp"
     "rig4/doc"
     "rig4/reader"
+    "strconv"
     "strings"
     "errors"
     "sort"
+    "path"
 )
 
 
@@ -53,6 +57,8 @@ type IExp interface {
 type Exp struct {
     Reader  reader.IGDocReader
     Mode    RewriteMode
+    dest_dir    string
+    current_name    string
 }
 
 type HtmlEntry struct {
@@ -118,12 +124,16 @@ func (e *Exp) GetIndexEntries(doc_master doc.IDocument) []*HtmlEntry {
 
 
 func (e *Exp) ProcessEntries(entries []*HtmlEntry, dest_dir string) {
+    log.Printf("Found %d master entries\n", len(entries))
     for _, entry := range entries {
         dest_name := entry.DestName
         doc_id := entry.DocId
 
         log.Printf("Process document: %s\n", dest_name)
         log.Printf("         Reading: %s\n", doc_id)
+
+        e.current_name = dest_name
+        e.dest_dir = dest_dir
 
         doc_html := e.ReadHtml(doc_id)
         str_html := doc_html.Content()
@@ -168,18 +178,15 @@ func (e *Exp) ProcessEntry(str_html, title, ga_script string) (string, error) {
     body_node := findChildNode(html_node, "body")
     body_class := getAttribute(body_node, "class")
 
-    var css CssMap
-//    if (e.Mode & RewriteCss) != 0 {
-        style_node = findTextNode(style_node)
-        style_str, css1, err2 := e.SimplifyStyles(style_node.Data, body_class)
-        if err2 != nil {
-            return "", err2
-        }
-        if style_str != "" {
-            style_node.Data = style_str
-        }
-        css = css1
-//    }
+    style_node = findTextNode(style_node)
+    style_str, css1, err2 := e.SimplifyStyles(style_node.Data, body_class)
+    if err2 != nil {
+        return "", err2
+    }
+    if style_str != "" {
+        style_node.Data = style_str
+    }
+    css := css1
 
     if title != "" {
         insertOrReplaceNode(head_node, atom.Title, title, true)
@@ -278,13 +285,20 @@ func traverseAllNodes(root *html.Node, process traverseFunc) {
     }
 }
 
-func rewriteUrl(str string) string {
+func (e *Exp) RewriteUrl(str string) string {
     if u, err := url.Parse(str); err == nil {
         if u.Host == "www.google.com" && u.Path == "/url" {
             q := u.Query().Get("q")
             if q != "" {
                 return q
             }
+        } else if u.Host == "docs.google.com" && u.Path == "/drawings/image" {
+            id := u.Query().Get("id")
+            w, _ := strconv.Atoi(u.Query().Get("w"))
+            h, _ := strconv.Atoi(u.Query().Get("h"))
+
+            log.Printf("         Drawing: %s [%v x %v]\n", id, w, h)
+            str = e.ProcessDrawing(id, w, h)
         }
     }
     return str
@@ -303,7 +317,7 @@ func (e *Exp) RewriteAttributes(node *html.Node, css CssMap) bool {
         a := &node.Attr[index]
 
         if rewrite_urls && a.Namespace == "" && (a.Key == "href" || a.Key == "src") {
-            a.Val = rewriteUrl(a.Val)
+            a.Val = e.RewriteUrl(a.Val)
         }
     }
     return true
@@ -340,6 +354,101 @@ func (e *Exp) SimplifyStyles(styles, body_class string) (string, CssMap, error) 
 
     return result, css, nil
 }
+
+// ----------------------
+// Drawings
+
+func (e *Exp) ProcessDrawing(id string, w, h int) string {
+
+    extension := "png"
+    dest_name := path.Base(e.current_name)
+    dest_name = strings.Replace(dest_name, ".html", "", -1)
+    dest_name = strings.Replace(dest_name, ".", "_", -1)
+    dest_name = dest_name + "_drawing_" + id + "." + extension
+    dest_path := dest_name
+    if e.dest_dir != "" {
+        dest_path = filepath.Join(e.dest_dir, dest_path)
+    }
+
+    log.Printf("     Downloading: %s\n", dest_name)
+
+    url := "https://docs.google.com/drawings/d/" + id + "/export/" + extension
+    img, err1 := e.Reader.Get(url)
+    if err1 != nil {
+        log.Fatalln(err1)
+    }
+
+    if w > 0 && h > 0 {
+        img = resizeImage(img, w, h)
+    }
+
+    if err2 := ioutil.WriteFile(dest_path, img, 0644); err2 != nil {
+        log.Fatalln(err2)
+    }
+
+    return dest_name
+}
+
+func resizeImage(input []byte, w, h int) []byte {
+    result := input
+
+    img, err1 := png.Decode(bytes.NewBuffer(input))
+    if err1 == nil {
+        bounds := img.Bounds()
+
+        x1 := bounds.Max.X
+        y1 := bounds.Max.Y
+        x2 := bounds.Min.X
+        y2 := bounds.Min.Y
+
+        for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+            for x := bounds.Min.X; x < bounds.Max.X; x++ {
+                _, _, _, a := img.At(x, y).RGBA()
+                if a != 0 {
+                    if x < x1 {
+                        x1 = x
+                    } else if x > x2 {
+                        x2 = x
+                    }
+                    if y < y1 {
+                        y1 = y
+                    } else if y > y2 {
+                        y2 = y
+                    }
+                }
+            }
+        }
+
+        rect := image.Rect(x1, y1, x2 + 1, y2 + 1)
+        switch img2 := img.(type) {
+        case *image.Gray:
+            img = img2.SubImage(rect)
+        case *image.Gray16:
+            img = img2.SubImage(rect)
+        case *image.NRGBA:
+            img = img2.SubImage(rect)
+        case *image.NRGBA64:
+            img = img2.SubImage(rect)
+        case *image.RGBA:
+            img = img2.SubImage(rect)
+        case *image.RGBA64:
+            img = img2.SubImage(rect)
+        default:
+            log.Fatalln("Unknown PNG decoded IMAGE TYPE %T\n", img)
+        }
+
+        var buf bytes.Buffer
+        png.Encode(&buf, img)
+        result = buf.Bytes()
+    }
+
+    return result
+}
+
+
+
+// ----------------------
+// Limited CSS parser
 
 type CssAttr map[string] string
 
@@ -441,20 +550,13 @@ func (c *CssAttr) CleanupAttrs(mode RewriteMode) bool {
     } else if (mode & RewriteCss) != 0 {
         for key, val := range *c {
             switch {
-            case //strings.HasPrefix(key, "border-"),
-                //            strings.HasPrefix(key, "padding-"),
-                //            strings.HasPrefix(key, "margin-"),
+            case
                 key == "font-family" && strings.Contains(val, "Consolas"),
                 key == "font-style" && val != "normal" && val != "inherit",
                 key == "font-weight" && val != "normal" && val != "inherit",
-                //            key == "font-size" && val != "inherit",
-                //            key == "text-decoration" && val == "underline" && val != "inherit",
                 key == "text-align" && val != "left" && val != "inherit",
                 key == "color" && val != "#000000" && val != "inherit",
                 key == "background-color" && val != "#ffffff" && val != "inherit":
-                //            key == "max-width",
-                //            key == "height",
-                //            key == "line-height":
                 continue
             }
             delete(*c, key)

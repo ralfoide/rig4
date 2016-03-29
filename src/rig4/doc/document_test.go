@@ -18,5 +18,5 @@ func TestDocument(t *testing.T) {
 
     // d is an interface, which underlying type is a Document pointer
     assert.NotNil(d.(*Document))
-    assert.Equal("&doc.Document{kind:\"kind\", content:\"the content\", id:\"some id\"}", fmt.Sprintf("%#v", d))
+    assert.Equal("&doc.Document{kind:\"kind\", content:\"the content\", id:\"some id\", tags:map[string]string{}}", fmt.Sprintf("%#v", d))
 }

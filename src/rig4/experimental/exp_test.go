@@ -156,23 +156,25 @@ for(i=0; i<10; i++) { print "script"; }
 func TestExp_RewriteUrl(t *testing.T) {
     assert := assert.New(t)
 
+    e := expTestNewExp(t)
+
     assert.Equal("http://www.example.com",
-        rewriteUrl("https://www.google.com/url?q=http://www.example.com&amp;sa=D&amp;ust=1455499447044000&amp;usg=AFQjCNFs3KTweWi-ktuTELf_0HC6UBXLpQ"))
+        e.RewriteUrl("https://www.google.com/url?q=http://www.example.com&amp;sa=D&amp;ust=1455499447044000&amp;usg=AFQjCNFs3KTweWi-ktuTELf_0HC6UBXLpQ"))
 
     assert.Equal("http://www.example.com/index.html",
-        rewriteUrl("https://www.google.com/url?q=http://www.example.com/index.html&amp;sa=D&amp;ust=1455499447047000&amp;usg=AFQjCNF4n60jdI_Pi72_Kj4fa9svhvp0_w"))
+        e.RewriteUrl("https://www.google.com/url?q=http://www.example.com/index.html&amp;sa=D&amp;ust=1455499447047000&amp;usg=AFQjCNF4n60jdI_Pi72_Kj4fa9svhvp0_w"))
 
     assert.Equal("https://www.example.com/url?q=http://www.example.com/index.html&amp;what=ever",
-        rewriteUrl("https://www.example.com/url?q=http://www.example.com/index.html&amp;what=ever"))
+        e.RewriteUrl("https://www.example.com/url?q=http://www.example.com/index.html&amp;what=ever"))
 
     assert.Equal("https://lh3.googleusercontent.com/xfS4pjf6g-Vb99nZKiK1Hf2aKJM61Agx2Sa1eM4kUmAVZ1HSzbAy1bheQYPQX-7fRGjd7vl5R0ItYChL4tyb8wUiphzdDBNjq1qjOzro9mDcJs90j71HbExtcEpNne9eIEW-88cu",
-        rewriteUrl("https://lh3.googleusercontent.com/xfS4pjf6g-Vb99nZKiK1Hf2aKJM61Agx2Sa1eM4kUmAVZ1HSzbAy1bheQYPQX-7fRGjd7vl5R0ItYChL4tyb8wUiphzdDBNjq1qjOzro9mDcJs90j71HbExtcEpNne9eIEW-88cu"))
+        e.RewriteUrl("https://lh3.googleusercontent.com/xfS4pjf6g-Vb99nZKiK1Hf2aKJM61Agx2Sa1eM4kUmAVZ1HSzbAy1bheQYPQX-7fRGjd7vl5R0ItYChL4tyb8wUiphzdDBNjq1qjOzro9mDcJs90j71HbExtcEpNne9eIEW-88cu"))
 
     assert.Equal("https://docs.google.com/drawings/image?id=s7Dyv_q6qR4PYd0tATI9Ucg&amp;rev=2&amp;h=120&amp;w=624&amp;ac=1",
-        rewriteUrl("https://docs.google.com/drawings/image?id=s7Dyv_q6qR4PYd0tATI9Ucg&amp;rev=2&amp;h=120&amp;w=624&amp;ac=1"))
+        e.RewriteUrl("https://docs.google.com/drawings/image?id=s7Dyv_q6qR4PYd0tATI9Ucg&amp;rev=2&amp;h=120&amp;w=624&amp;ac=1"))
 
     assert.Equal("https://www.youtube.com/playlist?list=PLjmlvzL_NxLof_RzTo6kduzMx6MYt_EBj",
-        rewriteUrl("https://www.google.com/url?q=https://www.youtube.com/playlist?list%3DPLjmlvzL_NxLof_RzTo6kduzMx6MYt_EBj&amp;sa=D&amp;ust=1455499447053000&amp;usg=AFQjCNEugJPtr0_akGnDjMrVDUimrXCXGA"))
+        e.RewriteUrl("https://www.google.com/url?q=https://www.youtube.com/playlist?list%3DPLjmlvzL_NxLof_RzTo6kduzMx6MYt_EBj&amp;sa=D&amp;ust=1455499447053000&amp;usg=AFQjCNEugJPtr0_akGnDjMrVDUimrXCXGA"))
 }
 
 // ----
@@ -211,6 +213,10 @@ func (g *MockGDocReader) ReadFileById(id string, mimetype string) (doc.IDocument
 
     d := doc.NewDocument("Kind", id, content)
     return d, nil
+}
+
+func (g *MockGDocReader) Get(url string) ([]byte, error) {
+    return []byte{}, nil
 }
 
 func expTestNewExp(t *testing.T) *Exp {
