@@ -5,6 +5,7 @@ import (
     "github.com/stretchr/testify/assert"
     "rig4/doc"
     "utils"
+    "os"
 )
 
 // -----
@@ -12,6 +13,18 @@ import (
 var EXP_TEST_MASTER_ID = "1iF14tncepmKpCIA4slb0TmKdkk3W7a58LoqG-MfihKo"
 var EXP_TEST_FILE1_ID = "1HduRx12vE3aBDLBp4tbYEoab2UPRPdxmPy0oBDhXfc8"
 var EXP_TEST_FILE2_ID = "1AaLSPRBTrrZtkvgtQ2VN5_Ooy25nDQNpbxx6dzDUPIU"
+
+// -----
+
+// Implements IFileWriter
+type ExpTestData struct {
+    WrittenFiles    []string
+}
+
+func (e *ExpTestData) WriteFile(filename string, data []byte, perm os.FileMode) error {
+    e.WrittenFiles = append(e.WrittenFiles, filename)
+    return nil
+}
 
 // -----
 
@@ -125,6 +138,20 @@ h6{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:
 /* .subtitle { color: #666666; font-family: "Arial"; font-size: 15pt; line-height: 1.15; orphans: 2; padding-bottom: 16pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
 .subtitle { color: #666666 }
 /* .title { color: #000000; font-family: "Arial"; font-size: 26pt; line-height: 1.15; orphans: 2; padding-bottom: 3pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
+/* h1 { color: #000000; font-family: "Arial"; font-size: 20pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 20pt; page-break-after: avoid; text-align: left; widows: 2 } */
+/* h2 { color: #000000; font-family: "Arial"; font-size: 16pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 18pt; page-break-after: avoid; text-align: left; widows: 2 } */
+/* h3 { color: #434343; font-family: "Arial"; font-size: 14pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 16pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h3 { color: #434343 }
+/* h4 { color: #666666; font-family: "Arial"; font-size: 12pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 14pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h4 { color: #666666 }
+/* h5 { color: #666666; font-family: "Arial"; font-size: 11pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h5 { color: #666666 }
+/* h6 { color: #666666; font-family: "Arial"; font-size: 11pt; font-style: italic; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h6 { color: #666666; font-style: italic }
+/* li { color: #000000; font-family: "Arial"; font-size: 11pt } */
+/* ol { margin: 0; padding: 0 } */
+/* p { color: #000000; font-family: "Arial"; font-size: 11pt; margin: 0 } */
+/* table td,table th { padding: 0 } */
 `
 
     result, css, err := exp.SimplifyStyles(original, "c16")
@@ -170,8 +197,10 @@ func TestExp_RewriteUrl(t *testing.T) {
     assert.Equal("https://lh3.googleusercontent.com/xfS4pjf6g-Vb99nZKiK1Hf2aKJM61Agx2Sa1eM4kUmAVZ1HSzbAy1bheQYPQX-7fRGjd7vl5R0ItYChL4tyb8wUiphzdDBNjq1qjOzro9mDcJs90j71HbExtcEpNne9eIEW-88cu",
         e.RewriteUrl("https://lh3.googleusercontent.com/xfS4pjf6g-Vb99nZKiK1Hf2aKJM61Agx2Sa1eM4kUmAVZ1HSzbAy1bheQYPQX-7fRGjd7vl5R0ItYChL4tyb8wUiphzdDBNjq1qjOzro9mDcJs90j71HbExtcEpNne9eIEW-88cu"))
 
-    assert.Equal("https://docs.google.com/drawings/image?id=s7Dyv_q6qR4PYd0tATI9Ucg&amp;rev=2&amp;h=120&amp;w=624&amp;ac=1",
+    assert.Equal("__drawing_s7Dyv_q6qR4PYd0tATI9Ucg.png",
         e.RewriteUrl("https://docs.google.com/drawings/image?id=s7Dyv_q6qR4PYd0tATI9Ucg&amp;rev=2&amp;h=120&amp;w=624&amp;ac=1"))
+    assert.Equal([]string{"__drawing_s7Dyv_q6qR4PYd0tATI9Ucg.png"},
+        e.FileWriter.(*ExpTestData).WrittenFiles)
 
     assert.Equal("https://www.youtube.com/playlist?list=PLjmlvzL_NxLof_RzTo6kduzMx6MYt_EBj",
         e.RewriteUrl("https://www.google.com/url?q=https://www.youtube.com/playlist?list%3DPLjmlvzL_NxLof_RzTo6kduzMx6MYt_EBj&amp;sa=D&amp;ust=1455499447053000&amp;usg=AFQjCNEugJPtr0_akGnDjMrVDUimrXCXGA"))
@@ -222,6 +251,7 @@ func (g *MockGDocReader) Get(url string) ([]byte, error) {
 func expTestNewExp(t *testing.T) *Exp {
     gd := &MockGDocReader{T: t}
     exp := &Exp{Reader: gd, Mode: RewriteUrls | RewriteCss}
+    exp.FileWriter = &ExpTestData{}
     return exp
 }
 
@@ -428,6 +458,20 @@ func expTestResultFile1() string {
 /* .subtitle { color: #666666; font-family: "Arial"; font-size: 15pt; line-height: 1.15; orphans: 2; padding-bottom: 16pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
 .subtitle { color: #666666 }
 /* .title { color: #000000; font-family: "Arial"; font-size: 26pt; line-height: 1.15; orphans: 2; padding-bottom: 3pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
+/* h1 { color: #000000; font-family: "Arial"; font-size: 20pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 20pt; page-break-after: avoid; text-align: left; widows: 2 } */
+/* h2 { color: #000000; font-family: "Arial"; font-size: 16pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 18pt; page-break-after: avoid; text-align: left; widows: 2 } */
+/* h3 { color: #434343; font-family: "Arial"; font-size: 14pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 16pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h3 { color: #434343 }
+/* h4 { color: #666666; font-family: "Arial"; font-size: 12pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 14pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h4 { color: #666666 }
+/* h5 { color: #666666; font-family: "Arial"; font-size: 11pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h5 { color: #666666 }
+/* h6 { color: #666666; font-family: "Arial"; font-size: 11pt; font-style: italic; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
+h6 { color: #666666; font-style: italic }
+/* li { color: #000000; font-family: "Arial"; font-size: 11pt } */
+/* ol { margin: 0; padding: 0 } */
+/* p { color: #000000; font-family: "Arial"; font-size: 11pt; margin: 0 } */
+/* table td,table th { padding: 0 } */
 </style>
 <title>My Title</title></head>
 <body class="c16">

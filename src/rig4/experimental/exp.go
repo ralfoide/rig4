@@ -53,11 +53,16 @@ type IExp interface {
     ReadFileById(id string, mimetype string) doc.IDocument
 }
 
-// Implements IExp
+type IFileWriter interface {
+    WriteFile(filename string, data []byte, perm os.FileMode) error
+}
+
+// Implements IExp, IFileWriter
 type Exp struct {
-    Reader  reader.IGDocReader
-    Mode    RewriteMode
-    dest_dir    string
+    FileWriter      IFileWriter
+    Reader          reader.IGDocReader
+    Mode            RewriteMode
+    dest_dir        string
     current_name    string
 }
 
@@ -79,11 +84,16 @@ func MainExp() {
     }
 
     exp := &Exp{Reader: gd, Mode: RewriteMode(*EXP_REWRITE_MODE)}
+    exp.FileWriter = exp
 
     doc_master := exp.ReadIndex(*EXP_GDOC_ID)
     entries := exp.GetIndexEntries(doc_master)
     dest_dir := *EXP_DEST_DIR
     exp.ProcessEntries(entries, dest_dir)
+}
+
+func (e *Exp) WriteFile(filename string, data []byte, perm os.FileMode) error {
+    return ioutil.WriteFile(filename, data, perm)
 }
 
 func (e *Exp) ReadFileById(id string, mimetype string) doc.IDocument {
@@ -142,7 +152,7 @@ func (e *Exp) ProcessEntries(entries []*HtmlEntry, dest_dir string) {
         if *EXP_DEBUG {
             tmp_name := filepath.Join(os.TempDir(), dest_name)
             log.Printf("         DEBUG  : %s [len: %d]\n", tmp_name, len(str_html))
-            ioutil.WriteFile(tmp_name, []byte(str_html), 0644)
+            e.FileWriter.WriteFile(tmp_name, []byte(str_html), 0644)
         }
 
         ga := *EXP_GA_UID
@@ -160,7 +170,7 @@ func (e *Exp) ProcessEntries(entries []*HtmlEntry, dest_dir string) {
         }
 
         log.Printf("         Writing: %s [len: %d]\n", dest_name, len(str_html))
-        if err2 := ioutil.WriteFile(dest_name, []byte(str_html), 0644); err2 != nil {
+        if err2 := e.FileWriter.WriteFile(dest_name, []byte(str_html), 0644); err2 != nil {
             log.Fatalln(err2)
         }
     }
@@ -382,7 +392,7 @@ func (e *Exp) ProcessDrawing(id string, w, h int) string {
         img = resizeImage(img, w, h)
     }
 
-    if err2 := ioutil.WriteFile(dest_path, img, 0644); err2 != nil {
+    if err2 := e.FileWriter.WriteFile(dest_path, img, 0644); err2 != nil {
         log.Fatalln(err2)
     }
 
