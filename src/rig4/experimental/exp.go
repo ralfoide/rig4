@@ -207,13 +207,38 @@ func (e *Exp) ProcessEntry(str_html, title, ga_script string) (string, error) {
     }
 
     traverseAllNodes(body_node, func (node *html.Node) bool {
-        return e.RewriteAttributes(node, css)
+        ret := e.RewriteAttributes(node, css)
+
+        // TODO move to method outside
+        if node.Type == html.ElementNode && node.Data == "a" {
+            href := getAttribute(node, "href")
+            if strings.HasPrefix(href, "https://www.youtube.com/watch?v=") {
+                index := strings.Index(href, "=")
+                videoId := href[index + 1 : ]
+
+                // <iframe width="560" height="315"
+                // src="https://www.youtube.com/embed/PP1nxWi8WeM"
+                // frameborder="0" allowfullscreen></iframe>
+
+                node.Data = "iframe"
+                node.DataAtom = atom.Iframe
+                node.Attr = append(node.Attr, html.Attribute{Key: "width", Val:"560"})
+                node.Attr = append(node.Attr, html.Attribute{Key: "height", Val:"315"})
+                node.Attr = append(node.Attr, html.Attribute{Key: "src", Val:"https://www.youtube.com/embed/" + videoId})
+                node.Attr = append(node.Attr, html.Attribute{Key: "frameborder", Val:"1"})
+                node.Attr = append(node.Attr, html.Attribute{Key: "allowfullscreen"})
+            }
+        }
+
+        return ret
     })
 
     var b bytes.Buffer
     err3 := html.Render(&b, root)
     return b.String(), err3
 }
+
+
 
 func findChildNode(root *html.Node, tag string) *html.Node {
     if root != nil {
@@ -323,7 +348,7 @@ func (e *Exp) RewriteAttributes(node *html.Node, css CssMap) bool {
 
     for index := range node.Attr {
         // Note: for _, a := range Array return copies, not references; since we want
-        // to change the elements, explicitely access to the array items via reference.
+        // to change the elements, explicitly access to the array items via reference.
         a := &node.Attr[index]
 
         if rewrite_urls && a.Namespace == "" && (a.Key == "href" || a.Key == "src") {
