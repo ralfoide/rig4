@@ -208,28 +208,7 @@ func (e *Exp) ProcessEntry(str_html, title, ga_script string) (string, error) {
 
     traverseAllNodes(body_node, func (node *html.Node) bool {
         ret := e.RewriteAttributes(node, css)
-
-        // TODO move to method outside
-        if node.Type == html.ElementNode && node.Data == "a" {
-            href := getAttribute(node, "href")
-            if strings.HasPrefix(href, "https://www.youtube.com/watch?v=") {
-                index := strings.Index(href, "=")
-                videoId := href[index + 1 : ]
-
-                // <iframe width="560" height="315"
-                // src="https://www.youtube.com/embed/PP1nxWi8WeM"
-                // frameborder="0" allowfullscreen></iframe>
-
-                node.Data = "iframe"
-                node.DataAtom = atom.Iframe
-                node.Attr = append(node.Attr, html.Attribute{Key: "width", Val:"560"})
-                node.Attr = append(node.Attr, html.Attribute{Key: "height", Val:"315"})
-                node.Attr = append(node.Attr, html.Attribute{Key: "src", Val:"https://www.youtube.com/embed/" + videoId})
-                node.Attr = append(node.Attr, html.Attribute{Key: "frameborder", Val:"1"})
-                node.Attr = append(node.Attr, html.Attribute{Key: "allowfullscreen"})
-            }
-        }
-
+        node = rewriteYoutubeEmbed(node)
         return ret
     })
 
@@ -238,7 +217,42 @@ func (e *Exp) ProcessEntry(str_html, title, ga_script string) (string, error) {
     return b.String(), err3
 }
 
+func rewriteYoutubeEmbed(node *html.Node) *html.Node {
+    if node.Type == html.ElementNode && node.DataAtom == atom.A {
+        href := getAttribute(node, "href")
+        if u, err := url.Parse(href); err == nil {
+            if u.Host == "www.youtube.com" && u.Path == "/watch" {
+                rig4embed := u.Query().Get("rig4embed")
+                if rig4embed != "" {
+                    videoId := u.Query().Get("v")
+                    width := u.Query().Get("width")
+                    height := u.Query().Get("height")
+                    frameborder := u.Query().Get("frameborder")
+                    src := "https://www.youtube.com/embed/" + videoId
 
+                    if width == "" {
+                        width = "560"
+                    }
+                    if height == "" {
+                        height = "315"
+                    }
+                    if frameborder == "" {
+                        frameborder = "0"
+                    }
+
+                    node.DataAtom = atom.Iframe
+                    node.Data = node.DataAtom.String()
+                    node.Attr = append(node.Attr, html.Attribute{Key: "width", Val: width})
+                    node.Attr = append(node.Attr, html.Attribute{Key: "height", Val: height})
+                    node.Attr = append(node.Attr, html.Attribute{Key: "src", Val: src})
+                    node.Attr = append(node.Attr, html.Attribute{Key: "frameborder", Val: frameborder})
+                    node.Attr = append(node.Attr, html.Attribute{Key: "allowfullscreen"})
+                }
+            }
+        }
+    }
+    return node
+}
 
 func findChildNode(root *html.Node, tag string) *html.Node {
     if root != nil {
@@ -305,6 +319,7 @@ func insertOrReplaceNode(parent *html.Node, tag atom.Atom, content string, can_r
 
 // Function that processes one node traversed. Returns true if the node
 // must be kept or false if the node needs to be removed from the tree.
+// TODO: node removal is not implemented yet.
 type traverseFunc func (*html.Node) bool
 
 // Traverses the nodes, deep-first.
@@ -394,7 +409,6 @@ func (e *Exp) SimplifyStyles(styles, body_class string) (string, CssMap, error) 
 // Drawings
 
 func (e *Exp) ProcessDrawing(id string, w, h int) string {
-
     extension := "png"
     dest_name := path.Base(e.current_name)
     dest_name = strings.Replace(dest_name, ".html", "", -1)
