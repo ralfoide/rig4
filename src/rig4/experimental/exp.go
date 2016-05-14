@@ -26,7 +26,7 @@ var EXP = flag.Bool("exp", false, "Enable experimental")
 var EXP_GDOC_ID = flag.String("exp-doc-id", "", "Exp gdoc id")
 var EXP_DEST_DIR= flag.String("exp-dest-dir", ".", "Exp dest dir")
 var EXP_GA_UID= flag.String("exp-ga-uid", "", "Exp GA UID")
-var EXP_REWRITE_MODE = flag.Int("exp-rewrite-mode", RewriteUrls | RewriteCss0, "Rewrite mode")
+var EXP_REWRITE_MODE = flag.Int("exp-rewrite-mode", RewriteUrls, "Rewrite mode")
 var EXP_DEBUG = flag.Bool("exp-debug", false, "Debug experimental")
 
 
