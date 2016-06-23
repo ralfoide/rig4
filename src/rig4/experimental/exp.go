@@ -30,6 +30,7 @@ var EXP_GA_UID= flag.String("exp-ga-uid", "", "Exp GA UID")
 var EXP_REWRITE_MODE = flag.Int("exp-rewrite-mode", RewriteUrls + UseTemplate, "Rewrite mode")
 var EXP_DEBUG = flag.Bool("exp-debug", false, "Debug experimental")
 var EXP_SITE_TITLE = flag.String("exp-site-title", "Site Title", "Web site title")
+var EXP_SITE_BANNER = flag.String("exp-site-banner", "header.jpg", "Web site banner filename")
 
 var GA_SCRIPT = `
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,6 @@ var GA_SCRIPT = `
   ga('send', 'pageview');
 `
 
-var EXP_HTML_BANNER_FILENAME = "header.jpg"
 var EXP_HTML_TEMPLATE = `<html lang="en">
 <head>
 <meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
@@ -414,7 +414,7 @@ func (e *Exp) RenderTemplate(
         title, ga_uid string) (string, error) {
     data := &TemplateData{}
 
-    data.BannerFilename = EXP_HTML_BANNER_FILENAME
+    data.BannerFilename = *EXP_SITE_BANNER
     data.GAUid = ga_uid
     data.PageTitle = title
     data.SiteTitle = *EXP_SITE_TITLE
