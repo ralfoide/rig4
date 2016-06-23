@@ -111,47 +111,18 @@ h4{padding-top:14pt;color:#666666;font-size:12pt;padding-bottom:4pt;font-family:
 h5{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;orphans:2;widows:2;text-align:left}
 h6{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:"Arial";line-height:1.15;page-break-after:avoid;font-style:italic;orphans:2;widows:2;text-align:left}`
 
-    expected := `/* .c0 { color: #1155cc; font-family: "Trebuchet MS"; text-decoration: underline } */
-.c0 { color: #1155cc }
-/* .c1 { color: #000000; font-family: "Trebuchet MS"; font-size: 11pt; font-style: normal; font-weight: normal; text-decoration: none; vertical-align: baseline } */
-/* .c10 { line-height: 1.15; padding-bottom: 0pt; padding-top: 0pt; text-align: center } */
+    expected := `.c0 { color: #1155cc }
 .c10 { text-align: center }
-/* .c11 { border-collapse: collapse; border-spacing: 0; margin-right: auto } */
-/* .c12 { orphans: 2; widows: 2 } */
-/* .c13 { page-break-after: avoid; text-align: center } */
 .c13 { text-align: center }
-/* .c14 { background-color: #a4c2f4; border-bottom-color: #a4c2f4; border-bottom-style: solid; border-bottom-width: 1pt; border-left-color: #a4c2f4; border-left-style: solid; border-left-width: 1pt; border-right-color: #a4c2f4; border-right-style: solid; border-right-width: 1pt; border-top-color: #a4c2f4; border-top-style: solid; border-top-width: 1pt; padding: 5pt 5pt 5pt 5pt; vertical-align: top; width: 468pt } */
 .c14 { background-color: #a4c2f4 }
-/* .c15 { text-align: center } */
 .c15 { text-align: center }
-/* .c16 { background-color: #ffffff; max-width: 468pt; padding: 72pt 72pt 72pt 72pt } */
-/* .c2 { height: 11pt; orphans: 2; widows: 2 } */
-/* .c3 { background-color: #d0e0e3; border-bottom-color: #a4c2f4; border-bottom-style: solid; border-bottom-width: 1pt; border-left-color: #a4c2f4; border-left-style: solid; border-left-width: 1pt; border-right-color: #a4c2f4; border-right-style: solid; border-right-width: 1pt; border-top-color: #a4c2f4; border-top-style: solid; border-top-width: 1pt; padding: 5pt 5pt 5pt 5pt; vertical-align: top; width: 468pt } */
 .c3 { background-color: #d0e0e3 }
-/* .c4 { color: #000000; font-family: "Trebuchet MS"; font-size: 11pt; font-style: normal; font-weight: bold; text-decoration: none; vertical-align: baseline } */
 .c4 { font-weight: bold }
-/* .c5 { height: 0pt } */
-/* .c6 { font-family: "Trebuchet MS" } */
-/* .c7 { height: 11pt; line-height: 1.0; padding-bottom: 0pt; padding-top: 0pt; text-align: left } */
-/* .c8 { color: inherit; text-decoration: inherit } */
-/* .c9 { line-height: 1.15; padding-bottom: 0pt; padding-top: 0pt; text-align: left } */
-/* .subtitle { color: #666666; font-family: "Arial"; font-size: 15pt; line-height: 1.15; orphans: 2; padding-bottom: 16pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
 .subtitle { color: #666666 }
-/* .title { color: #000000; font-family: "Arial"; font-size: 26pt; line-height: 1.15; orphans: 2; padding-bottom: 3pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
-/* h1 { color: #000000; font-family: "Arial"; font-size: 20pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 20pt; page-break-after: avoid; text-align: left; widows: 2 } */
-/* h2 { color: #000000; font-family: "Arial"; font-size: 16pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 18pt; page-break-after: avoid; text-align: left; widows: 2 } */
-/* h3 { color: #434343; font-family: "Arial"; font-size: 14pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 16pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h3 { color: #434343 }
-/* h4 { color: #666666; font-family: "Arial"; font-size: 12pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 14pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h4 { color: #666666 }
-/* h5 { color: #666666; font-family: "Arial"; font-size: 11pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h5 { color: #666666 }
-/* h6 { color: #666666; font-family: "Arial"; font-size: 11pt; font-style: italic; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h6 { color: #666666; font-style: italic }
-/* li { color: #000000; font-family: "Arial"; font-size: 11pt } */
-/* ol { margin: 0; padding: 0 } */
-/* p { color: #000000; font-family: "Arial"; font-size: 11pt; margin: 0 } */
-/* table td,table th { padding: 0 } */
 `
 
     result, css, err := exp.SimplifyStyles(original, "c16")
@@ -431,47 +402,18 @@ h6{padding-top:12pt;color:#666666;font-size:11pt;padding-bottom:4pt;font-family:
 func expTestResultFile1() string {
     return `<html><head>
 <meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
-<style type="text/css">/* .c0 { color: #1155cc; font-family: "Trebuchet MS"; text-decoration: underline } */
-.c0 { color: #1155cc }
-/* .c1 { color: #000000; font-family: "Trebuchet MS"; font-size: 11pt; font-style: normal; font-weight: normal; text-decoration: none; vertical-align: baseline } */
-/* .c10 { line-height: 1.15; padding-bottom: 0pt; padding-top: 0pt; text-align: center } */
+<style type="text/css">.c0 { color: #1155cc }
 .c10 { text-align: center }
-/* .c11 { border-collapse: collapse; border-spacing: 0; margin-right: auto } */
-/* .c12 { orphans: 2; widows: 2 } */
-/* .c13 { page-break-after: avoid; text-align: center } */
 .c13 { text-align: center }
-/* .c14 { background-color: #a4c2f4; border-bottom-color: #a4c2f4; border-bottom-style: solid; border-bottom-width: 1pt; border-left-color: #a4c2f4; border-left-style: solid; border-left-width: 1pt; border-right-color: #a4c2f4; border-right-style: solid; border-right-width: 1pt; border-top-color: #a4c2f4; border-top-style: solid; border-top-width: 1pt; padding: 5pt 5pt 5pt 5pt; vertical-align: top; width: 468pt } */
 .c14 { background-color: #a4c2f4 }
-/* .c15 { text-align: center } */
 .c15 { text-align: center }
-/* .c16 { background-color: #ffffff; max-width: 468pt; padding: 72pt 72pt 72pt 72pt } */
-/* .c2 { height: 11pt; orphans: 2; widows: 2 } */
-/* .c3 { background-color: #d0e0e3; border-bottom-color: #a4c2f4; border-bottom-style: solid; border-bottom-width: 1pt; border-left-color: #a4c2f4; border-left-style: solid; border-left-width: 1pt; border-right-color: #a4c2f4; border-right-style: solid; border-right-width: 1pt; border-top-color: #a4c2f4; border-top-style: solid; border-top-width: 1pt; padding: 5pt 5pt 5pt 5pt; vertical-align: top; width: 468pt } */
 .c3 { background-color: #d0e0e3 }
-/* .c4 { color: #000000; font-family: "Trebuchet MS"; font-size: 11pt; font-style: normal; font-weight: bold; text-decoration: none; vertical-align: baseline } */
 .c4 { font-weight: bold }
-/* .c5 { height: 0pt } */
-/* .c6 { font-family: "Trebuchet MS" } */
-/* .c7 { height: 11pt; line-height: 1.0; padding-bottom: 0pt; padding-top: 0pt; text-align: left } */
-/* .c8 { color: inherit; text-decoration: inherit } */
-/* .c9 { line-height: 1.15; padding-bottom: 0pt; padding-top: 0pt; text-align: left } */
-/* .subtitle { color: #666666; font-family: "Arial"; font-size: 15pt; line-height: 1.15; orphans: 2; padding-bottom: 16pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
 .subtitle { color: #666666 }
-/* .title { color: #000000; font-family: "Arial"; font-size: 26pt; line-height: 1.15; orphans: 2; padding-bottom: 3pt; padding-top: 0pt; page-break-after: avoid; text-align: left; widows: 2 } */
-/* h1 { color: #000000; font-family: "Arial"; font-size: 20pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 20pt; page-break-after: avoid; text-align: left; widows: 2 } */
-/* h2 { color: #000000; font-family: "Arial"; font-size: 16pt; line-height: 1.15; orphans: 2; padding-bottom: 6pt; padding-top: 18pt; page-break-after: avoid; text-align: left; widows: 2 } */
-/* h3 { color: #434343; font-family: "Arial"; font-size: 14pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 16pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h3 { color: #434343 }
-/* h4 { color: #666666; font-family: "Arial"; font-size: 12pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 14pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h4 { color: #666666 }
-/* h5 { color: #666666; font-family: "Arial"; font-size: 11pt; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h5 { color: #666666 }
-/* h6 { color: #666666; font-family: "Arial"; font-size: 11pt; font-style: italic; line-height: 1.15; orphans: 2; padding-bottom: 4pt; padding-top: 12pt; page-break-after: avoid; text-align: left; widows: 2 } */
 h6 { color: #666666; font-style: italic }
-/* li { color: #000000; font-family: "Arial"; font-size: 11pt } */
-/* ol { margin: 0; padding: 0 } */
-/* p { color: #000000; font-family: "Arial"; font-size: 11pt; margin: 0 } */
-/* table td,table th { padding: 0 } */
 </style>
 <title>My Title</title></head>
 <body class="c16">
