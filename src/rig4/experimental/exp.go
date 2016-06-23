@@ -19,6 +19,7 @@ import (
     "errors"
     "sort"
     "path"
+    "text/template"
 )
 
 
@@ -26,9 +27,9 @@ var EXP = flag.Bool("exp", false, "Enable experimental")
 var EXP_GDOC_ID = flag.String("exp-doc-id", "", "Exp gdoc id")
 var EXP_DEST_DIR= flag.String("exp-dest-dir", ".", "Exp dest dir")
 var EXP_GA_UID= flag.String("exp-ga-uid", "", "Exp GA UID")
-var EXP_REWRITE_MODE = flag.Int("exp-rewrite-mode", RewriteUrls, "Rewrite mode")
+var EXP_REWRITE_MODE = flag.Int("exp-rewrite-mode", RewriteUrls + UseTemplate, "Rewrite mode")
 var EXP_DEBUG = flag.Bool("exp-debug", false, "Debug experimental")
-
+var EXP_SITE_TITLE = flag.String("exp-site-title", "Site Title", "Web site title")
 
 var GA_SCRIPT = `
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -40,6 +41,188 @@ var GA_SCRIPT = `
   ga('send', 'pageview');
 `
 
+var EXP_HTML_BANNER_FILENAME = "header.jpg"
+var EXP_HTML_TEMPLATE = `<html lang="en">
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
+<link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.blue-light_blue.min.css">
+<style type="text/css">
+{{.Css}}
+
+.demo-ribbon {
+  width: 100%;
+  height: 40vh;
+  background-color: #3F51B5;
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+  background-image: url("{{.BannerFilename}}");
+  background-position: center;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+
+.demo-main {
+  margin-top: -10vh;
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+}
+
+.demo-header .mdl-layout__header-row {
+  padding-left: 40px;
+}
+
+.demo-container {
+  max-width: 1600px;
+  width: calc(100% - 16px);
+  margin: 0 auto;
+}
+
+.demo-content {
+  border-radius: 2px;
+  padding: 40px 56px 80px; /* top side bottom */
+  margin-bottom: 80px;
+}
+
+.demo-layout.is-small-screen .demo-content {
+  padding: 40px 28px;
+}
+
+.demo-content h3 {
+  margin-top: 48px;
+}
+
+.demo-footer {
+  padding-left: 40px;
+}
+
+.demo-footer .mdl-mini-footer--link-list a {
+  font-size: 13px;
+}
+
+.demo-ribbon {
+  width: 100%;
+  height: 40vh;
+  background-color: #3F51B5;
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+  background-image: url("test_banner_img.jpg");
+  background-position: center;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+
+.demo-main {
+  margin-top: -10vh;
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+}
+
+.demo-header .mdl-layout__header-row {
+  padding-left: 40px;
+}
+
+.demo-container {
+  max-width: 1600px;
+  width: calc(100% - 16px);
+  margin: 0 auto;
+}
+
+.demo-content {
+  border-radius: 2px;
+  padding: 40px 56px 80px; /* top side bottom */
+  margin-bottom: 80px;
+}
+
+.demo-layout.is-small-screen .demo-content {
+  padding: 40px 28px;
+}
+
+.demo-content h3 {
+  margin-top: 48px;
+}
+
+.demo-footer {
+  padding-left: 40px;
+}
+
+.demo-footer .mdl-mini-footer--link-list a {
+  font-size: 13px;
+}
+
+.demo-footer2 {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    -ms-flex-flow: row wrap;
+    flex-flow: row wrap;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+
+    padding: 32px 16px;
+    color: #9e9e9e;
+    background-color: #424242;
+}
+
+.demo-footer2-center {
+    align-self: center;
+    margin: auto;
+}
+
+</style>
+<title>{{.PageTitle}}</title>
+</head>
+<body>
+<div class="demo-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
+  <div class="demo-ribbon"></div>
+  <main class="demo-main mdl-layout__content">
+    <div class="demo-container mdl-grid">
+      <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+      <div class="demo-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+
+{{.Content}}
+
+      </div>
+    </div>
+    <footer class="demo-footer demo-footer2">
+      <center class="demo-footer2-center">
+        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" href=".">
+          Back to main page
+        </a>
+        <br/>
+        <span class="mdl-typography--display-2">{{.SiteTitle}}</span>
+      </center>
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', '{{.GAUid}}', 'auto');
+  ga('send', 'pageview');
+</script>
+</body>
+</html>
+`
+
+type TemplateData struct {
+    Css             string
+    BannerFilename  string
+    GAUid           string
+    PageTitle       string
+    SiteTitle       string
+    Content         string
+}
+
 type RewriteMode int
 
 const (
@@ -47,6 +230,7 @@ const (
     RewriteCss  = 1 << iota
     RewriteCss0 = 1 << iota
     RewriteHtml = 1 << iota
+    UseTemplate = 1 << iota
 )
 
 type IExp interface {
@@ -198,12 +382,14 @@ func (e *Exp) ProcessEntry(str_html, title, ga_script string) (string, error) {
     }
     css := css1
 
-    if title != "" {
-        insertOrReplaceNode(head_node, atom.Title, title, true)
-    }
+    if (e.Mode & UseTemplate) == 0 {
+        if title != "" {
+            insertOrReplaceNode(head_node, atom.Title, title, true)
+        }
 
-    if ga_script != "" {
-        insertOrReplaceNode(body_node, atom.Script, ga_script, false)
+        if ga_script != "" {
+            insertOrReplaceNode(body_node, atom.Script, ga_script, false)
+        }
     }
 
     traverseAllNodes(body_node, func (node *html.Node) bool {
@@ -212,9 +398,45 @@ func (e *Exp) ProcessEntry(str_html, title, ga_script string) (string, error) {
         return ret
     })
 
-    var b bytes.Buffer
-    err3 := html.Render(&b, root)
-    return b.String(), err3
+    if (e.Mode & UseTemplate) != 0 {
+        t := template.Must(template.New("article").Parse(EXP_HTML_TEMPLATE))
+        return e.RenderTemplate(t, body_node, style_node, title, *EXP_GA_UID)
+    } else {
+        var b bytes.Buffer
+        err3 := html.Render(&b, root)
+        return b.String(), err3
+    }
+}
+
+func (e *Exp) RenderTemplate(
+        temp *template.Template,
+        body_node, style_node *html.Node,
+        title, ga_uid string) (string, error) {
+    data := &TemplateData{}
+
+    data.BannerFilename = EXP_HTML_BANNER_FILENAME
+    data.GAUid = ga_uid
+    data.PageTitle = title
+    data.SiteTitle = *EXP_SITE_TITLE
+    data.Css = style_node.Data
+    data.Content = ""
+
+    body_child := body_node.FirstChild
+    for body_child != nil {
+        if body_child.Type == html.ElementNode {
+            var b1 bytes.Buffer
+            err1 := html.Render(&b1, body_child)
+            if err1 != nil {
+                return "", err1
+            }
+            data.Content += b1.String()
+        }
+        body_child = body_child.NextSibling
+    }
+
+    var b2 bytes.Buffer
+    err2 := temp.Execute(&b2, data)
+    return b2.String(), err2
 }
 
 func rewriteYoutubeEmbed(node *html.Node) *html.Node {
@@ -394,8 +616,8 @@ func (e *Exp) SimplifyStyles(styles, body_class string) (string, CssMap, error) 
         if selector == body_class {
             result += c.String(selector) + "\n"
         } else {
-            // Keep the old value as a comment in the source
-            result += "/* " + c.String(selector) + " */\n"
+            // This can be used to Keep the old value as a comment in the source
+            // result += "/* " + c.String(selector) + " */\n"
             if c.CleanupAttrs(e.Mode) {
                 result += c.String(selector) + "\n"
             }
