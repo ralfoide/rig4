@@ -347,6 +347,7 @@ func (e *Exp) ProcessEntry(str_html, title, ga_script string) (string, error) {
     traverseAllNodes(body_node, func (node *html.Node) bool {
         ret := e.RewriteAttributes(node, css)
         node = rewriteYoutubeEmbed(node)
+        node = insertNodeSpacing(node)
         return ret
     })
 
@@ -391,18 +392,46 @@ func (e *Exp) RenderTemplate(
     return b2.String(), err2
 }
 
+func insertNodeSpacing(node *html.Node) *html.Node {
+    if node.Type == html.ElementNode &&
+            node.NextSibling != nil &&
+            node.NextSibling.Type == html.ElementNode {
+        spacing := &html.Node{
+            Type:     html.TextNode,
+            Data:     "\n",
+        }
+        node.Parent.InsertBefore(spacing, node.NextSibling)
+    }
+    return node
+}
+
 func rewriteYoutubeEmbed(node *html.Node) *html.Node {
     if node.Type == html.ElementNode && node.DataAtom == atom.A {
         href := getAttribute(node, "href")
         if u, err := url.Parse(href); err == nil {
-            if u.Host == "www.youtube.com" && u.Path == "/watch" {
-                rig4embed := u.Query().Get("rig4embed")
-                if rig4embed != "" {
-                    videoId := u.Query().Get("v")
+            if u.Query().Get("rig4embed") != "" {
+                var isWatch = false
+                var isPlaylist = false
+                var id = ""
+                if u.Host == "www.youtube.com" {
+                    isWatch = u.Path == "/watch"
+                    isPlaylist = u.Path == "/playlist"
+                    if isWatch {
+                        id = u.Query().Get("v")
+                    } else if isPlaylist {
+                        id = u.Query().Get("list")
+                    }
+                }
+                if isWatch || isPlaylist {
                     width := u.Query().Get("width")
                     height := u.Query().Get("height")
                     frameborder := u.Query().Get("frameborder")
-                    src := "https://www.youtube.com/embed/" + videoId
+                    var src = ""
+                    if isWatch {
+                        src = "https://www.youtube.com/embed/" + id
+                    } else if isPlaylist {
+                        src = "https://www.youtube.com/embed/videoseries?list=" + id
+                    }
 
                     if width == "" {
                         width = "560"
@@ -416,11 +445,19 @@ func rewriteYoutubeEmbed(node *html.Node) *html.Node {
 
                     node.DataAtom = atom.Iframe
                     node.Data = node.DataAtom.String()
+                    node.Attr = removeAttribute(node.Attr, "href")
                     node.Attr = append(node.Attr, html.Attribute{Key: "width", Val: width})
                     node.Attr = append(node.Attr, html.Attribute{Key: "height", Val: height})
                     node.Attr = append(node.Attr, html.Attribute{Key: "src", Val: src})
                     node.Attr = append(node.Attr, html.Attribute{Key: "frameborder", Val: frameborder})
                     node.Attr = append(node.Attr, html.Attribute{Key: "allowfullscreen"})
+
+                    if node.FirstChild != nil {
+                        child := node.FirstChild
+                        if child.Type == html.TextNode && child.Data == href {
+                            node.RemoveChild(child)
+                        }
+                    }
                 }
             }
         }
@@ -463,6 +500,20 @@ func getAttribute(node *html.Node, name string) string {
         }
     }
     return ""
+}
+
+func removeAttribute(attrs []html.Attribute, name string) []html.Attribute {
+    if attrs != nil {
+        // See https://github.com/golang/go/wiki/SliceTricks#filtering-without-allocating
+        b := attrs[:0]
+        for _, x := range attrs {
+            if x.Key != name {
+                b = append(b, x)
+            }
+        }
+        attrs = b
+    }
+    return attrs
 }
 
 func insertOrReplaceNode(parent *html.Node, tag atom.Atom, content string, can_replace bool) {

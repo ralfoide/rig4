@@ -173,6 +173,9 @@ func TestExp_RewriteUrl(t *testing.T) {
     assert.Equal([]string{"__drawing_s7Dyv_q6qR4PYd0tATI9Ucg.png"},
         e.FileWriter.(*ExpTestData).WrittenFiles)
 
+    assert.Equal("https://www.youtube.com/watch?v=PP1nxWi8WeM",
+        e.RewriteUrl("https://www.google.com/url?q=https://www.youtube.com/watch?v%3DPP1nxWi8WeM&amp;sa=D&amp;ust=1455499447053000&amp;usg=AFQjCNEugJPtr0_akGnDjMrVDUimrXCXGA"))
+
     assert.Equal("https://www.youtube.com/playlist?list=PLjmlvzL_NxLof_RzTo6kduzMx6MYt_EBj",
         e.RewriteUrl("https://www.google.com/url?q=https://www.youtube.com/playlist?list%3DPLjmlvzL_NxLof_RzTo6kduzMx6MYt_EBj&amp;sa=D&amp;ust=1455499447053000&amp;usg=AFQjCNEugJPtr0_akGnDjMrVDUimrXCXGA"))
 }
