@@ -42,6 +42,10 @@ var GA_SCRIPT = `
   ga('send', 'pageview');
 `
 
+// TODO experiment with replacing stylesheets with local ones
+// <link rel="stylesheet" href="material.blue-light_blue.css">
+// <link rel="stylesheet" href="stylesheet.css">
+
 var EXP_HTML_TEMPLATE = `<html lang="en">
 <head>
 <meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
