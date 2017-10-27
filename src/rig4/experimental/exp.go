@@ -582,6 +582,8 @@ func (e *Exp) RewriteUrl(str string) string {
 
             log.Printf("       Drawing 2: %s [%v x %v]\n", id, w, h)
             str = e.ProcessDrawing(id, w, h)
+        } else if u.Host == "docs.google.com" {
+            log.Fatalln("ERROR Unprocessed URL for", u.Host, ", Path:", u.Path)
         }
     }
     return str
