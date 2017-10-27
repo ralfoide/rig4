@@ -572,7 +572,15 @@ func (e *Exp) RewriteUrl(str string) string {
             w, _ := strconv.Atoi(u.Query().Get("w"))
             h, _ := strconv.Atoi(u.Query().Get("h"))
 
-            log.Printf("         Drawing: %s [%v x %v]\n", id, w, h)
+            log.Printf("       Drawing 1: %s [%v x %v]\n", id, w, h)
+            str = e.ProcessDrawing(id, w, h)
+        } else if u.Host == "docs.google.com" && strings.HasPrefix(u.Path, "/drawings/d/") {
+            id := strings.TrimPrefix(u.Path, "/drawings/d/")
+            id = strings.TrimSuffix(id, "/image")
+            w, _ := strconv.Atoi(u.Query().Get("w"))
+            h, _ := strconv.Atoi(u.Query().Get("h"))
+
+            log.Printf("       Drawing 2: %s [%v x %v]\n", id, w, h)
             str = e.ProcessDrawing(id, w, h)
         }
     }
