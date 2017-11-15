@@ -7,3 +7,6 @@
 [submodule "v4.1/src/github.com/sergi/go-diff"]
 	path = v4.1/src/github.com/sergi/go-diff
 	url = https://github.com/sergi/go-diff.git
+[submodule "v4.2/LibUtils"]
+	path = v4.2/LibUtils
+	url = git@bitbucket.org:ralfoide/libutils.git
