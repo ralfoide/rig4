@@ -13,7 +13,9 @@ cd $(dirname "$0")
 function checkout() {
     DIR=$1
     URL=$2
-    ROOT=.
+    ROOT=v4.1
+    if [[ "$ROOT" == $(basename "$PWD")]]; then cd .. ; fi
+
     GIT_USER=$(sed -n '/email = /s/.*= \(.*\)@.*/\1/p' ~/.gitconfig)
     if [[ -z $GIT_USER ]]; then set +x; echo "Git user not found"; exit 1; fi
 
