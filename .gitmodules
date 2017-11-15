@@ -1,0 +1,9 @@
+[submodule "v4.1/src/github.com/stretchr/testify"]
+	path = v4.1/src/github.com/stretchr/testify
+	url = https://github.com/stretchr/testify.git
+[submodule "v4.1/src/github.com/stretchr/objx"]
+	path = v4.1/src/github.com/stretchr/objx
+	url = https://github.com/stretchr/objx.git
+[submodule "v4.1/src/github.com/sergi/go-diff"]
+	path = v4.1/src/github.com/sergi/go-diff
+	url = https://github.com/sergi/go-diff.git

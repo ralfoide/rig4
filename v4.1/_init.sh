@@ -14,22 +14,23 @@ function checkout() {
     DIR=$1
     URL=$2
     ROOT=v4.1
-    if [[ "$ROOT" == $(basename "$PWD")]]; then cd .. ; fi
+    (
+        if [[ "$ROOT" == $(basename "$PWD") ]]; then cd .. ; fi
 
-    GIT_USER=$(sed -n '/email = /s/.*= \(.*\)@.*/\1/p' ~/.gitconfig)
-    if [[ -z $GIT_USER ]]; then set +x; echo "Git user not found"; exit 1; fi
+        GIT_USER=$(sed -n '/email = /s/.*= \(.*\)@.*/\1/p' ~/.gitconfig)
+        if [[ -z $GIT_USER ]]; then set +x; echo "Git user not found"; exit 1; fi
 
-    if [[ ! -d $ROOT/$DIR ]]; then
-      git submodule add $URL $ROOT/$DIR
-    fi
+        if [[ ! -d $ROOT/$DIR ]]; then
+          git submodule add $URL $ROOT/$DIR
+        fi
 
-    git submodule update --init $ROOT/$DIR
+        git submodule update --init $ROOT/$DIR
+    )
 }
 
 # Note: we do this to not copy what is a git repo (as go get will do).
 # Instead we manually recreate the matching git submodule.
 checkout src/github.com/stretchr/testify https://github.com/stretchr/testify.git
-checkout src/github.com/stretchr/objx https://github.com/stretchr/objx.git
 checkout src/github.com/stretchr/objx https://github.com/stretchr/objx.git
 checkout src/github.com/sergi/go-diff https://github.com/sergi/go-diff.git
 
