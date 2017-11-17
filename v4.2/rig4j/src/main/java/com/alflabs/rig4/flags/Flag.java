@@ -40,13 +40,24 @@ public abstract class Flag<T> {
         return mValue;
     }
 
-    @NonNull
-    public T getDefaultValue() {
-        return mDefaultValue;
+    /** Indicates if a value has been set or if the default value would be used. */
+    public boolean isDefaultValue() {
+        // This uses an object-reference check on purpose and must NOT be changed
+        // to an equals() check.
+        return mValue == null || mValue == mDefaultValue;
+    }
+
+    /**
+     * Indicates where the parser should allow no extra parameter value.
+     * This is used by the Boolean flag to avoid parsing an extra parameter
+     * and indicates what should be the default value when not specified.
+     */
+    public String getOptionalParameter() {
+        return null;
     }
 
     public static class String_ extends Flag<String> {
-        public String_(@NonNull String name, String defaultValue, @Null String description) {
+        public String_(@NonNull String name, @NonNull String defaultValue, @Null String description) {
             super(name, defaultValue, description);
         }
 
@@ -75,6 +86,11 @@ public abstract class Flag<T> {
         @Override
         public void setValue(@NonNull String value) {
             __setValue(Boolean.parseBoolean(value));
+        }
+
+        @Override
+        public String getOptionalParameter() {
+            return Boolean.TRUE.toString();
         }
     }
 }

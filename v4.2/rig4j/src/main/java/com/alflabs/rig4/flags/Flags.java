@@ -6,10 +6,13 @@ import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 
 public class Flags {
@@ -79,7 +82,11 @@ public class Flags {
         }
 
         for (Flag flag : mFlagMap.values()) {
-            mLogger.d("Usage", String.format("--%-" + nlen + "s: %-" + vlen + "s, %s", flag.getName(), flag.getValue(), flag.getDescription()));
+            mLogger.d("Usage",
+                    String.format("--%-" + nlen + "s: %-" + vlen + "s%s",
+                    flag.getName(),
+                    flag.getValue(),
+                    flag.getDescription() == null ? "" : (", " + flag.getDescription())));
         }
     }
 
@@ -147,6 +154,15 @@ public class Flags {
                 mLogger.d(TAG, "Unknown parameter: " + name);
                 error = true;
             } else {
+                String optional = flag.getOptionalParameter();
+
+                if (optional != null && value == null) {
+                    String next = stack.peek();
+                    if (next == null || next.startsWith("-")) {
+                        value = optional;
+                    }
+                }
+
                 if (value == null && !stack.isEmpty()) {
                     value = stack.pop();
                 }
@@ -169,9 +185,12 @@ public class Flags {
 
     /**
      * Parses flags from config file.
-     * This is designed to be called _after_ parsing the command line (this allows the command
-     * line to specify the config file name). Consequently this does NOT change flags which
-     * value is not the default (e.g. defined via the command line).
+     * <p/>
+     * This is designed to be called _after_ parsing the command line -- this allows the command
+     * line to specify the config file name yet override values from the config file.
+     * <p/>
+     * Consequently this does NOT change flags which value is not the default
+     * (e.g. defined via the command line).
      *
      * On error, prints unknown flag on the current logger.
      *
@@ -181,7 +200,46 @@ public class Flags {
     public boolean parseConfigFile(@NonNull String configPath) {
         boolean error = false;
 
+        File file = new File(configPath);
+        if (!mFileOps.isFile(file)) {
+            mLogger.d(TAG, "No config file '" + configPath + "'");
+            return true;
+        }
 
+        try {
+            Properties props = mFileOps.getProperties(file);
+
+            for (Map.Entry<Object, Object> entry : props.entrySet()) {
+                String name = (String) entry.getKey();
+                String value = (String) entry.getValue();
+
+                Flag flag = mFlagMap.get(name);
+                if (flag == null) {
+                    mLogger.d(TAG, "Unknown parameter '" + name + "' in config file '" + configPath + "'");
+                    error = true;
+                    continue;
+                }
+
+                if (!flag.isDefaultValue()) {
+                    // If the value is not the default one, it has been changed by the command
+                    // line parser and we ignore the value from the config file. (Note: one might
+                    // be tempted to simply call parseConfigFile() before parseCommandLine();
+                    // however doing it this way allows for the command line to specify the name
+                    // of the config file, yet the command line arguments take precedence).
+                    continue;
+                }
+
+                try {
+                    flag.setValue(value);
+                } catch (Exception e) {
+                    mLogger.d(TAG, "Invalid value '" + value + "' for flag " + flag.getName(), e);
+                    error = true;
+                }
+            }
+        } catch (IOException e) {
+            mLogger.d(TAG, "Failed to load properties from '" + configPath+ "'", e);
+            error = true;
+        }
 
         return !error;
     }
