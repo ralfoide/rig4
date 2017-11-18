@@ -6,6 +6,7 @@ import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
+@Singleton
 public class Flags {
     private final static String TAG = Flags.class.getSimpleName();
 
