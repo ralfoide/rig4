@@ -37,9 +37,10 @@ public class Exp {
 
     private void readIndex() throws IOException {
         String indexId = mFlags.getString(EXP_DOC_ID);
-        mGDocReader.getMetadataById(indexId);
         byte[] bytes = mGDocReader.readFileById(indexId, "text/plain");
         String content = new String(bytes, Charsets.UTF_8);
         mLogger.d(TAG, "Index: \n " + content);
+
+        mLogger.d(TAG, "Hash: " + mGDocReader.getMetadataHashById(indexId));
     }
 }

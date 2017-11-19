@@ -9,6 +9,7 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -16,16 +17,23 @@ import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -58,10 +66,10 @@ public class GDocReader {
         mFlags = flags;
         mLogger = logger;
         flags.addString(GDOC_PATH_CLIENT_SECRET_JSON,
-                "~/.rig4/client_secret.json",
+                "~/.rig42/client_secret.json",
                 "Path to load client_secret.json from Google Drive API.");
         flags.addString(GDOC_PATH_DATA_STORE_DIR,
-                "~/.rig4/gdoc_store",
+                "~/.rig42/gdoc_store",
                 "Directory where the Google Drive API stores local credentials.");
 
     }
@@ -91,7 +99,7 @@ public class GDocReader {
                 mHttpTransport,
                 JSON_FACTORY,
                 clientSecrets,
-                Collections.singleton(DriveScopes.DRIVE_READONLY))
+                Arrays.asList(DriveScopes.DRIVE_READONLY, DriveScopes.DRIVE_METADATA_READONLY))
             .setDataStoreFactory(dataStoreFactory)
             .build();
 
@@ -131,18 +139,25 @@ public class GDocReader {
         return baos.toByteArray();
     }
 
-    /** Retrieve the metadata for a file. */
-    public void getMetadataById(String fileId) throws IOException {
-        Drive.Files.Get get = mDrive.files().get(fileId);
+    /**
+     * Retrieve a SHA1 hash of the metadata for a file to understand whether its content as changed.
+     */
+    public String getMetadataHashById(String fileId) throws IOException {
+        // We need to explicitely tell which fields we want, otherwsie the response
+        // contains nothing useful. This is still a hint and some fields might just
+        // be missing (e.g. the md5 checksum on a gdoc).
+        Drive.Files.Get get = mDrive.files()
+                .get(fileId)
+                .setFields("md5Checksum,modifiedTime,version");
         com.google.api.services.drive.model.File gfile = get.execute();
 
-        // Note: Experimentation shows the only values provided on a gdoc file
-        // are id, kind (drive#file), mimeType (application/vnd.google-apps.document) and name.
-        // TODO find how to get more.
+        Long version = gfile.getVersion();
         String checksum = gfile.getMd5Checksum();
         DateTime dateTime = gfile.getModifiedTime();
-        mLogger.d(TAG, fileId + " Checksum: " + checksum);
-        mLogger.d(TAG, fileId + " DateTime: " + dateTime);
+
+        String hash = String.format("%s|%s|%s", version, checksum, dateTime);
+
+        return DigestUtils.shaHex(hash);
     }
 
 }
