@@ -8,6 +8,8 @@ import com.alflabs.utils.IClock;
 import com.alflabs.utils.ILogger;
 import com.alflabs.utils.JavaClock;
 import com.alflabs.utils.JavaLogger;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import dagger.Module;
 import dagger.Provides;
 
@@ -36,7 +38,14 @@ public class RigModule {
 
     @Singleton
     @Provides
-    public GDocReader provideGDocReader(Flags flags, ILogger logger) {
-        return new GDocReader(flags, logger);
+    public GDocReader provideGDocReader(JsonFactory jsonFactory, Flags flags, ILogger logger) {
+        return new GDocReader(jsonFactory, flags, logger);
     }
+
+    @Singleton
+    @Provides
+    public JsonFactory provideJsonFactory() {
+        return JacksonFactory.getDefaultInstance();
+    }
+
 }

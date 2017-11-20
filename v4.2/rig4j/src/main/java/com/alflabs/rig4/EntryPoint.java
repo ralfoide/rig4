@@ -24,9 +24,9 @@ public class EntryPoint {
 
         ILogger logger = component.getLogger();
         Flags flags = component.getFlags();
-        // Force singletons to be instantiated to setup their flags
-        component.getExp();
-        component.getGDocReader();
+        component.getExp().declareFlags();
+        component.getBlobStore().declareFlags();
+        component.getGDocReader().declareFlags();
 
         flags.addBool(FLAG_HELP, false, "Displays help");
         flags.addString(FLAG_CONFIG, "~/.rig42rc", "Config file path");

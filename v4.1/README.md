@@ -13,7 +13,7 @@ posts and standalone articles.
 
 Configuration describes a number of sources. A source is a type (a.k.a. kind) and
 a parameter specific to that source. A *source* indicates both *how* to get the data
-but not *what* to do with it.
+and *what* to do with it.
 
 The canonical format handled by Rig4 is the Izumi text-based format.
 An Izumi file can represent:
@@ -24,7 +24,7 @@ An Izumi file can represent:
 The Izumi file starts with a header that defines a series of *Izumi tags*.
 These tags indicate *what* to do with the document.
 For example tags convey the tile, date and category of an article
-or how a the various posts of a blog should be ordered.
+or how the various posts of a blog should be ordered.
 
 In an Izumi blog, each posts also carries an Izumi header with tags
 specific to that blog post such as its title and date.

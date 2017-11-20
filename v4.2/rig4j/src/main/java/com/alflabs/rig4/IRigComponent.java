@@ -16,6 +16,7 @@ public interface IRigComponent {
     Flags getFlags();
     ILogger getLogger();
     GDocReader getGDocReader();
+    BlobStore getBlobStore();
 
     @Component.Builder
     interface Builder {

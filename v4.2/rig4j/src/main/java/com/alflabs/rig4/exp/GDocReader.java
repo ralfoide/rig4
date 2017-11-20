@@ -9,7 +9,6 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -21,19 +20,12 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -48,13 +40,11 @@ public class GDocReader {
      * https://github.com/google/google-api-java-client-samples/blob/master/drive-cmdline-sample/src/main/java/com/google/api/services/samples/drive/cmdline/DriveSample.java
      */
 
-    /** Global instance of the JSON factory. */
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-
     private static final String GDOC_PATH_CLIENT_SECRET_JSON = "gdoc-path-client-secret-json";
     private static final String GDOC_PATH_DATA_STORE_DIR = "gdoc-path-data-store-dir";
     private static final String APPLICATION_NAME = "rig4";
 
+    private final JsonFactory mJsonFactory;
     private final Flags mFlags;
     private final ILogger mLogger;
     private NetHttpTransport mHttpTransport;
@@ -62,23 +52,26 @@ public class GDocReader {
 
 
     @Inject
-    public GDocReader(Flags flags, ILogger logger) {
+    public GDocReader(JsonFactory jsonFactory, Flags flags, ILogger logger) {
+        mJsonFactory = jsonFactory;
         mFlags = flags;
         mLogger = logger;
-        flags.addString(GDOC_PATH_CLIENT_SECRET_JSON,
+    }
+
+    public void declareFlags() {
+        mFlags.addString(GDOC_PATH_CLIENT_SECRET_JSON,
                 "~/.rig42/client_secret.json",
                 "Path to load client_secret.json from Google Drive API.");
-        flags.addString(GDOC_PATH_DATA_STORE_DIR,
+        mFlags.addString(GDOC_PATH_DATA_STORE_DIR,
                 "~/.rig42/gdoc_store",
                 "Directory where the Google Drive API stores local credentials.");
-
     }
 
     public void init() throws GeneralSecurityException, IOException {
         mHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Credential credential = authorize();
         // set up the global Drive instance
-        mDrive = new Drive.Builder(mHttpTransport, JSON_FACTORY, credential)
+        mDrive = new Drive.Builder(mHttpTransport, mJsonFactory, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }
@@ -97,7 +90,7 @@ public class GDocReader {
         // set up authorization code flow
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 mHttpTransport,
-                JSON_FACTORY,
+                mJsonFactory,
                 clientSecrets,
                 Arrays.asList(DriveScopes.DRIVE_READONLY, DriveScopes.DRIVE_METADATA_READONLY))
             .setDataStoreFactory(dataStoreFactory)
@@ -120,7 +113,7 @@ public class GDocReader {
     private GoogleClientSecrets getGoogleClientSecrets() throws IOException {
         String path = StringUtils.expandUserHome(mFlags.getString(GDOC_PATH_CLIENT_SECRET_JSON));
         try {
-            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new FileReader(path));
+            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(mJsonFactory, new FileReader(path));
             return clientSecrets;
 
         } catch (IOException e) {
@@ -140,9 +133,9 @@ public class GDocReader {
     }
 
     /**
-     * Retrieve a SHA1 hash of the metadata for a file to understand whether its content as changed.
+     * Retrieve a SHA1 hash that indicates whether the content as changed.
      */
-    public String getMetadataHashById(String fileId) throws IOException {
+    public String getContentHashById(String fileId) throws IOException {
         // We need to explicitely tell which fields we want, otherwsie the response
         // contains nothing useful. This is still a hint and some fields might just
         // be missing (e.g. the md5 checksum on a gdoc).
@@ -155,8 +148,7 @@ public class GDocReader {
         String checksum = gfile.getMd5Checksum();
         DateTime dateTime = gfile.getModifiedTime();
 
-        String hash = String.format("%s|%s|%s", version, checksum, dateTime);
-
+        String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
         return DigestUtils.shaHex(hash);
     }
 
