@@ -4,12 +4,14 @@ import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
 import com.alflabs.rig4.BlobStore;
 import com.alflabs.rig4.flags.Flags;
+import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +28,15 @@ public class Exp {
 
     private final Flags mFlags;
     private final ILogger mLogger;
+    private final FileOps mFileOps;
     private final GDocReader mGDocReader;
     private final BlobStore mBlobStore;
 
     @Inject
-    public Exp(Flags flags, ILogger logger, GDocReader gDocReader, BlobStore blobStore) {
+    public Exp(Flags flags, ILogger logger, FileOps fileOps, GDocReader gDocReader, BlobStore blobStore) {
         mFlags = flags;
         mLogger = logger;
+        mFileOps = fileOps;
         mGDocReader = gDocReader;
         mBlobStore = blobStore;
     }
@@ -56,8 +60,8 @@ public class Exp {
     private List<HtmlEntry> readIndex() throws IOException {
         mLogger.d(TAG, "Processing document: index");
         String indexId = mFlags.getString(EXP_DOC_ID);
-        byte[] bytes = getGDoc(indexId, "text/plain");
-        String content = new String(bytes, Charsets.UTF_8);
+        GDocMetadata gdoc = getGDoc(indexId, "text/plain");
+        String content = new String(gdoc.getContent(), Charsets.UTF_8);
 
         List<HtmlEntry> entries = new ArrayList<>();
 
@@ -65,26 +69,45 @@ public class Exp {
             line = line.trim();
             Matcher matcher = indexLineRe.matcher(line);
             if (matcher.find()) {
-                entries.add(HtmlEntry.create(matcher.group(0), matcher.group(1)));
+                entries.add(HtmlEntry.create(matcher.group(2), matcher.group(1)));
             }
         }
 
         return entries;
     }
 
-    private void processEntries(@NonNull List<HtmlEntry> entries) {
+    private void processEntries(@NonNull List<HtmlEntry> entries) throws IOException {
+        String destDir = mFlags.getString(EXP_DEST_DIR);
+
         for (HtmlEntry entry : entries) {
-            mLogger.d(TAG, "Process document: " + entry.getDestName());
+            String destName = entry.getDestName();
+
+            mLogger.d(TAG, "Process document: " + destName);
+
+            GDocMetadata gdoc = getGDoc(entry.getFileId(), "text/html");
+            byte[] content = gdoc.getContent();
+            String title = gdoc.getTitle();
+
+            content = processHtml(content, title);
+
+            File destFile = new File(destDir, destName);
+            mFileOps.createParentDirs(destFile);
+            mFileOps.writeBytes(content, destFile);
         }
+    }
+
+    @NonNull
+    private byte[] processHtml(@NonNull byte[] content, @NonNull String title) {
+        return content;
     }
 
 
     // ---
 
     @Null
-    private byte[] getGDoc(@NonNull String fileId, @NonNull String mimeType) {
-        final String hashKey = "hash-" + fileId;
-        final String contentKey = "content-" + fileId;
+    private GDocMetadata getGDoc(@NonNull String fileId, @NonNull String mimeType) {
+        final String metadataKey = "hash-" + fileId;
+        final String contentKey = "content-" + fileId + "-" + mimeType;
 
         // Known implementation issue: the gdoc API calls to retrieve the file content
         // and the freshness hash are not part of an atomic call. There's a chance the
@@ -105,12 +128,11 @@ public class Exp {
             content = mBlobStore.getBytes(contentKey);
         } catch (IOException ignore) {}
 
-        String contentHash = null;
+        GDocMetadata gdoc;
         try {
-            contentHash = mGDocReader.getContentHashById(fileId);
-        } catch (IOException ignore) {}
-
-        if (contentHash == null) {
+            gdoc = mGDocReader.getMetadataById(fileId);
+        } catch (IOException e) {
+            mLogger.d(TAG, "Get metadata failed for " + fileId);
             return null;
         }
 
@@ -118,8 +140,8 @@ public class Exp {
         if (content != null) {
             // Check freshness
             try {
-                String storeHash = mBlobStore.getString(hashKey);
-                retrieve = !contentHash.equals(storeHash);
+                String storeHash = mBlobStore.getString(metadataKey);
+                retrieve = !gdoc.getContentHash().equals(storeHash);
             } catch (IOException ignore) {}
         }
 
@@ -131,12 +153,13 @@ public class Exp {
                 if (content != null) {
                     // Update the store
                     mBlobStore.putBytes(contentKey, content);
-                    mBlobStore.putString(hashKey, contentHash);
+                    mBlobStore.putString(metadataKey, gdoc.getContentHash());
                 }
             } catch (IOException ignore) {}
         }
 
-        return content;
+        gdoc.setContent(content);
+        return gdoc;
     }
 
     @AutoValue

@@ -1,5 +1,6 @@
 package com.alflabs.rig4.exp;
 
+import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.ILogger;
 import com.alflabs.utils.StringUtils;
@@ -135,13 +136,14 @@ public class GDocReader {
     /**
      * Retrieve a SHA1 hash that indicates whether the content as changed.
      */
-    public String getContentHashById(String fileId) throws IOException {
+    @NonNull
+    public GDocMetadata getMetadataById(String fileId) throws IOException {
         // We need to explicitely tell which fields we want, otherwsie the response
         // contains nothing useful. This is still a hint and some fields might just
         // be missing (e.g. the md5 checksum on a gdoc).
         Drive.Files.Get get = mDrive.files()
                 .get(fileId)
-                .setFields("md5Checksum,modifiedTime,version");
+                .setFields("md5Checksum,modifiedTime,version,name");
         com.google.api.services.drive.model.File gfile = get.execute();
 
         Long version = gfile.getVersion();
@@ -149,7 +151,9 @@ public class GDocReader {
         DateTime dateTime = gfile.getModifiedTime();
 
         String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
-        return DigestUtils.shaHex(hash);
+        hash = DigestUtils.shaHex(hash);
+
+        return new GDocMetadata(gfile.getName(), hash);
     }
 
 }
