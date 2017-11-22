@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -31,14 +32,22 @@ public class Exp {
     private final FileOps mFileOps;
     private final GDocReader mGDocReader;
     private final BlobStore mBlobStore;
+    private final HtmlTransformer mHtmlTransformer;
 
     @Inject
-    public Exp(Flags flags, ILogger logger, FileOps fileOps, GDocReader gDocReader, BlobStore blobStore) {
+    public Exp(
+            Flags flags,
+            ILogger logger,
+            FileOps fileOps,
+            GDocReader gDocReader,
+            BlobStore blobStore,
+            HtmlTransformer htmlTransformer) {
         mFlags = flags;
         mLogger = logger;
         mFileOps = fileOps;
         mGDocReader = gDocReader;
         mBlobStore = blobStore;
+        mHtmlTransformer = htmlTransformer;
     }
 
     public void declareFlags() {
@@ -47,7 +56,7 @@ public class Exp {
         mFlags.addString(EXP_GA_UID, "", null);
     }
 
-    public void start() throws IOException {
+    public void start() throws IOException, URISyntaxException {
         List<HtmlEntry> entries = readIndex();
         processEntries(entries);
     }
@@ -76,7 +85,7 @@ public class Exp {
         return entries;
     }
 
-    private void processEntries(@NonNull List<HtmlEntry> entries) throws IOException {
+    private void processEntries(@NonNull List<HtmlEntry> entries) throws IOException, URISyntaxException {
         String destDir = mFlags.getString(EXP_DEST_DIR);
 
         for (HtmlEntry entry : entries) {
@@ -97,7 +106,8 @@ public class Exp {
     }
 
     @NonNull
-    private byte[] processHtml(@NonNull byte[] content, @NonNull String title) {
+    private byte[] processHtml(@NonNull byte[] content, @NonNull String title) throws IOException, URISyntaxException {
+        content = mHtmlTransformer.simplify(content);
         return content;
     }
 
