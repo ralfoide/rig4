@@ -166,13 +166,11 @@ public class GDocReader {
         return new GDocMetadata(gfile.getName(), hash);
     }
 
-    public byte[] getDataByUrl(URL url) throws IOException {
+    public InputStream getDataByUrl(URL url) throws IOException {
         HttpRequest request = mDrive.getRequestFactory().buildGetRequest(new GenericUrl(url));
         request.setThrowExceptionOnExecuteError(true);
         HttpResponse response = request.execute();
-        try (InputStream stream = response.getContent()) {
-            return ByteStreams.toByteArray(stream);
-        }
+        return response.getContent();
     }
 
 }

@@ -27,6 +27,7 @@ dependencies {
     compile project(":LibUtilsJava")
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
     compile "org.jsoup:jsoup:1.11.2"
+    compile "net.coobird:thumbnailator:0.4.8"
 
     compile "com.google.apis:google-api-services-drive:v3-rev90-1.23.0"
     compile "com.google.oauth-client:google-oauth-client-jetty:1.23.0"

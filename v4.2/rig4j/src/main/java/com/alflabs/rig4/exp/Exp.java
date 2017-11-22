@@ -9,12 +9,21 @@ import com.alflabs.utils.ILogger;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriter;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -131,15 +140,84 @@ public class Exp {
         mLogger.d(TAG, "     Downloading: " + destName + " [" + width + "x" + height + "]");
 
         URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
-        byte[] bytes = mGDocReader.getDataByUrl(url);
+        InputStream stream = mGDocReader.getDataByUrl(url);
+        BufferedImage image = ImageIO.read(stream);
 
-// TODO
-//        if (w > 0 && h > 0) {
-//            img = resizeImage(img, w, h);
-//        }
+        if (width > 0 && height > 0) {
+            image = resizeImage(image, width, height);
+        }
 
-        mFileOps.writeBytes(bytes, destFile);
+        ImageIO.write(image, extension, destFile);
         return destName;
+    }
+
+    private BufferedImage resizeImage(BufferedImage image, int width, int height) throws IOException {
+        int srcw = image.getWidth();
+        int srch = image.getHeight();
+
+        WritableRaster raster = image.getRaster();
+        ColorModel model = image.getColorModel();
+
+        int x1 = srcw;
+        int y1 = srch;
+        int x2 = 0;
+        int y2 = 0;
+
+        for (int k = 0, y = 0; y < srch; y++) {
+            for (int x = 0; x < srcw; x++) {
+                Object elements = raster.getDataElements(x, y, null);
+                int a = model.getAlpha(elements);
+
+                if (a != 0) {
+                    if (x < x1) {
+                        x1 = x;
+                    } else if (x > x2) {
+                        x2 = x;
+                    }
+                    if (y < y1) {
+                        y1 = y;
+                    } else if (y > y2) {
+                        y2 = y;
+                    }
+                }
+            }
+        }
+
+        // If we desired size is larger, then try to center it
+        int destw = x2 - x1 + 1;
+        int desth = y2 - y1 + 1;
+        if (width <= srcw && width > destw && height <= srch && height > desth) {
+            double w2 = width / 2.;
+            double h2 = height / 2.;
+            double cx = x1 + destw / 2.;
+            double cy = y1 + desth / 2.;
+            if (cx - w2 < 0) {
+                x1 = 0;
+            } else if (cx + w2 > srcw) {
+                x1 = srcw - width;
+            }
+            destw = width;
+
+            if (cy - h2 < 0) {
+                y1 = 0;
+            } else if (cy + h2 > srch) {
+                y1 = srch - height;
+            }
+            desth = height;
+        }
+
+        image = image.getSubimage(x1, y1, destw, desth);
+
+        if (destw > width && desth > height) {
+            image = Thumbnails.of(image).size(width, height).asBufferedImage();
+            destw = image.getWidth();
+            desth = image.getHeight();
+        }
+
+        mLogger.d(TAG, String.format("resize [%dx%d]: src [%dx%d], sub image (%dx%d)+[%dx%d]",
+                width, height, srcw, srch, x1, y1, destw, desth));
+
+        return image;
     }
 
 
