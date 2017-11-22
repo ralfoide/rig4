@@ -1,12 +1,12 @@
 package com.alflabs.rig4.exp;
 
+import com.alflabs.utils.ILogger;
 import com.google.common.base.Charsets;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
 import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Whitelist;
 
@@ -15,7 +15,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -25,7 +24,7 @@ public class HtmlTransformer {
     public HtmlTransformer() {
     }
 
-    public byte[] simplify(byte[] content) throws IOException, URISyntaxException {
+    public byte[] simplify(byte[] content, Callback callback) throws IOException, URISyntaxException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
             Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
 
@@ -33,8 +32,8 @@ public class HtmlTransformer {
             removeEmptyElements(doc, "a");
             removeEmptyElements(doc, "span");
             cleanupInlineStyle(doc);
-            rewriteUrls(doc, "href");
-            rewriteUrls(doc, "src");
+            rewriteUrls(doc, "href", callback);
+            rewriteUrls(doc, "src", callback);
             rewriteYoutubeEmbed(doc);
 
             doc.outputSettings().prettyPrint(true);
@@ -77,7 +76,7 @@ public class HtmlTransformer {
         }
     }
 
-    private void rewriteUrls(Element root, String attrName) throws URISyntaxException {
+    private void rewriteUrls(Element root, String attrName, Callback callback) throws IOException, URISyntaxException {
         for (Element element : root.select("[" + attrName + "]")) {
             String value = element.attr(attrName);
             String newValue = null;
@@ -96,21 +95,15 @@ public class HtmlTransformer {
                 String id = queries.get("id");
                 int w = Integer.parseInt(queries.get("w"));
                 int h = Integer.parseInt(queries.get("h"));
-
-// TODO
-//                mLogger.Printf("       Drawing 1: %s [%v x %v]\n", id, w, h);
-//                newValue = e.ProcessDrawing(id, w, h);
+                newValue = callback.processDrawing(id, w, h);
             } else if (host.equals("docs.google.com") && path.startsWith("/drawings/d/") && path.endsWith("/image")) {
                 String id = path.substring("/drawings/d/".length());
-                id = path.substring(0, path.length() - "/image".length());
+                id = id.substring(0, id.length() - "/image".length());
                 int w = Integer.parseInt(queries.get("w"));
                 int h = Integer.parseInt(queries.get("h"));
-
-// TODO
-//                mLogger.Printf("       Drawing 2: %s [%v x %v]\n", id, w, h);
-//                newValue = e.ProcessDrawing(id, w, h);
+                newValue = callback.processDrawing(id, w, h);
             } else if (host.equals("docs.google.com")) {
-//                mLogger.d("ERROR Unprocessed URL for", u.Host, ", Path:", u.Path);
+                throw new TransformerException("ERROR Unprocessed URL for " + host + ", Path: " + path);
             }
 
             if (newValue != null) {
@@ -182,4 +175,15 @@ public class HtmlTransformer {
         return map;
     }
 
+    public interface Callback {
+        /** Process a drawing by downloading it, adjusting it to change to the desired size and
+         * returns the href for the new document. */
+        String processDrawing(String id, int width, int height) throws IOException;
+    }
+
+    public static class TransformerException extends RuntimeException {
+        public TransformerException(String s) {
+            super(s);
+        }
+    }
 }

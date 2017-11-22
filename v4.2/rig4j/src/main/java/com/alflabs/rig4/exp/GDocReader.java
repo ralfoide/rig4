@@ -10,21 +10,27 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import com.google.common.io.ByteStreams;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
@@ -77,7 +83,9 @@ public class GDocReader {
                 .build();
     }
 
-    /** Authorizes the installed application to access user's protected data. */
+    /**
+     * Authorizes the installed application to access user's protected data.
+     */
     private Credential authorize() throws IOException {
         // load client secrets
         GoogleClientSecrets clientSecrets = getGoogleClientSecrets();
@@ -94,8 +102,8 @@ public class GDocReader {
                 mJsonFactory,
                 clientSecrets,
                 Arrays.asList(DriveScopes.DRIVE_READONLY, DriveScopes.DRIVE_METADATA_READONLY))
-            .setDataStoreFactory(dataStoreFactory)
-            .build();
+                .setDataStoreFactory(dataStoreFactory)
+                .build();
 
         // authorize
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
@@ -120,12 +128,14 @@ public class GDocReader {
         } catch (IOException e) {
             mLogger.d(TAG,
                     "Enter Client ID and Secret from https://code.google.com/apis/console/?api=drive"
-                    + " into " + path, e);
+                            + " into " + path, e);
             throw e;
         }
     }
 
-    /** Retrieve the exported content of a file. */
+    /**
+     * Retrieve the exported content of a file.
+     */
     public byte[] readFileById(String fileId, String mimeType) throws IOException {
         // https://developers.google.com/drive/v3/web/manage-downloads
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -154,6 +164,15 @@ public class GDocReader {
         hash = DigestUtils.shaHex(hash);
 
         return new GDocMetadata(gfile.getName(), hash);
+    }
+
+    public byte[] getDataByUrl(URL url) throws IOException {
+        HttpRequest request = mDrive.getRequestFactory().buildGetRequest(new GenericUrl(url));
+        request.setThrowExceptionOnExecuteError(true);
+        HttpResponse response = request.execute();
+        try (InputStream stream = response.getContent()) {
+            return ByteStreams.toByteArray(stream);
+        }
     }
 
 }

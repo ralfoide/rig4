@@ -8,12 +8,15 @@ import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -90,6 +93,7 @@ public class Exp {
 
         for (HtmlEntry entry : entries) {
             String destName = entry.getDestName();
+            File destFile = new File(destDir, destName);
 
             mLogger.d(TAG, "Process document: " + destName);
 
@@ -97,18 +101,45 @@ public class Exp {
             byte[] content = gdoc.getContent();
             String title = gdoc.getTitle();
 
-            content = processHtml(content, title);
+            content = processHtml(content, title, destFile);
 
-            File destFile = new File(destDir, destName);
             mFileOps.createParentDirs(destFile);
             mFileOps.writeBytes(content, destFile);
         }
     }
 
     @NonNull
-    private byte[] processHtml(@NonNull byte[] content, @NonNull String title) throws IOException, URISyntaxException {
-        content = mHtmlTransformer.simplify(content);
+    private byte[] processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
+        content = mHtmlTransformer.simplify(
+                content,
+                (id, width, height) -> downloadDrawing(id, destFile, width, height));
         return content;
+    }
+
+    private String downloadDrawing(String id, File destFile, int width, int height) throws IOException {
+        // Note: There is no Drive API for embedded drawings.
+        // Experience shows that we can't even get the metadata like for a normal gdoc.
+        // Instead we just download them everytime the doc is generated.
+
+        String extension = "png";
+        String destName = destFile.getName();
+        destName = destName.replace(".html", "_");
+        destName = destName.replace(".", "_");
+        destName += DigestUtils.shaHex("_drawing_" + id) + "." + extension;
+        destFile = new File(destFile.getParentFile(), destName);
+
+        mLogger.d(TAG, "     Downloading: " + destName + " [" + width + "x" + height + "]");
+
+        URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
+        byte[] bytes = mGDocReader.getDataByUrl(url);
+
+// TODO
+//        if (w > 0 && h > 0) {
+//            img = resizeImage(img, w, h);
+//        }
+
+        mFileOps.writeBytes(bytes, destFile);
+        return destName;
     }
 
 
