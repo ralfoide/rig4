@@ -46,6 +46,7 @@ public class HtmlTransformer {
 
     private Document cleanup(Document doc) {
         Whitelist relaxed = Whitelist.relaxed();
+        relaxed.addTags("hr");
         relaxed.addTags("style");
         relaxed.addAttributes(":all", "style");
         Cleaner cleaner = new Cleaner(relaxed);

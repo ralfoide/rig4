@@ -8,18 +8,14 @@ import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriter;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
@@ -81,8 +77,8 @@ public class Exp {
     private List<HtmlEntry> readIndex() throws IOException {
         mLogger.d(TAG, "Processing document: index");
         String indexId = mFlags.getString(EXP_DOC_ID);
-        GDocMetadata gdoc = getGDoc(indexId, "text/plain");
-        String content = new String(gdoc.getContent(), Charsets.UTF_8);
+        Entity entity = getGDoc(indexId, "text/plain");
+        String content = new String(entity.getContent(), Charsets.UTF_8);
 
         List<HtmlEntry> entries = new ArrayList<>();
 
@@ -106,14 +102,26 @@ public class Exp {
 
             mLogger.d(TAG, "Process document: " + destName);
 
-            GDocMetadata gdoc = getGDoc(entry.getFileId(), "text/html");
-            byte[] content = gdoc.getContent();
-            String title = gdoc.getTitle();
+            Entity entity = getGDoc(entry.getFileId(), "text/html");
+            byte[] docContent = entity.getContent();
+            String title = entity.getMetadata().getTitle();
+            boolean keepExisting = entity.isUpdateToDate() && mFileOps.isFile(destFile);
 
-            content = processHtml(content, title, destFile);
+            String htmlHashKey = "html-hash-" + destFile.getPath();
+            if (keepExisting) {
+                String htmlHash = mBlobStore.getString(htmlHashKey);
+                keepExisting = htmlHash != null && htmlHash.equals(entity.getMetadata().getContentHash());
+            }
 
-            mFileOps.createParentDirs(destFile);
-            mFileOps.writeBytes(content, destFile);
+            if (keepExisting) {
+                mLogger.d(TAG, "   Keep existing: " + destName);
+            } else {
+                byte[] htmlContent = processHtml(docContent, title, destFile);
+
+                mFileOps.createParentDirs(destFile);
+                mFileOps.writeBytes(htmlContent, destFile);
+                mBlobStore.putString(htmlHashKey, entity.getMetadata().getContentHash());
+            }
         }
     }
 
@@ -214,8 +222,8 @@ public class Exp {
             desth = image.getHeight();
         }
 
-        mLogger.d(TAG, String.format("resize [%dx%d]: src [%dx%d], sub image (%dx%d)+[%dx%d]",
-                width, height, srcw, srch, x1, y1, destw, desth));
+        mLogger.d(TAG, String.format("        Resizing: from [%dx%d] to [%dx%d], crop (%dx%d)+[%dx%d]",
+                srcw, srch, width, height, x1, y1, destw, desth));
 
         return image;
     }
@@ -224,9 +232,9 @@ public class Exp {
     // ---
 
     @Null
-    private GDocMetadata getGDoc(@NonNull String fileId, @NonNull String mimeType) {
-        final String metadataKey = "hash-" + fileId;
-        final String contentKey = "content-" + fileId + "-" + mimeType;
+    private Entity getGDoc(@NonNull String fileId, @NonNull String mimeType) {
+        final String metadataKey = "gdoc-hash-" + fileId;
+        final String contentKey = "gdoc-content-" + fileId + "-" + mimeType;
 
         // Known implementation issue: the gdoc API calls to retrieve the file content
         // and the freshness hash are not part of an atomic call. There's a chance the
@@ -247,24 +255,24 @@ public class Exp {
             content = mBlobStore.getBytes(contentKey);
         } catch (IOException ignore) {}
 
-        GDocMetadata gdoc;
+        GDocMetadata metadata;
         try {
-            gdoc = mGDocReader.getMetadataById(fileId);
+            metadata = mGDocReader.getMetadataById(fileId);
         } catch (IOException e) {
             mLogger.d(TAG, "Get metadata failed for " + fileId);
             return null;
         }
 
-        boolean retrieve = true;
+        boolean updateToDate = false;
         if (content != null) {
             // Check freshness
             try {
                 String storeHash = mBlobStore.getString(metadataKey);
-                retrieve = !gdoc.getContentHash().equals(storeHash);
+                updateToDate = metadata.getContentHash().equals(storeHash);
             } catch (IOException ignore) {}
         }
 
-        if (retrieve) {
+        if (!updateToDate) {
             try {
                 mLogger.d(TAG, "        Fetching: " + fileId);
                 content = mGDocReader.readFileById(fileId, mimeType);
@@ -272,13 +280,12 @@ public class Exp {
                 if (content != null) {
                     // Update the store
                     mBlobStore.putBytes(contentKey, content);
-                    mBlobStore.putString(metadataKey, gdoc.getContentHash());
+                    mBlobStore.putString(metadataKey, metadata.getContentHash());
                 }
             } catch (IOException ignore) {}
         }
 
-        gdoc.setContent(content);
-        return gdoc;
+        return new Entity(metadata, updateToDate, content);
     }
 
     @AutoValue
@@ -290,4 +297,30 @@ public class Exp {
         abstract String getFileId();
         abstract String getDestName();
     }
+
+    static class Entity {
+        private final GDocMetadata mMetadata;
+        private final boolean mUpdateToDate;
+        private final byte[] mContent;
+
+        public Entity(GDocMetadata metadata, boolean updateToDate, byte[] content) {
+            mMetadata = metadata;
+            mUpdateToDate = updateToDate;
+            mContent = content;
+        }
+
+        public GDocMetadata getMetadata() {
+            return mMetadata;
+        }
+
+        public boolean isUpdateToDate() {
+            return mUpdateToDate;
+        }
+
+        public byte[] getContent() {
+            return mContent;
+        }
+    }
+
+
 }

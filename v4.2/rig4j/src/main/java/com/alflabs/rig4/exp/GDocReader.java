@@ -163,7 +163,7 @@ public class GDocReader {
         String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
         hash = DigestUtils.shaHex(hash);
 
-        return new GDocMetadata(gfile.getName(), hash);
+        return GDocMetadata.create(gfile.getName(), hash);
     }
 
     public InputStream getDataByUrl(URL url) throws IOException {
