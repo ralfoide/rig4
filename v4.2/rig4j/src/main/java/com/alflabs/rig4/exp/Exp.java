@@ -37,6 +37,7 @@ public class Exp {
     private static final String EXP_GA_UID = "exp-ga-uid";
     private static final String EXP_SITE_TITLE = "exp-site-title";
     private static final String EXP_SITE_BANNER = "exp-site-banner";
+    private static final String EXP_SITE_BASE_URL = "exp-site-base-url";
 
     private final Flags mFlags;
     private final ILogger mLogger;
@@ -70,6 +71,7 @@ public class Exp {
         mFlags.addString(EXP_GA_UID,      "",           "Exp GA UID");
         mFlags.addString(EXP_SITE_TITLE,  "Site Title", "Web site title");
         mFlags.addString(EXP_SITE_BANNER, "header.jpg", "Web site banner filename");
+        mFlags.addString(EXP_SITE_BASE_URL, "/",        "Web site base URL");
     }
 
     public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
@@ -128,10 +130,11 @@ public class Exp {
 
                 Templater.TemplateData data = Templater.TemplateData.create(
                         "", // css
-                        mFlags.getString(EXP_SITE_BANNER),
                         mFlags.getString(EXP_GA_UID),
                         title,
                         mFlags.getString(EXP_SITE_TITLE),
+                        mFlags.getString(EXP_SITE_BASE_URL),
+                        mFlags.getString(EXP_SITE_BANNER),
                         htmlBody);
                 String html = mTemplater.generate(data);
                 byte[] htmlContent = html.getBytes(Charsets.UTF_8);

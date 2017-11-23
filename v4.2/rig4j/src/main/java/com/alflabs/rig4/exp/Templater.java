@@ -65,15 +65,30 @@ public class Templater {
 
     @AutoValue
     public abstract static class TemplateData {
-        public static TemplateData create(String css, String bannerFilename, String GAUid, String pageTitle, String siteTitle, String content) {
-            return new AutoValue_Templater_TemplateData(css, bannerFilename, GAUid, pageTitle, siteTitle, content);
+        public static TemplateData create(
+                String css,
+                String GAUid,
+                String pageTitle,
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
+                String content) {
+            return new AutoValue_Templater_TemplateData(
+                    css,
+                    GAUid,
+                    pageTitle,
+                    siteTitle,
+                    siteBaseUrl,
+                    bannerFilename,
+                    content);
         }
 
         public abstract String getCss();
-        public abstract String getBannerFilename();
         public abstract String getGAUid();
         public abstract String getPageTitle();
         public abstract String getSiteTitle();
+        public abstract String getSiteBaseUrl();
+        public abstract String getBannerFilename();
         public abstract String getContent();
     }
 

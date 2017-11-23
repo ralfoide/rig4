@@ -1,118 +1,125 @@
+<!doctype html>
 <html lang="en">
 <head>
-    <meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
-    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.blue-light_blue.min.css">
-    <style type="text/css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- link rel="icon" href="{{.FavIcon}}" -->
+
+    <title>{{.SiteTitle}}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet"
+        href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" 
+        integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" 
+        crossorigin="anonymous">
+
+<!-- Custom styles for this template -->
+<style type="text/css">
+body {
+    font-family: serif;
+}
+/* Override Bootstrap's default container. */
+.container {
+  max-width: 60rem;
+}
+
+.no-margin-container {
+}
+
+/* Header + Title */
+.blog-header {
+  margin-bottom: 3rem;
+  background-color: #428bca;
+  box-shadow: inset 0 -.1rem .25rem rgba(0,0,0,.1);
+}
+
+.banner-bg-image {
+    height: 200px;
+    background-image: url("{{.BannerFilename}}");
+    background-position: center;
+    background-size: 100% auto;
+}
+
+.title-font {
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+
+/* Nav links */
+.nav-link {
+  position: relative;
+  padding: 1rem;
+  font-weight: 500;
+  color: #cdddeb;
+}
+.nav-link:hover,
+.nav-link:focus {
+  color: #fff;
+  background-color: transparent;
+}
+.nav-link.active {
+  color: #fff;
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: sans-serif;
+  font-weight: bold;
+}
+
 {{.Css}}
-
-.demo-ribbon {
-  width: 100%;
-  height: 40vh;
-  background-color: #3F51B5;
-  -webkit-flex-shrink: 0;
-      -ms-flex-negative: 0;
-          flex-shrink: 0;
-  background-image: url("{{.BannerFilename}}");
-  background-position: center;
-  background-size: 100% auto;
-  background-repeat: no-repeat;
-}
-
-.demo-main {
-  margin-top: -10vh;
-  -webkit-flex-shrink: 0;
-      -ms-flex-negative: 0;
-          flex-shrink: 0;
-}
-
-.demo-header .mdl-layout__header-row {
-  padding-left: 40px;
-}
-
-.demo-container {
-  max-width: 1600px;
-  width: calc(100% - 16px);
-  margin: 0 auto;
-}
-
-.demo-content {
-  border-radius: 2px;
-  padding: 40px 56px 80px; /* top side bottom */
-  margin-bottom: 80px;
-}
-
-.demo-layout.is-small-screen .demo-content {
-  padding: 40px 28px;
-}
-
-.demo-content h3 {
-  margin-top: 48px;
-}
-
-.demo-footer {
-  padding-left: 40px;
-}
-
-.demo-footer .mdl-mini-footer--link-list a {
-  font-size: 13px;
-}
-
-.demo-footer2 {
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-flex-flow: row wrap;
-    -ms-flex-flow: row wrap;
-    flex-flow: row wrap;
-    -webkit-justify-content: space-between;
-    -ms-flex-pack: justify;
-    justify-content: space-between;
-
-    padding: 32px 16px;
-    color: #9e9e9e;
-    background-color: #424242;
-}
-
-.demo-footer2-center {
-    align-self: center;
-    margin: auto;
-}
-
 </style>
-    <title>{{.PageTitle}}</title>
 </head>
+
 <body>
-<div class="demo-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
-    <div class="demo-ribbon"></div>
-    <main class="demo-main mdl-layout__content">
-        <div class="demo-container mdl-grid">
-            <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
-            <div class="demo-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
 
-                {{.Content}}
-
-            </div>
-        </div>
-        <footer class="demo-footer demo-footer2">
-            <center class="demo-footer2-center">
-                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" href=".">
-                    Back to main page
-                </a>
-                <br/>
-                <span class="mdl-typography--display-2">{{.SiteTitle}}</span>
-            </center>
-        </footer>
-    </main>
+<header class="blog-header">
+<div class="no-margin-container banner-bg-image text-hide">
+    Site Banner Image
 </div>
+<div class="no-margin-container">
+  <nav class="nav">
+    <a class="nav-link active title-font" href="{{.SiteBaseUrl}}">{{.SiteTitle}}</a>
+    <!--{{.Categories <a class="nav-link" href="{{.CatLink}}">{{.CatName}}</a> }}-->
+  </nav>
+</div>   
+</header>
+
+<main role="main" class="container">
+
+{{.Content}}
+  
+</main>
+
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" 
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" 
+    crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" 
+    integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" 
+    crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" 
+    integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" 
+    crossorigin="anonymous"></script>
 
 <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', '{{.GAUid}}', 'auto');
-  ga('send', 'pageview');
+    ga('create', '{{.GAUid}}', 'auto');
+    ga('send', 'pageview');
 </script>
+
+
 </body>
 </html>
+
