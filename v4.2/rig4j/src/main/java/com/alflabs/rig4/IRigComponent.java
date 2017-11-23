@@ -2,6 +2,7 @@ package com.alflabs.rig4;
 
 import com.alflabs.rig4.exp.Exp;
 import com.alflabs.rig4.exp.GDocReader;
+import com.alflabs.rig4.exp.Templater;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.ILogger;
 import dagger.Component;
@@ -17,6 +18,7 @@ public interface IRigComponent {
     ILogger getLogger();
     GDocReader getGDocReader();
     BlobStore getBlobStore();
+    Templater getTemplater();
 
     @Component.Builder
     interface Builder {

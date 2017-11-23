@@ -16,17 +16,17 @@ public class EntryPoint {
     private static final String FLAG_CONFIG = "config";
 
     public static void main(String[] args) {
-
-        IRigComponent component = DaggerIRigComponent
+        final IRigComponent component = DaggerIRigComponent
                 .builder()
                 .rigModule(new RigModule())
                 .build();
 
         System.out.println("Hello World!");
 
-        ILogger logger = component.getLogger();
-        Flags flags = component.getFlags();
+        final ILogger logger = component.getLogger();
+        final Flags flags = component.getFlags();
         component.getExp().declareFlags();
+        component.getTemplater().declareFlags();
         component.getBlobStore().declareFlags();
         component.getGDocReader().declareFlags();
 

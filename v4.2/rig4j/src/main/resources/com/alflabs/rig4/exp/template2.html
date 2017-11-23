@@ -1,0 +1,118 @@
+<html lang="en">
+<head>
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
+    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.blue-light_blue.min.css">
+    <style type="text/css">
+{{.Css}}
+
+.demo-ribbon {
+  width: 100%;
+  height: 40vh;
+  background-color: #3F51B5;
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+  background-image: url("{{.BannerFilename}}");
+  background-position: center;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+
+.demo-main {
+  margin-top: -10vh;
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+}
+
+.demo-header .mdl-layout__header-row {
+  padding-left: 40px;
+}
+
+.demo-container {
+  max-width: 1600px;
+  width: calc(100% - 16px);
+  margin: 0 auto;
+}
+
+.demo-content {
+  border-radius: 2px;
+  padding: 40px 56px 80px; /* top side bottom */
+  margin-bottom: 80px;
+}
+
+.demo-layout.is-small-screen .demo-content {
+  padding: 40px 28px;
+}
+
+.demo-content h3 {
+  margin-top: 48px;
+}
+
+.demo-footer {
+  padding-left: 40px;
+}
+
+.demo-footer .mdl-mini-footer--link-list a {
+  font-size: 13px;
+}
+
+.demo-footer2 {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    -ms-flex-flow: row wrap;
+    flex-flow: row wrap;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+
+    padding: 32px 16px;
+    color: #9e9e9e;
+    background-color: #424242;
+}
+
+.demo-footer2-center {
+    align-self: center;
+    margin: auto;
+}
+
+</style>
+    <title>{{.PageTitle}}</title>
+</head>
+<body>
+<div class="demo-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
+    <div class="demo-ribbon"></div>
+    <main class="demo-main mdl-layout__content">
+        <div class="demo-container mdl-grid">
+            <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+            <div class="demo-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+
+                {{.Content}}
+
+            </div>
+        </div>
+        <footer class="demo-footer demo-footer2">
+            <center class="demo-footer2-center">
+                <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" href=".">
+                    Back to main page
+                </a>
+                <br/>
+                <span class="mdl-typography--display-2">{{.SiteTitle}}</span>
+            </center>
+        </footer>
+    </main>
+</div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', '{{.GAUid}}', 'auto');
+  ga('send', 'pageview');
+</script>
+</body>
+</html>

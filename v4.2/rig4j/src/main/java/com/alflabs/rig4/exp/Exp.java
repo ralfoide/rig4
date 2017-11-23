@@ -240,8 +240,8 @@ public class Exp {
             desth = image.getHeight();
         }
 
-        mLogger.d(TAG, String.format("        Resizing: from [%dx%d] to [%dx%d], crop (%dx%d)+[%dx%d]",
-                srcw, srch, width, height, x1, y1, destw, desth));
+        mLogger.d(TAG, String.format("        Resizing: from [%dx%d] to (%dx%d)+[%dx%d]",
+                srcw, srch, x1, y1, destw, desth));
 
         return image;
     }
