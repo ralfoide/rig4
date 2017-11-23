@@ -5,6 +5,7 @@ import com.alflabs.utils.ILogger;
 import com.alflabs.utils.StringUtils;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
@@ -43,7 +44,7 @@ public class EntryPoint {
             component.getGDocReader().init();
             component.getExp().start();
             logger.d(TAG, "Done.");
-        } catch (GeneralSecurityException | IOException | URISyntaxException e) {
+        } catch (GeneralSecurityException | IOException | URISyntaxException | IllegalAccessException | InvocationTargetException e) {
             logger.d(TAG, "Failure", e);
         }
     }

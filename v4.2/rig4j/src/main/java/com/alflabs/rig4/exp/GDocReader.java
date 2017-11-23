@@ -19,12 +19,10 @@ import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
-import com.google.common.io.ByteStreams;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;

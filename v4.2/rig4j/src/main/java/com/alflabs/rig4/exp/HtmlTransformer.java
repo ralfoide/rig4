@@ -9,6 +9,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Whitelist;
+import org.jsoup.select.Elements;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
@@ -24,7 +25,11 @@ public class HtmlTransformer {
     public HtmlTransformer() {
     }
 
-    public byte[] simplify(byte[] content, Callback callback) throws IOException, URISyntaxException {
+    /**
+     * Simplifies a GDoc exported HTML.
+     * Returns the <em>Body</em> element only.
+     */
+    public String simplify(byte[] content, Callback callback) throws IOException, URISyntaxException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
             Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
 
@@ -39,9 +44,9 @@ public class HtmlTransformer {
             doc.outputSettings().prettyPrint(true);
             doc.outputSettings().charset(Charsets.UTF_8);
 
-            content = doc.html().getBytes(Charsets.UTF_8);
+            Element body = doc.select("body").first();
+            return body.html();
         }
-        return content;
     }
 
     private Document cleanup(Document doc) {

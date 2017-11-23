@@ -20,6 +20,7 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -34,12 +35,15 @@ public class Exp {
     private static final String EXP_DOC_ID = "exp-doc-id";
     private static final String EXP_DEST_DIR = "exp-dest-dir";
     private static final String EXP_GA_UID = "exp-ga-uid";
+    private static final String EXP_SITE_TITLE = "exp-site-title";
+    private static final String EXP_SITE_BANNER = "exp-site-banner";
 
     private final Flags mFlags;
     private final ILogger mLogger;
     private final FileOps mFileOps;
     private final GDocReader mGDocReader;
     private final BlobStore mBlobStore;
+    private final Templater mTemplater;
     private final HtmlTransformer mHtmlTransformer;
 
     @Inject
@@ -49,22 +53,26 @@ public class Exp {
             FileOps fileOps,
             GDocReader gDocReader,
             BlobStore blobStore,
+            Templater templater,
             HtmlTransformer htmlTransformer) {
         mFlags = flags;
         mLogger = logger;
         mFileOps = fileOps;
         mGDocReader = gDocReader;
         mBlobStore = blobStore;
+        mTemplater = templater;
         mHtmlTransformer = htmlTransformer;
     }
 
     public void declareFlags() {
-        mFlags.addString(EXP_DOC_ID, "", null);
-        mFlags.addString(EXP_DEST_DIR, "", null);
-        mFlags.addString(EXP_GA_UID, "", null);
+        mFlags.addString(EXP_DOC_ID,      "",           "Exp gdoc id");
+        mFlags.addString(EXP_DEST_DIR,    "",           "Exp dest dir");
+        mFlags.addString(EXP_GA_UID,      "",           "Exp GA UID");
+        mFlags.addString(EXP_SITE_TITLE,  "Site Title", "Web site title");
+        mFlags.addString(EXP_SITE_BANNER, "header.jpg", "Web site banner filename");
     }
 
-    public void start() throws IOException, URISyntaxException {
+    public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         List<HtmlEntry> entries = readIndex();
         processEntries(entries);
     }
@@ -93,7 +101,7 @@ public class Exp {
         return entries;
     }
 
-    private void processEntries(@NonNull List<HtmlEntry> entries) throws IOException, URISyntaxException {
+    private void processEntries(@NonNull List<HtmlEntry> entries) throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         String destDir = mFlags.getString(EXP_DEST_DIR);
 
         for (HtmlEntry entry : entries) {
@@ -116,7 +124,17 @@ public class Exp {
             if (keepExisting) {
                 mLogger.d(TAG, "   Keep existing: " + destName);
             } else {
-                byte[] htmlContent = processHtml(docContent, title, destFile);
+                String htmlBody = processHtml(docContent, title, destFile);
+
+                Templater.TemplateData data = Templater.TemplateData.create(
+                        "", // css
+                        mFlags.getString(EXP_SITE_BANNER),
+                        mFlags.getString(EXP_GA_UID),
+                        title,
+                        mFlags.getString(EXP_SITE_TITLE),
+                        htmlBody);
+                String html = mTemplater.generate(data);
+                byte[] htmlContent = html.getBytes(Charsets.UTF_8);
 
                 mFileOps.createParentDirs(destFile);
                 mFileOps.writeBytes(htmlContent, destFile);
@@ -126,11 +144,11 @@ public class Exp {
     }
 
     @NonNull
-    private byte[] processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
-        content = mHtmlTransformer.simplify(
+    private String processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
+        String htmlBody = mHtmlTransformer.simplify(
                 content,
                 (id, width, height) -> downloadDrawing(id, destFile, width, height));
-        return content;
+        return htmlBody;
     }
 
     private String downloadDrawing(String id, File destFile, int width, int height) throws IOException {
