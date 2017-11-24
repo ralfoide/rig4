@@ -1,7 +1,5 @@
 package com.alflabs.rig4.exp;
 
-import com.alflabs.annotations.NonNull;
-import com.alflabs.annotations.Null;
 import com.alflabs.utils.RPair;
 import com.google.common.base.Charsets;
 import org.apache.http.NameValuePair;
@@ -20,9 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class HtmlTransformer {
 
@@ -116,11 +112,12 @@ public class HtmlTransformer {
         }
     }
 
-    /**
+    /*
      * Converts P with a single SPAN into a parent SPAN.
      * Merges the span styles into the p styles.
-     * ==> This is currently deactivated, it changes some styling.
+     * ==> This is currently deactivated, it changes too much the styling.
      */
+    /*
     private void mergeSingleSpans(Element root) {
         for (Element span : root.select("p > span")) {
             Element p = span.parent();
@@ -134,33 +131,40 @@ public class HtmlTransformer {
             }
         }
     }
+    */
 
     /**
      * Cleanup all STYLE attributes in 2 pases:
-     * - The first P/SPAN with an "[izu" text is located and acts as a markers for the
-     *   "default paragraph". A simple normal-style line with "[izu-default-style]" can be
-     *   added for that purpose anywhere in the doc (the [izu] text will be wiped out later).
-     * - This descends all elements recursively, only keeping the style that is a delta with
+     * - The first P/SPAN is located and acts as a markers for the "default paragraph".
+     *   A simple normal-style line can be added for that purpose as the very first line in the doc.
+     * - This method descends all elements recursively, only keeping the style that is a delta with
      *   the parents (we simplify and assume they are all inherited from their parent).
      *
      * Step 2 alone removes a ton of useless style info which is endlessly repeated by the
-     * gdoc exporter.
+     * gdoc exporter while still diffing the styles against a (supposedly) stable reference.
      *
-     * Combined with step 1 above, it also means all the "normal" style attributes are wiped out.
+     * Combined with step 1 above, it also means all the "normal" style attributes are wiped out
+     * and the style from the css can be respected.
      */
     private void cleanupInlineStyle(Element root) {
-        Element firstIzu = root.select(":containsOwn([izu)").first();
-        String baseStyles = firstIzu == null ? null : firstIzu.attr(ATTR_STYLE);
-        Set<String> styles = parseStyle(baseStyles, null);
+        CssStyles eraseStyles = new CssStyles();
+        Element p = root.select("p").first();
+        String baseStyle = p == null ? null : p.attr(ATTR_STYLE);
+        eraseStyles.parseStyle(baseStyle);
+        // mark these as part of the baseline to get rid of
+        eraseStyles.add("height:11pt");
+        eraseStyles.add("font-family:\"Arial\"");
+        eraseStyles.add("font-style:normal");
+        eraseStyles.add("font-weight:400");
+        eraseStyles.add("text-decoration:none");
+        eraseStyles.add("vertical-align:baseline");
+        // this one is the default in the css so let's have it erased too
+        eraseStyles.add("text-align:justify");
 
-        if (firstIzu != null && firstIzu.parent() != null && firstIzu.parent().hasAttr(ATTR_STYLE)) {
-            styles = parseStyle(firstIzu.parent().attr(ATTR_STYLE), styles);
-        }
-
-        cleanupInlineStyleRecursive(root, styles);
+        cleanupInlineStyleRecursive(root, eraseStyles);
     }
 
-    private void cleanupInlineStyleRecursive(Element root, Set<String> parentStyles) {
+    private void cleanupInlineStyleRecursive(Element root, CssStyles parentStyles) {
         for (int i = 0, n = root.childNodeSize(); i < n; i++) {
             Node node = root.childNode(i);
             if (node instanceof Element) {
@@ -171,15 +175,15 @@ public class HtmlTransformer {
                     continue;
                 }
 
-                RPair<Set<String>, String> pair = deltaChildStyle(element.attr(ATTR_STYLE), parentStyles);
-                Set<String> newParentStyle = pair == null ? parentStyles : pair.first;
+                RPair<CssStyles, String> pair = parentStyles.deltaChildStyle(element.attr(ATTR_STYLE));
+                CssStyles newParentStyles = pair == null ? parentStyles : pair.first;
                 String newStyle = pair == null ? "" : pair.second;
                 if (newStyle.isEmpty()) {
                     element.removeAttr(ATTR_STYLE);
                 } else {
                     element.attr(ATTR_STYLE, newStyle);
                 }
-                cleanupInlineStyleRecursive(element, newParentStyle);
+                cleanupInlineStyleRecursive(element, newParentStyles);
             }
         }
     }
@@ -298,62 +302,6 @@ public class HtmlTransformer {
         return map;
     }
 
-    @SuppressWarnings({"ManualArrayToCollectionCopy", "UseBulkOperation"})
-    @NonNull
-    private Set<String> parseStyle(@Null String style, @Null Set<String> mergeInto) {
-        if (mergeInto == null) {
-            mergeInto = new TreeSet<>();
-        }
-
-        if (style != null && !style.isEmpty()) {
-            for (String s : style.split(";")) {
-                mergeInto.add(s);
-            }
-        }
-
-        return mergeInto;
-    }
-
-    private RPair<Set<String>, String> deltaChildStyle(String childStyle, Set<String> parentStyles) {
-        Set<String> deltaChildStyles = null;
-
-        if (childStyle != null && !childStyle.isEmpty()) {
-            for (String s : childStyle.split(";")) {
-                if (!parentStyles.contains(s)) {
-                    if (deltaChildStyles == null) {
-                        deltaChildStyles = new TreeSet<>();
-                    }
-
-                    deltaChildStyles.add(s);
-                }
-            }
-        }
-
-
-        if (deltaChildStyles == null) {
-            return null;
-        } else {
-            Set<String> newParentStyles = new TreeSet<>(parentStyles);
-            newParentStyles.addAll(deltaChildStyles);
-
-            return RPair.create(newParentStyles, generateStyle(deltaChildStyles));
-        }
-    }
-
-    @NonNull
-    private String generateStyle(@NonNull Set<String> styles) {
-        StringBuilder sb = new StringBuilder();
-        boolean semi = false;
-        for (String style : styles) {
-            if (semi) {
-                sb.append(';');
-            }
-            sb.append(style);
-            semi = true;
-        }
-        return sb.toString();
-    }
-
     public interface Callback {
         /** Process a drawing by downloading it, adjusting it to change to the desired size and
          * returns the href for the new document. */
@@ -365,4 +313,73 @@ public class HtmlTransformer {
             super(s);
         }
     }
+
+    private static class CssStyles {
+        private final TreeMap<String, String> mMap = new TreeMap<>();
+
+        public CssStyles() {}
+
+        public CssStyles(CssStyles styles) {
+            addAll(styles);
+        }
+
+        private void addAll(CssStyles styles) {
+            mMap.putAll(styles.mMap);
+        }
+
+        public void add(String kvStyle) {
+            String[] kv = kvStyle.split(":");
+            mMap.put(kv[0], kv.length < 2 ? "" : kv[1]);
+        }
+
+        public void parseStyle(String attrStyle) {
+            if (attrStyle != null && !attrStyle.isEmpty()) {
+                for (String s : attrStyle.split(";")) {
+                    add(s);
+                }
+            }
+        }
+
+        public RPair<CssStyles, String> deltaChildStyle(String attrStyle) {
+            CssStyles deltaChildStyles = null;
+
+            if (attrStyle != null && !attrStyle.isEmpty()) {
+                for (String s : attrStyle.split(";")) {
+                    String[] kv = s.split(":");
+
+                    boolean same = mMap.containsKey(kv[0]) && mMap.get(kv[0]).equals(kv.length < 2 ? "" : kv[1]);
+                    if (!same) {
+                        if (deltaChildStyles == null) {
+                            deltaChildStyles = new CssStyles();
+                        }
+                        deltaChildStyles.add(s);
+                    }
+                }
+            }
+
+            if (deltaChildStyles == null) {
+                return null;
+            } else {
+                CssStyles newParentStyles = new CssStyles(this);
+                newParentStyles.addAll(deltaChildStyles);
+
+                return RPair.create(newParentStyles, deltaChildStyles.generateStyle());
+            }
+        }
+
+        public String generateStyle() {
+            StringBuilder sb = new StringBuilder();
+            boolean semi = false;
+            for (Map.Entry<String, String> entry : mMap.entrySet()) {
+                if (semi) {
+                    sb.append(';');
+                }
+                sb.append(entry.getKey()).append(':').append(entry.getValue());
+                semi = true;
+            }
+            return sb.toString();
+        }
+    }
 }
+
+
