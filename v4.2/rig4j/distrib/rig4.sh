@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 cd $(dirname "$0")
 RIG4JAR=../build/libs/rig4j-1.0-SNAPSHOT-all.jar
 
@@ -19,7 +20,10 @@ fi
 
 if [[ -n "$BUILD" ]]; then
     echo "Building $RIG4JAR ..."
-    ./gradlew --no-daemon fatJar
+    (
+        cd ..
+        ./gradlew --no-daemon fatJar
+    )
     echo
 fi
 
