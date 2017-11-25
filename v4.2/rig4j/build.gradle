@@ -2,6 +2,7 @@ plugins {
     id "java"
     // Add the Annotation Processor Plugin to run dagger at build-time.
     id "net.ltgt.apt" version "0.10"
+    id "org.ajoberstar.grgit" version "2.1.0"
 }
 
 group "com.alflabs.rig4"
@@ -49,7 +50,7 @@ dependencies {
 jar {
     manifest {
         attributes(
-                "Main-Class": "com.alflabs.rig4.EntryPoint",
+            "Main-Class": "com.alflabs.rig4.EntryPoint",
         )
     }
 }
@@ -71,6 +72,13 @@ task fatJar(type: Jar) {
 compileJava {
     delete dagger.generatedSrcDir
     source dagger.generatedSrcDir
+
+    // Generate a resource file with the jar version + git head hash
+    // (this file should be in gitignore).
+    def versionFile = new File("$buildDir/../src/main/resources/com/alflabs/rig4/version.txt")
+    def git = org.ajoberstar.grgit.Grgit.open(dir: "../..")
+    def revision = git.head().abbreviatedId
+    versionFile.write(project.version + "-" + revision)
 }
 
 clean {

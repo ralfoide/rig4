@@ -3,6 +3,7 @@ package com.alflabs.rig4.exp;
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
 import com.alflabs.rig4.BlobStore;
+import com.alflabs.rig4.EntryPoint;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
@@ -75,11 +76,27 @@ public class Exp {
     }
 
     public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
+        boolean changed = checkVersionChanged();
         List<HtmlEntry> entries = readIndex();
-        processEntries(entries);
+        processEntries(entries, changed);
     }
 
     // ---
+
+    private boolean checkVersionChanged() throws IOException {
+        final String versionKey = "version";
+
+        String currVersion = EntryPoint.getVersion();
+
+        boolean changed = !currVersion.equals(mBlobStore.getString(versionKey));
+        if (changed) {
+            mBlobStore.putString(versionKey, currVersion);
+            mLogger.d(TAG, "Regenerating for new rig4j version: " + currVersion);
+        }
+
+        return changed;
+    }
+
 
     private Pattern indexLineRe = Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
 
@@ -103,7 +120,8 @@ public class Exp {
         return entries;
     }
 
-    private void processEntries(@NonNull List<HtmlEntry> entries) throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
+    private void processEntries(@NonNull List<HtmlEntry> entries, boolean changed)
+            throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         String destDir = mFlags.getString(EXP_DEST_DIR);
 
         for (HtmlEntry entry : entries) {
@@ -115,7 +133,7 @@ public class Exp {
             Entity entity = getGDoc(entry.getFileId(), "text/html");
             byte[] docContent = entity.getContent();
             String title = entity.getMetadata().getTitle();
-            boolean keepExisting = entity.isUpdateToDate() && mFileOps.isFile(destFile);
+            boolean keepExisting = !changed && entity.isUpdateToDate() && mFileOps.isFile(destFile);
 
             String htmlHashKey = "html-hash-" + destFile.getPath();
             if (keepExisting) {
