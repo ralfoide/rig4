@@ -7,6 +7,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Entities;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.safety.Cleaner;
@@ -17,12 +18,16 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class HtmlTransformer {
 
     private static final String ELEM_A = "a";
+    private static final String ELEM_P = "p";
+    private static final String ELEM_TD = "td";
     private static final String ELEM_HR = "hr";
     private static final String ELEM_SPAN = "span";
     private static final String ELEM_IFRAME = "iframe";
@@ -34,11 +39,17 @@ public class HtmlTransformer {
     private static final String ATTR_STYLE = "style";
     private static final String ATTR_WIDTH = "width";
     private static final String ATTR_HEIGHT = "height";
+    private static final String ATTR_CLASS = "class";
 
     private static final String QUERY_Q = "q";
     private static final String QUERY_W = "w";
     private static final String QEURY_H = "h";
     private static final String QUERY_RIG4EMBED = "rig4embed";
+
+    private static final String FONT_CONSOLE = "Consolas";
+    private static final String CLASS_CONSOLE = "console";
+
+    private static final String HTML_NBSP = Entities.getByName("nbsp");
 
     @Inject
     public HtmlTransformer() {
@@ -56,6 +67,8 @@ public class HtmlTransformer {
             removeEmptyElements(doc, ELEM_A);
             removeEmptyElements(doc, ELEM_SPAN);
             cleanupInlineStyle(doc);
+            cleanupLineStyle(doc);
+            cleanupConsolasLineStyle(doc);
             rewriteUrls(doc, ATTR_HREF, callback);
             rewriteUrls(doc, ATTR_SRC, callback);
             rewriteYoutubeEmbed(doc);
@@ -65,7 +78,7 @@ public class HtmlTransformer {
             doc.outputSettings().charset(Charsets.UTF_8);
 
             // -- for debugging -- return doc.html();
-            Element body = doc.select("body").first();
+            Element body = doc.getElementsByTag("body").first();
             return body.html();
         }
     }
@@ -92,7 +105,7 @@ public class HtmlTransformer {
      * The GDoc export generates quite a number of useless ones.
      */
     private void removeEmptyElements(Element root, String name) {
-        for (Element element : root.select(name)) {
+        for (Element element : root.getElementsByTag(name)) {
             if (element.childNodeSize() == 0) {
                 element.remove();
             }
@@ -104,7 +117,7 @@ public class HtmlTransformer {
      * current gdocs and not show them by mistake in the final output.
      */
     private void removeIzuTags(Element root) {
-        for (Element element : root.select(":containsOwn([izu)")) {
+        for (Element element : root.getElementsContainingOwnText("[izu")) {
             for (int i = 0, n = element.childNodeSize(); i < n; i++) {
                 Node node = element.childNode(i);
                 if (node instanceof TextNode) {
@@ -131,7 +144,7 @@ public class HtmlTransformer {
      */
     private void cleanupInlineStyle(Element root) {
         CssStyles eraseStyles = new CssStyles();
-        Element p = root.select("p").first();
+        Element p = root.getElementsByTag("p").first();
         String baseStyle = p == null ? null : p.attr(ATTR_STYLE);
         eraseStyles.parseStyle(baseStyle);
         // mark these as part of the baseline to get rid of
@@ -172,6 +185,100 @@ public class HtmlTransformer {
     }
 
     /**
+     * Cleanup a lot of padding style attributes that don't seem that useful.
+     */
+    private void cleanupLineStyle(Element root) {
+        for (Element element : root.getElementsByTag("p")) {
+            CssStyles styles = new CssStyles();
+            styles.parseStyle(element.attr(ATTR_STYLE));
+            styles.remove("padding-bottom");
+            styles.remove("padding-left");
+            styles.remove("padding-right");
+            styles.remove("padding-top");
+            styles.remove("padding");
+            element.attr(ATTR_STYLE, styles.generateStyle());
+        }
+
+    }
+
+    /**
+     * Cleanup the "source code" tables in the gdoc exported html. This relies on my
+     * convention to include source code in these documents: They use a Consolas font,
+     * size 10, and are always inserted into a single cell table (one row, one column).
+     *
+     * The generated code does not use PRE (understandbly). Instead one P + SPAN is generated
+     * for each line with text. Empty lines use a P only with a fixed height.
+     *
+     * The cleanup works as follows:
+     * - The template CSS has a "console" class applied to P that removes the margin after P.
+     * - P elements have the class "console" applied if they are followed by a SPAN that has a
+     *   style listing Consolas (for simplification I just check that name, not the whole font
+     *   family attribute). This would cover the Consolas usage when it is also done outside
+     *   a table.
+     * - For all the TR > TD > P > SPAN structures, find the TD, and in there make sure there
+     *   is at least one SPAN with a Consolas style. If we find that, capture that style.
+     *   For all the P elements, remove any height style attribute and instead add a SPAN
+     *   with an nbsp if the P has no child (otherwise they show up at zero size). And also
+     *   make sure they are tagged with the console CSS class.
+     */
+    private void cleanupConsolasLineStyle(Element root) {
+        for (Element span : root.select("p > span")) {
+            String spanStyle = span.attr(ATTR_STYLE);
+            if (spanStyle != null && spanStyle.contains(FONT_CONSOLE)) {
+                Element p = span.parent();
+                if (p != null && p.tagName().equals(ELEM_P)) {
+                    String clazz = p.attr(ATTR_CLASS);
+                    if (!clazz.contains(CLASS_CONSOLE)) {
+                        p.attr(ATTR_CLASS, CLASS_CONSOLE + " " + clazz);
+                    }
+                }
+            }
+        }
+
+        Set<Element> visited = new HashSet<>();
+        for (Element span1 : root.select("tr > td > p > span")) {
+            Element p1 = span1.parent();
+            Element td = p1 == null ? null : p1.parent();
+            if (td == null || visited.contains(td)) {
+                continue;
+            }
+
+            visited.add(td);
+
+            String consoleSpanStyle = null;
+            for (Element span2 : td.select("p > span")) {
+                String spanStyle = span2.attr(ATTR_STYLE);
+                if (spanStyle != null && spanStyle.contains(FONT_CONSOLE)) {
+                    consoleSpanStyle = spanStyle;
+                    break;
+                }
+            }
+
+            if (consoleSpanStyle == null) {
+                continue;
+            }
+
+            for (Element p2 : td.getElementsByTag(ELEM_P)) {
+                CssStyles styles = new CssStyles();
+                styles.parseStyle(p2.attr(ATTR_STYLE));
+                if (styles.has(ATTR_HEIGHT)) {
+                    styles.remove(ATTR_HEIGHT);
+                    p2.attr(ATTR_STYLE, styles.generateStyle());
+                }
+                String clazz = p2.attr(ATTR_CLASS);
+                if (!clazz.contains(CLASS_CONSOLE)) {
+                    p2.attr(ATTR_CLASS, CLASS_CONSOLE + " " + clazz);
+                }
+                if (p2.childNodeSize() == 0) {
+                    p2.appendElement(ELEM_SPAN)
+                            .attr(ATTR_STYLE, consoleSpanStyle)
+                            .appendText(HTML_NBSP);
+                }
+            }
+        }
+    }
+
+    /**
      * Rewrite URLs:
      * - The gdoc exporter wraps all URLs using the google URL redirectory. Simply refer to the
      *   source directly and bypass the redirector.
@@ -179,7 +286,7 @@ public class HtmlTransformer {
      * - Any untreated google.com link is an error that should be loooked into.
      */
     private void rewriteUrls(Element root, String attrName, Callback callback) throws IOException, URISyntaxException {
-        for (Element element : root.select("[" + attrName + "]")) {
+        for (Element element : root.getElementsByAttribute(attrName)) {
             String value = element.attr(attrName);
             String newValue = null;
 
@@ -229,7 +336,7 @@ public class HtmlTransformer {
      * This only does it if the URL contains a "&rig4embed" attribute.
      */
     private void rewriteYoutubeEmbed(Element root) throws URISyntaxException {
-        for (Element element : root.select(ELEM_A)) {
+        for (Element element : root.getElementsByTag(ELEM_A)) {
             String href = element.attr(ATTR_HREF);
             if (!href.contains(QUERY_RIG4EMBED)) {
                 continue;
@@ -367,6 +474,14 @@ public class HtmlTransformer {
                 semi = true;
             }
             return sb.toString();
+        }
+
+        public void remove(String name) {
+            mMap.remove(name);
+        }
+
+        public boolean has(String name) {
+            return mMap.containsKey(name);
         }
     }
 }
