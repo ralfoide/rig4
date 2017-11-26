@@ -22,22 +22,23 @@ import java.util.TreeMap;
 
 public class HtmlTransformer {
 
-    public static final String ELEM_A = "a";
-    public static final String ELEM_HR = "hr";
-    public static final String ELEM_SPAN = "span";
-    public static final String ELEM_IFRAME = "iframe";
-    public static final String ELEM_STYLE = "style";
+    private static final String ELEM_A = "a";
+    private static final String ELEM_HR = "hr";
+    private static final String ELEM_SPAN = "span";
+    private static final String ELEM_IFRAME = "iframe";
+    private static final String ELEM_STYLE = "style";
 
-    public static final String ATTR_HREF = "href";
-    public static final String ATTR_SRC = "src";
-    public static final String ATTR_STYLE = "style";
-    public static final String ATTR_WIDTH = "width";
-    public static final String ATTR_HEIGHT = "height";
+    private static final String ATTR_ID = "id";
+    private static final String ATTR_HREF = "href";
+    private static final String ATTR_SRC = "src";
+    private static final String ATTR_STYLE = "style";
+    private static final String ATTR_WIDTH = "width";
+    private static final String ATTR_HEIGHT = "height";
 
-    public static final String QUERY_Q = "q";
-    public static final String QUERY_W = "w";
-    public static final String QEURY_H = "h";
-    public static final String QUERY_RIG4EMBED = "rig4embed";
+    private static final String QUERY_Q = "q";
+    private static final String QUERY_W = "w";
+    private static final String QEURY_H = "h";
+    private static final String QUERY_RIG4EMBED = "rig4embed";
 
     @Inject
     public HtmlTransformer() {
@@ -75,8 +76,11 @@ public class HtmlTransformer {
      */
     private Document cleanup(Document doc) {
         Whitelist relaxed = Whitelist.relaxed();
+        relaxed.preserveRelativeLinks(true);
         relaxed.addTags(ELEM_HR);
         relaxed.addTags(ELEM_STYLE);
+        relaxed.addProtocols(ELEM_A, ATTR_HREF, "#"); // allow internal anchors
+        relaxed.addAttributes(":all", ATTR_ID);
         relaxed.addAttributes(":all", ATTR_STYLE);
         Cleaner cleaner = new Cleaner(relaxed);
         doc = cleaner.clean(doc);
@@ -111,27 +115,6 @@ public class HtmlTransformer {
             }
         }
     }
-
-    /*
-     * Converts P with a single SPAN into a parent SPAN.
-     * Merges the span styles into the p styles.
-     * ==> This is currently deactivated, it changes too much the styling.
-     */
-    /*
-    private void mergeSingleSpans(Element root) {
-        for (Element span : root.select("p > span")) {
-            Element p = span.parent();
-            if (p.childNodeSize() == 1 && span.childNodeSize() == 1) {
-                Node child = span.childNode(0).clone();
-                Set<String> styles = parseStyle(p.attr(ATTR_STYLE), null);
-                parseStyle(span.attr(ATTR_STYLE), styles);
-                p.attr(ATTR_STYLE, generateStyle(styles));
-                span.remove();
-                p.appendChild(child);
-            }
-        }
-    }
-    */
 
     /**
      * Cleanup all STYLE attributes in 2 pases:
@@ -203,6 +186,12 @@ public class HtmlTransformer {
             URI uri = new URI(value);
             String host = uri.getHost();
             String path = uri.getPath();
+
+            if (host == null || path == null) {
+                // This is typically the case with anchor references (e.g. <a href="#chapter">).
+                continue;
+            }
+
             Map<String, String> queries = parseQuery(uri);
 
             if (host.equals("www.google.com") && path.equals("/url")) {
