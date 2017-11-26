@@ -1,6 +1,7 @@
 package com.alflabs.rig4.exp;
 
 import com.alflabs.utils.RPair;
+import com.alflabs.utils.RSparseArray;
 import com.google.common.base.Charsets;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -18,6 +19,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -27,11 +32,13 @@ public class HtmlTransformer {
 
     private static final String ELEM_A = "a";
     private static final String ELEM_P = "p";
-    private static final String ELEM_TD = "td";
     private static final String ELEM_HR = "hr";
+    private static final String ELEM_LI = "li";
+    private static final String ELEM_TD = "td";
+    private static final String ELEM_UL = "ul";
     private static final String ELEM_SPAN = "span";
-    private static final String ELEM_IFRAME = "iframe";
     private static final String ELEM_STYLE = "style";
+    private static final String ELEM_IFRAME = "iframe";
 
     private static final String ATTR_ID = "id";
     private static final String ATTR_HREF = "href";
@@ -66,6 +73,7 @@ public class HtmlTransformer {
             doc = cleanup(doc);
             removeEmptyElements(doc, ELEM_A);
             removeEmptyElements(doc, ELEM_SPAN);
+            rewriteBulletLists(doc);
             cleanupInlineStyle(doc);
             cleanupLineStyle(doc);
             cleanupConsolasLineStyle(doc);
@@ -143,10 +151,8 @@ public class HtmlTransformer {
      * and the style from the css can be respected.
      */
     private void cleanupInlineStyle(Element root) {
-        CssStyles eraseStyles = new CssStyles();
         Element p = root.getElementsByTag("p").first();
-        String baseStyle = p == null ? null : p.attr(ATTR_STYLE);
-        eraseStyles.parseStyle(baseStyle);
+        CssStyles eraseStyles = new CssStyles(p == null ? null : p.attr(ATTR_STYLE));
         // mark these as part of the baseline to get rid of
         eraseStyles.add("height:11pt");
         eraseStyles.add("font-family:\"Arial\"");
@@ -189,8 +195,7 @@ public class HtmlTransformer {
      */
     private void cleanupLineStyle(Element root) {
         for (Element element : root.getElementsByTag("p")) {
-            CssStyles styles = new CssStyles();
-            styles.parseStyle(element.attr(ATTR_STYLE));
+            CssStyles styles = new CssStyles(element.attr(ATTR_STYLE));
             styles.remove("padding-bottom");
             styles.remove("padding-left");
             styles.remove("padding-right");
@@ -259,8 +264,7 @@ public class HtmlTransformer {
             }
 
             for (Element p2 : td.getElementsByTag(ELEM_P)) {
-                CssStyles styles = new CssStyles();
-                styles.parseStyle(p2.attr(ATTR_STYLE));
+                CssStyles styles = new CssStyles(p2.attr(ATTR_STYLE));
                 if (styles.has(ATTR_HEIGHT)) {
                     styles.remove(ATTR_HEIGHT);
                     p2.attr(ATTR_STYLE, styles.generateStyle());
@@ -275,6 +279,116 @@ public class HtmlTransformer {
                             .appendText(HTML_NBSP);
                 }
             }
+        }
+    }
+
+    /**
+     * Rewrite UL / LI lists.
+     *
+     * This works by measuring the margin-left in UL > LI and using that to recreate the proper
+     * nesting.
+     *
+     * First find an UL tag with some LI.
+     * For any UL tag immediately after (next sibling), move its LI at the end of the first UL.
+     *
+     * That will gives uses one UL instead of many per level and all the LI at the same level are
+     * not differentiated by their margin-left.
+     *
+     * Instead of simply adding the LI into the first UL, look at the margin-left values.
+     * Value should not be considered absolute but relative.
+     * When values are larger, create a new UL to nest values.
+     * When the values become smaller, go find a previous level to append to.
+     * Use a lookup table to memorize which margin-left matches which nested UL level,
+     * in case a bullet list goes from level N to level N-2 or more directly.
+     */
+    private void rewriteBulletLists(Element root) {
+        Set<Element> visitedUl = new HashSet<>();
+
+        restartRootUl: while (true) {
+            for (Element ul1 : root.getElementsByTag(ELEM_UL)) {
+                if (visitedUl.contains(ul1)) {
+                    continue;
+                }
+                visitedUl.add(ul1);
+
+                Set<Element> removeUl = new HashSet<>();
+                ArrayList<Element> moveLi = new ArrayList<>();
+                Element ul2 = ul1;
+                nextSiblingUl:
+                while (ul2 != null && ul2.tagName().equals(ELEM_UL)) {
+                    // Check that UL contains *only* LI elements. If it doesn't then abort.
+                    for (Element li : ul2.children()) {
+                        if (!li.tagName().equals(ELEM_LI)) {
+                            break nextSiblingUl;
+                        }
+                    }
+
+                    for (Element li : ul2.children()) {
+                        moveLi.add(li.clone());
+                    }
+
+                    if (ul2 != ul1) {
+                        removeUl.add(ul2);
+                        visitedUl.add(ul2);
+                    }
+
+                    ul2 = ul2.nextElementSibling();
+                }
+
+                if (moveLi.isEmpty()) {
+                    continue; // next root UL
+                }
+
+                for (Element ul3 : removeUl) {
+                    ul3.remove();
+                }
+
+                for (Element li1 : ul1.children()) {
+                    li1.remove();
+                }
+
+                int lastMarginLeft = 0;
+                Element currLevel = ul1;
+                RSparseArray<Element> levelMap = new RSparseArray<>();
+                levelMap.put(lastMarginLeft, currLevel);
+                for (Element li1 : moveLi) {
+                    CssStyles liStyles = new CssStyles(li1.attr(ATTR_STYLE));
+                    int marginLeft = liStyles.getIntValue("margin-left", lastMarginLeft);
+                    liStyles.remove("margin-left");
+                    liStyles.remove("margin-right");
+                    liStyles.remove("margin-top");
+                    liStyles.remove("margin-bottom");
+                    li1.attr(ATTR_STYLE, liStyles.generateStyle());
+
+                    if (marginLeft > lastMarginLeft && lastMarginLeft > 0) {
+                        lastMarginLeft = marginLeft;
+                        currLevel = currLevel.appendElement(ELEM_UL);
+                        levelMap.put(marginLeft, currLevel);
+                    } else if (marginLeft < lastMarginLeft) {
+                        if (marginLeft < 0) {
+                            marginLeft = 0;
+                        }
+                        lastMarginLeft = marginLeft;
+                        currLevel = levelMap.get(marginLeft);
+                        if (currLevel == null) {
+                            int val = -1;
+                            for (int i = 0; i < levelMap.size() && val < marginLeft; i++) {
+                                val = levelMap.keyAt(i);
+                                currLevel = levelMap.get(val);
+                            }
+                        }
+
+                    } else if (levelMap.get(marginLeft) == null) {
+                        lastMarginLeft = marginLeft;
+                        levelMap.put(marginLeft, currLevel);
+                    }
+
+                    currLevel.appendChild(li1);
+                }
+
+                continue restartRootUl;
+            }
+            break;
         }
     }
 
@@ -415,6 +529,10 @@ public class HtmlTransformer {
 
         public CssStyles() {}
 
+        public CssStyles(String attrStyle) {
+            parseStyle(attrStyle);
+        }
+
         public CssStyles(CssStyles styles) {
             addAll(styles);
         }
@@ -482,6 +600,17 @@ public class HtmlTransformer {
 
         public boolean has(String name) {
             return mMap.containsKey(name);
+        }
+
+        public int getIntValue(String name, int missingValue) {
+            int i = missingValue;
+            String value = mMap.get(name);
+            if (value != null) {
+                try {
+                    i = NumberFormat.getIntegerInstance().parse(value).intValue();
+                } catch (ParseException ignore) {}
+            }
+            return i;
         }
     }
 }
