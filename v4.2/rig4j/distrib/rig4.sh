@@ -12,7 +12,7 @@ if [[ ! -f "$RIG4JAR" ]]; then
     BUILD="1"
 else
     GITREV=$(git rev-parse --short HEAD)
-    RIGREV=$(java -jar "$RIG4JAR" --version)
+    RIGREV=$(java -jar "$RIG4JAR" --version || echo "0")
     if [[ ! "$RIGREV" == *"$GITREV"* ]]; then
         BUILD="1"
     fi
