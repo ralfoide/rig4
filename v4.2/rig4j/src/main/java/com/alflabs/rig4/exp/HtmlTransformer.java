@@ -22,7 +22,6 @@ import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -33,20 +32,21 @@ public class HtmlTransformer {
     private static final String ELEM_A = "a";
     private static final String ELEM_P = "p";
     private static final String ELEM_HR = "hr";
-    private static final String ELEM_LI = "li";
     private static final String ELEM_TD = "td";
     private static final String ELEM_UL = "ul";
+    private static final String ELEM_LI = "li";
+    private static final String ELEM_IMG = "img";
     private static final String ELEM_SPAN = "span";
     private static final String ELEM_STYLE = "style";
     private static final String ELEM_IFRAME = "iframe";
 
-    private static final String ATTR_ID = "id";
+    private static final String ATTR_CLASS = "class";
     private static final String ATTR_HREF = "href";
+    private static final String ATTR_ID = "id";
     private static final String ATTR_SRC = "src";
     private static final String ATTR_STYLE = "style";
     private static final String ATTR_WIDTH = "width";
     private static final String ATTR_HEIGHT = "height";
-    private static final String ATTR_CLASS = "class";
 
     private static final String QUERY_Q = "q";
     private static final String QUERY_W = "w";
@@ -74,9 +74,9 @@ public class HtmlTransformer {
             removeEmptyElements(doc, ELEM_A);
             removeEmptyElements(doc, ELEM_SPAN);
             rewriteBulletLists(doc);
-            cleanupInlineStyle(doc);
             cleanupLineStyle(doc);
             cleanupConsolasLineStyle(doc);
+            cleanupInlineStyle(doc);
             rewriteUrls(doc, ATTR_HREF, callback);
             rewriteUrls(doc, ATTR_SRC, callback);
             rewriteYoutubeEmbed(doc);
@@ -427,6 +427,7 @@ public class HtmlTransformer {
                 int w = Integer.parseInt(queries.get(QUERY_W));
                 int h = Integer.parseInt(queries.get(QEURY_H));
                 newValue = callback.processDrawing(id, w, h);
+
             } else if (host.equals("docs.google.com") && path.startsWith("/drawings/d/") && path.endsWith("/image")) {
                 // Current style of drawing URLs.
                 String id = path.substring("/drawings/d/".length());
@@ -434,9 +435,25 @@ public class HtmlTransformer {
                 int w = Integer.parseInt(queries.get(QUERY_W));
                 int h = Integer.parseInt(queries.get(QEURY_H));
                 newValue = callback.processDrawing(id, w, h);
+
             } else if (host.contains(".google.com")) {
                 // Whatever this is, we should probably do something with it.
                 throw new TransformerException("ERROR Unprocessed URL for " + host + ", Path: " + path);
+
+            } else if (attrName.equals(ATTR_SRC) && element.tagName().equals(ELEM_IMG)) {
+                CssStyles styles = new CssStyles(element.attr(ATTR_STYLE));
+                String sw = element.attr(ATTR_WIDTH);
+                String sh = element.attr(ATTR_HEIGHT);
+                if (sw.isEmpty()) {
+                    sw = styles.get(ATTR_WIDTH);
+                }
+                if (sh.isEmpty()) {
+                    sh = styles.get(ATTR_HEIGHT);
+                }
+                int w = getIntValue(sw, 0);
+                int h = getIntValue(sh, 0);
+
+                newValue = callback.processImage(uri, w, h);
             }
 
             if (newValue != null) {
@@ -500,7 +517,6 @@ public class HtmlTransformer {
 
                 element.replaceWith(iframe);
             }
-
         }
     }
 
@@ -512,10 +528,28 @@ public class HtmlTransformer {
         return map;
     }
 
+    private static int getIntValue(String value, int missingValue) {
+        int i = missingValue;
+        if (value != null) {
+            try {
+                i = NumberFormat.getIntegerInstance().parse(value.trim()).intValue();
+            } catch (ParseException ignore) {}
+        }
+        return i;
+    }
+
     public interface Callback {
-        /** Process a drawing by downloading it, adjusting it to change to the desired size and
-         * returns the href for the new document. */
+        /**
+         * Process a drawing by downloading it, adjusting it to change to the desired size and
+         * returns the href for the new document.
+         */
         String processDrawing(String id, int width, int height) throws IOException;
+
+        /**
+         * Process an image by downloading it, adjusting it to change to the desired size and
+         * returns the src for the new document.
+         */
+        String processImage(URI uri, int width, int height) throws IOException;
     }
 
     public static class TransformerException extends RuntimeException {
@@ -602,15 +636,12 @@ public class HtmlTransformer {
             return mMap.containsKey(name);
         }
 
+        public String get(String name) {
+            return mMap.get(name);
+        }
+
         public int getIntValue(String name, int missingValue) {
-            int i = missingValue;
-            String value = mMap.get(name);
-            if (value != null) {
-                try {
-                    i = NumberFormat.getIntegerInstance().parse(value).intValue();
-                } catch (ParseException ignore) {}
-            }
-            return i;
+            return HtmlTransformer.getIntValue(mMap.get(name), missingValue);
         }
     }
 }

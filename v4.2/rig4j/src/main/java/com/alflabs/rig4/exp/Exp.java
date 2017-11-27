@@ -9,7 +9,12 @@ import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
+import com.google.common.io.ByteSink;
+import com.google.common.io.ByteSource;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
 import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.resizers.configurations.Antialiasing;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.imageio.ImageIO;
@@ -22,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -39,6 +45,8 @@ public class Exp {
     private static final String EXP_SITE_TITLE = "exp-site-title";
     private static final String EXP_SITE_BANNER = "exp-site-banner";
     private static final String EXP_SITE_BASE_URL = "exp-site-base-url";
+
+    private static final boolean CONVERT_IMAGES = false;
 
     private final Flags mFlags;
     private final ILogger mLogger;
@@ -98,7 +106,7 @@ public class Exp {
     }
 
 
-    private Pattern indexLineRe = Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
+    private static final Pattern indexLineRe = Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
 
     @NonNull
     private List<HtmlEntry> readIndex() throws IOException {
@@ -168,23 +176,33 @@ public class Exp {
     private String processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
         String htmlBody = mHtmlTransformer.simplify(
                 content,
-                (id, width, height) -> downloadDrawing(id, destFile, width, height));
+                new HtmlTransformer.Callback() {
+                    @Override
+                    public String processDrawing(String id, int width, int height) throws IOException {
+                        return Exp.this.downloadDrawing(id, destFile, width, height);
+                    }
+
+                    @Override
+                    public String processImage(URI uri, int width, int height) throws IOException {
+                        return Exp.this.downloadImage(uri, destFile, width, height);
+                    }
+                });
         return htmlBody;
     }
 
     private String downloadDrawing(String id, File destFile, int width, int height) throws IOException {
         // Note: There is no Drive API for embedded drawings.
         // Experience shows that we can't even get the metadata like for a normal gdoc.
-        // Instead we just download them everytime the doc is generated.
+        // Instead we just download them every time the doc is generated.
 
         String extension = "png";
         String destName = destFile.getName();
         destName = destName.replace(".html", "_");
         destName = destName.replace(".", "_");
-        destName += DigestUtils.shaHex("_drawing_" + id) + "." + extension;
+        destName += DigestUtils.shaHex("_drawing_" + id) + "d." + extension;
         destFile = new File(destFile.getParentFile(), destName);
 
-        mLogger.d(TAG, "     Downloading: " + destName + " [" + width + "x" + height + "]");
+        mLogger.d(TAG, "     Downloading: " + destName + ", drawing [" + width + "x" + height + "]");
 
         URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
         InputStream stream = mGDocReader.getDataByUrl(url);
@@ -265,6 +283,52 @@ public class Exp {
                 srcw, srch, x1, y1, destw, desth));
 
         return image;
+    }
+
+    private String downloadImage(URI uri, File destFile, int width, int height) throws IOException {
+
+        String path = uri.getPath();
+
+        String destName = destFile.getName();
+        destName = destName.replace(".html", "_");
+        destName = destName.replace(".", "_");
+        destName += DigestUtils.shaHex("_image_" + path) + "i";
+
+        // The stuff from gdocs appears to be mostly (if not always) PNG but there's
+        // no way to really know before actually downloading it.
+         String extension = "png";
+         destName += "." + extension;
+
+        destFile = new File(destFile.getParentFile(), destName);
+
+        mLogger.d(TAG, "     Downloading: " + destName + ", image [" + width + "x" + height + "]");
+
+        if (CONVERT_IMAGES) {
+            // Use the Thumbnailer to download, optionally resize and convert.
+            //
+            // This is currently disabled. Issues:
+            // - A lot of my images are drawings. They would look better as PNG than JPG.
+            //   Converting them actually makes them bigger and fuzzier.
+            // - To properly resize images, we should really know their initial size,
+            //   which the Thumbnailer API won't tell us and we can't figure without
+            //   downloading and parsing the image.
+            Thumbnails.Builder<URL> builder = Thumbnails.of(uri.toURL());
+            if (width > 0 || height > 0) {
+                builder = builder.size(width <= 0 ? height : width, height <= 0 ? width : height)
+                        .antialiasing(Antialiasing.ON);
+            }
+            builder.outputFormat("jpg")
+                    .outputQuality(0.75f)
+                    .toFile(destFile);
+
+        } else {
+            // Download as-is and do not convert
+            ByteSource reader = Resources.asByteSource(uri.toURL());
+            ByteSink writer = Files.asByteSink(destFile);
+            reader.copyTo(writer);
+        }
+
+        return destName;
     }
 
 
