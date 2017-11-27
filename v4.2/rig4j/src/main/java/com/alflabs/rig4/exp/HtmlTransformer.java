@@ -201,7 +201,7 @@ public class HtmlTransformer {
             styles.remove("padding-right");
             styles.remove("padding-top");
             styles.remove("padding");
-            element.attr(ATTR_STYLE, styles.generateStyle());
+            styles.applyTo(element);
         }
 
     }
@@ -267,7 +267,7 @@ public class HtmlTransformer {
                 CssStyles styles = new CssStyles(p2.attr(ATTR_STYLE));
                 if (styles.has(ATTR_HEIGHT)) {
                     styles.remove(ATTR_HEIGHT);
-                    p2.attr(ATTR_STYLE, styles.generateStyle());
+                    styles.applyTo(p2);
                 }
                 String clazz = p2.attr(ATTR_CLASS);
                 if (!clazz.contains(CLASS_CONSOLE)) {
@@ -347,6 +347,10 @@ public class HtmlTransformer {
                     li1.remove();
                 }
 
+                CssStyles ulStyles = new CssStyles(ul1.attr(ATTR_STYLE));
+                ulStyles.remove("padding");
+                ulStyles.applyTo(ul1);
+
                 int lastMarginLeft = 0;
                 Element currLevel = ul1;
                 RSparseArray<Element> levelMap = new RSparseArray<>();
@@ -358,7 +362,8 @@ public class HtmlTransformer {
                     liStyles.remove("margin-right");
                     liStyles.remove("margin-top");
                     liStyles.remove("margin-bottom");
-                    li1.attr(ATTR_STYLE, liStyles.generateStyle());
+                    liStyles.remove("padding");
+                    liStyles.applyTo(li1);
 
                     if (marginLeft > lastMarginLeft && lastMarginLeft > 0) {
                         lastMarginLeft = marginLeft;
@@ -642,6 +647,15 @@ public class HtmlTransformer {
 
         public int getIntValue(String name, int missingValue) {
             return HtmlTransformer.getIntValue(mMap.get(name), missingValue);
+        }
+
+        public void applyTo(Element element) {
+            String style = generateStyle();
+            if (style.isEmpty()) {
+                element.removeAttr(ATTR_STYLE);
+            } else {
+                element.attr(ATTR_STYLE, style);
+            }
         }
     }
 }
