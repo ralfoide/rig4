@@ -20,9 +20,11 @@ import org.apache.commons.codec.digest.DigestUtils;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +48,8 @@ public class Exp {
     private static final String EXP_SITE_BANNER = "exp-site-banner";
     private static final String EXP_SITE_BASE_URL = "exp-site-base-url";
 
-    private static final boolean CONVERT_IMAGES = false;
+    private static final boolean CONVERT_IMAGES = true;
+    private static final boolean COMPOSITE_GRAPHICS_TO_WHITE = true;
 
     private final Flags mFlags;
     private final ILogger mLogger;
@@ -131,6 +134,7 @@ public class Exp {
     private void processEntries(@NonNull List<HtmlEntry> entries, boolean changed)
             throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         String destDir = mFlags.getString(EXP_DEST_DIR);
+        mLogger.d(TAG, "     Destination: " + destDir);
 
         for (HtmlEntry entry : entries) {
             String destName = entry.getDestName();
@@ -199,24 +203,29 @@ public class Exp {
         String destName = destFile.getName();
         destName = destName.replace(".html", "_");
         destName = destName.replace(".", "_");
-        destName += DigestUtils.shaHex("_drawing_" + id) + "d." + extension;
-        destFile = new File(destFile.getParentFile(), destName);
+        destName += DigestUtils.shaHex("_drawing_" + id) + "d";
 
-        mLogger.d(TAG, "     Downloading: " + destName + ", drawing [" + width + "x" + height + "]");
+        mLogger.d(TAG, "         Drawing: " + destName + ", " + width + "x" + height);
 
         URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
         InputStream stream = mGDocReader.getDataByUrl(url);
         BufferedImage image = ImageIO.read(stream);
 
         if (width > 0 && height > 0) {
-            image = resizeImage(image, width, height);
+            image = cropAndResizeDrawing(image, width, height);
         }
 
-        ImageIO.write(image, extension, destFile);
+        if (CONVERT_IMAGES) {
+            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
+        } else {
+            destName += "." + extension;
+            destFile = new File(destFile.getParentFile(), destName);
+            ImageIO.write(image, extension, destFile);
+        }
         return destName;
     }
 
-    private BufferedImage resizeImage(BufferedImage image, int width, int height) throws IOException {
+    private BufferedImage cropAndResizeDrawing(BufferedImage image, int width, int height) throws IOException {
         int srcw = image.getWidth();
         int srch = image.getHeight();
 
@@ -279,6 +288,13 @@ public class Exp {
             desth = image.getHeight();
         }
 
+        if (COMPOSITE_GRAPHICS_TO_WHITE) {
+            BufferedImage white = new BufferedImage(destw, desth, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = white.createGraphics();
+            g2d.drawImage(image, 0, 0, Color.WHITE, null /*observer*/ );
+            image = white;
+        }
+
         mLogger.d(TAG, String.format("        Resizing: from [%dx%d] to (%dx%d)+[%dx%d]",
                 srcw, srch, x1, y1, destw, desth));
 
@@ -293,41 +309,93 @@ public class Exp {
         destName = destName.replace(".html", "_");
         destName = destName.replace(".", "_");
         destName += DigestUtils.shaHex("_image_" + path) + "i";
-
-        // The stuff from gdocs appears to be mostly (if not always) PNG but there's
-        // no way to really know before actually downloading it.
-         String extension = "png";
-         destName += "." + extension;
-
-        destFile = new File(destFile.getParentFile(), destName);
-
-        mLogger.d(TAG, "     Downloading: " + destName + ", image [" + width + "x" + height + "]");
+        mLogger.d(TAG, "           Image: " + destName + ", " + width + "x" + height);
 
         if (CONVERT_IMAGES) {
-            // Use the Thumbnailer to download, optionally resize and convert.
+            // Download the image, then compares whether a PNG or JPG would be more compact.
             //
-            // This is currently disabled. Issues:
-            // - A lot of my images are drawings. They would look better as PNG than JPG.
-            //   Converting them actually makes them bigger and fuzzier.
-            // - To properly resize images, we should really know their initial size,
-            //   which the Thumbnailer API won't tell us and we can't figure without
-            //   downloading and parsing the image.
-            Thumbnails.Builder<URL> builder = Thumbnails.of(uri.toURL());
-            if (width > 0 || height > 0) {
-                builder = builder.size(width <= 0 ? height : width, height <= 0 ? width : height)
-                        .antialiasing(Antialiasing.ON);
-            }
-            builder.outputFormat("jpg")
-                    .outputQuality(0.75f)
-                    .toFile(destFile);
+            // The gdoc exported images seem to always be PNG, even when copied from photos.
+            // Drawings are fairly compact in PNG, but not photos.
+
+            BufferedImage image = ImageIO.read(uri.toURL());
+            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
 
         } else {
+            // The stuff from gdocs appears to be mostly (if not always) PNG but there's
+            // no way to really know before actually downloading it.
+            String extension = "png";
+            destName += "." + extension;
+            destFile = new File(destFile.getParentFile(), destName);
+
             // Download as-is and do not convert
             ByteSource reader = Resources.asByteSource(uri.toURL());
             ByteSink writer = Files.asByteSink(destFile);
             reader.copyTo(writer);
         }
 
+        return destName;
+    }
+
+    /**
+     * Writes the image to a file destDir/destName, either as PNG or JPG, whichever is more compact.
+     * <p/>
+     * If both width and height are zero, the image size is used.<br/>
+     * Otherwise, a zero value is computed to match a scaled aspect ratio.<br/>
+     * A typical case is to have width=some value and height=0, in which case height is recomputed
+     * to match the scaled width.
+     * <p/>
+     * Side effect: this loads both the original image and the generated JPG and PNG streams in
+     * memory. It also means the original image is always decoded then re-encoded, even if it's
+     * in the same format.
+     *
+     * @param destDir Destination direction.
+     * @param destName Base name (without the .extension)
+     * @param image Image to write
+     * @param width Desired width or 0
+     * @param height Desired heith or 0
+     * @return The final destName with extension
+     * @throws IOException
+     */
+    private String writeImageJpgOrPng(File destDir, String destName, BufferedImage image, int width, int height) throws IOException {
+        int w = image.getWidth();
+        int h = image.getHeight();
+
+        if (width > 0 && height <= 0) {
+            height = (int) Math.round(h * (double) w / (double) width);
+        } else if (width <= 0 && height <= 0) {
+            width = image.getWidth();
+            height = image.getHeight();
+        }
+
+        ByteArrayOutputStream pngStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream jpgStream = new ByteArrayOutputStream();
+        Thumbnails.of(image)
+                .size(width, height)
+                .antialiasing(Antialiasing.ON)
+                .outputFormat("png")
+                .toOutputStream(pngStream);
+        Thumbnails.of(image)
+                .size(width, height)
+                .antialiasing(Antialiasing.ON)
+                .outputFormat("jpg")
+                .outputQuality(0.9f)
+                .toOutputStream(jpgStream);
+
+        pngStream.close();
+        jpgStream.close();
+
+        int pngSize = pngStream.size();
+        int jpgSize = jpgStream.size();
+        ByteArrayOutputStream result = pngSize < jpgSize ? pngStream : jpgStream;
+        String extension = pngSize < jpgSize ? "png" : "jpg";
+        destName += "." + extension;
+        destDir = new File(destDir.getParentFile(), destName);
+
+        mLogger.d(TAG, "         Writing: " + destName
+                + ", " + width + "x" + height
+                + ", [png: " + pngSize + " " + (pngSize < jpgSize ? "<" : ">") + " jpg: " + jpgSize + "]");
+        ByteSink writer = Files.asByteSink(destDir);
+        writer.write(result.toByteArray());
         return destName;
     }
 
