@@ -30,7 +30,11 @@ p.console {
 }
 
 .container {
-  max-width: 60rem;
+    max-width: 60rem;
+}
+
+.center-horiz {
+    margin: auto;
 }
 
 .no-margin-container {
@@ -77,6 +81,10 @@ h1, h2, h3, h4, h5, h6 {
     border: 0;
 }
 
+td p {
+    margin: 0;
+}
+
 {{.Css}}
 </style>
 </head>
@@ -93,10 +101,12 @@ h1, h2, h3, h4, h5, h6 {
 </header>
 
 <main role="main">
-<div class="main container">
+<div class="main">
+<div class="container center-horiz">
 
 {{.Content}}
 
+</div>
 </div>
 </main>
 
