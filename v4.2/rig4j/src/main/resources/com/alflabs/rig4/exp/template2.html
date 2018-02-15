@@ -1,12 +1,24 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
+<meta charset="utf-8">
+<meta name="viewport"    content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="author"      content="">
 
-    <title>{{.SiteTitle}}</title>
+<meta property="og:url"         content="{{.SiteBaseUrl}}{{.PageFilename}}" />
+<meta property="og:type"        content="article" />
+<meta property="og:title"       content="{{.PageTitle}}" />
+<!-- {{If.Description}}<meta property="og:description" content="{{.Description}}" />{{Endif}}-->
+<!-- {{If.ImageFilename}}<meta property="og:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}-->
+
+<meta name="twitter:card"        content="summary" />
+<!-- meta name="twitter:site"    content="@flickr" / -->
+<meta name="twitter:title"       content="{{.PageTitle}}" />
+<!-- {{If.Description}}<meta name="twitter:description" content="{{.Description}}" />{{Endif}}-->
+<!-- {{If.ImageFilename}}<meta name="twitter:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}-->
+
+<title>{{.PageTitle}}</title>
 
 <!-- Custom styles for this template -->
 <style type="text/css">

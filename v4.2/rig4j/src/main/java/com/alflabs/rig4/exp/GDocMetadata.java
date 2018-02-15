@@ -6,7 +6,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class GDocMetadata {
     @NonNull
-    public static GDocMetadata create(@NonNull String title,@NonNull String contentHash) {
+    public static GDocMetadata create(@NonNull String title, @NonNull String contentHash) {
         return new AutoValue_GDocMetadata(title, contentHash);
     }
 

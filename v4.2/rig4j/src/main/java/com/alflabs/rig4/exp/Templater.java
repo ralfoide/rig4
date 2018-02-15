@@ -69,6 +69,7 @@ public class Templater {
                 String css,
                 String GAUid,
                 String pageTitle,
+                String pageFilename,
                 String siteTitle,
                 String siteBaseUrl,
                 String bannerFilename,
@@ -77,6 +78,7 @@ public class Templater {
                     css,
                     GAUid,
                     pageTitle,
+                    pageFilename,
                     siteTitle,
                     siteBaseUrl,
                     bannerFilename,
@@ -86,6 +88,7 @@ public class Templater {
         public abstract String getCss();
         public abstract String getGAUid();
         public abstract String getPageTitle();
+        public abstract String getPageFilename();
         public abstract String getSiteTitle();
         public abstract String getSiteBaseUrl();
         public abstract String getBannerFilename();

@@ -46,6 +46,7 @@ public class Exp {
     private static final String EXP_GA_UID = "exp-ga-uid";
     private static final String EXP_SITE_TITLE = "exp-site-title";
     private static final String EXP_SITE_BANNER = "exp-site-banner";
+    /** Base URL is expected to be in the format http(s)://some.host(/folder)/ */
     private static final String EXP_SITE_BASE_URL = "exp-site-base-url";
 
     private static final boolean CONVERT_IMAGES = true;
@@ -83,7 +84,7 @@ public class Exp {
         mFlags.addString(EXP_GA_UID,      "",           "Exp GA UID");
         mFlags.addString(EXP_SITE_TITLE,  "Site Title", "Web site title");
         mFlags.addString(EXP_SITE_BANNER, "header.jpg", "Web site banner filename");
-        mFlags.addString(EXP_SITE_BASE_URL, "/",        "Web site base URL");
+        mFlags.addString(EXP_SITE_BASE_URL, "http://localhost/folder/", "Web site base URL");
     }
 
     public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
@@ -134,6 +135,7 @@ public class Exp {
     private void processEntries(@NonNull List<HtmlEntry> entries, boolean changed)
             throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         String destDir = mFlags.getString(EXP_DEST_DIR);
+        mLogger.d(TAG, "        Site URL: " + mFlags.getString(EXP_SITE_BASE_URL));
         mLogger.d(TAG, "     Destination: " + destDir);
 
         for (HtmlEntry entry : entries) {
@@ -162,6 +164,7 @@ public class Exp {
                         "", // css
                         mFlags.getString(EXP_GA_UID),
                         title,
+                        destName,
                         mFlags.getString(EXP_SITE_TITLE),
                         mFlags.getString(EXP_SITE_BASE_URL),
                         mFlags.getString(EXP_SITE_BANNER),
