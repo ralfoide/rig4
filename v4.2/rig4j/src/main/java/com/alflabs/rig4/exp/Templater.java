@@ -54,9 +54,14 @@ public class Templater {
 
     public String generate(TemplateData data) throws IOException, InvocationTargetException, IllegalAccessException, ParseException {
         String source = getTemplate();
-        StringBuilder result = new StringBuilder();
         Map<String, String> vars = new TreeMap<>();
 
+        return generateImpl(data, source, vars);
+    }
+
+    private String generateImpl(TemplateData data, String source, Map<String, String> vars) throws ParseException, InvocationTargetException, IllegalAccessException {
+        StringBuilder result = new StringBuilder();
+        String sourceLower = source.toLowerCase(Locale.US);
         int len = source.length();
         for (int offset = 0; offset < len; ) {
             int start = source.indexOf("{{", offset);
@@ -79,11 +84,28 @@ public class Templater {
             String name = command.substring(dot + 1).toLowerCase(Locale.US);
             String value = getVarValue(data, name, vars);
             String function = dot <= 0 ? "" : command.substring(0, dot).toLowerCase(Locale.US);
-            if (!function.isEmpty()) {
+
+            String replacement = value;
+            switch (function) {
+            case "if":
+                int endif = sourceLower.indexOf("{{endif}}", offset);
+                if (endif < offset) {
+                    throw new ParseException("Missing '{{EndIf}}' for '" + command + "' in template", offset);
+                }
+                if (value.trim().isEmpty()) {
+                    replacement = "";
+                } else {
+                    String innerSource = source.substring(offset, endif);
+                    replacement = generateImpl(data, innerSource, vars);
+                }
+                offset = endif + "{{endif}}".length();
+                break;
+            case "":
+                break;
+            default:
                 throw new ParseException("Invalid function in '" + command + "' in template", start);
             }
 
-            String replacement = value;
             result.append(replacement);
         }
 

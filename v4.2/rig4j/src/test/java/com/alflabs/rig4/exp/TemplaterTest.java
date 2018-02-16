@@ -65,4 +65,40 @@ public class TemplaterTest {
 
     }
 
+    @Test
+    public void testIfEmpty() throws Exception {
+        String template = "" +
+                "{{If.NonExistent}}<!doctype html>\n" +
+                "<html lang=\"en\">\n" +
+                "<meta property=\"og:url\"         content=\"{{.SiteBaseUrl}}{{.PageFilename}}\" />\n" +
+                "<meta property=\"og:type\"        content=\"article\" />\n" +
+                "<head>{{EndIf}}\n" +
+                "<meta property=\"og:title\"       content=\"{{.PageTitle}}\" />\n" +
+                "{{IF.Description}}<meta property=\"og:description\" content=\"{{.Description}}\" />{{ENDIF}}\n" +
+                "{{if.content}}{{.Content}}{{endif}}\n" +
+                "    ga('create', '{{.GAUid}}', 'auto');\n";
+
+        Templater templater = new Templater(mFlags, template);
+
+        String generated = templater.generate(Templater.TemplateData.create(
+                "CSS replacement",
+                "GA UID replacement",
+                "Page Title replacement",
+                "Page Filename replacement",
+                "Site Title replacement",
+                "http://Site URL/replacement/",
+                "Banner replacement",
+                "Content replacement\n" +
+                        "Multiple content."));
+
+        assertThat(generated).isEqualTo("" +
+                "\n" +
+                "<meta property=\"og:title\"       content=\"Page Title replacement\" />\n" +
+                "\n" +
+                "Content replacement\n" +
+                "Multiple content.\n" +
+                "    ga('create', 'GA UID replacement', 'auto');\n");
+
+    }
+
 }

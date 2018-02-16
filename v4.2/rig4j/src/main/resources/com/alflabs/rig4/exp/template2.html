@@ -9,14 +9,14 @@
 <meta property="og:url"         content="{{.SiteBaseUrl}}{{.PageFilename}}" />
 <meta property="og:type"        content="article" />
 <meta property="og:title"       content="{{.PageTitle}}" />
-<!-- {{If.Description}}<meta property="og:description" content="{{.Description}}" />{{Endif}}-->
-<!-- {{If.ImageFilename}}<meta property="og:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}-->
+{{If.Description}}<meta property="og:description" content="{{.Description}}" />{{Endif}}
+{{If.ImageFilename}}<meta property="og:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}
 
 <meta name="twitter:card"        content="summary" />
 <!-- meta name="twitter:site"    content="@flickr" / -->
 <meta name="twitter:title"       content="{{.PageTitle}}" />
-<!-- {{If.Description}}<meta name="twitter:description" content="{{.Description}}" />{{Endif}}-->
-<!-- {{If.ImageFilename}}<meta name="twitter:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}-->
+{{If.Description}}<meta name="twitter:description" content="{{.Description}}" />{{Endif}}
+{{If.ImageFilename}}<meta name="twitter:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}
 
 <title>{{.PageTitle}}</title>
 
