@@ -1,5 +1,6 @@
 package com.alflabs.rig4.exp;
 
+import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.flags.Flags;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
@@ -12,6 +13,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.text.ParseException;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,25 +52,73 @@ public class Templater {
         return mTemplate;
     }
 
-    public String generate(TemplateData data) throws IOException, InvocationTargetException, IllegalAccessException {
-        String result = getTemplate();
+    public String generate(TemplateData data) throws IOException, InvocationTargetException, IllegalAccessException, ParseException {
+        String source = getTemplate();
+        StringBuilder result = new StringBuilder();
+        Map<String, String> vars = new TreeMap<>();
+
+        int len = source.length();
+        for (int offset = 0; offset < len; ) {
+            int start = source.indexOf("{{", offset);
+            int end = source.indexOf("}}", offset);
+            if (start == -1 || end <= start) {
+                result.append(source.substring(offset, len));
+                break;
+            }
+            if (start > offset) {
+                result.append(source.substring(offset, start));
+            }
+            offset = end + 2;
+
+            String command = source.substring(start + 2, end);
+            int dot = command.indexOf('.');
+            if (dot == -1) {
+                throw new ParseException("Invalid command '" + command + "' in template", start);
+            }
+
+            String name = command.substring(dot + 1).toLowerCase(Locale.US);
+            String value = getVarValue(data, name, vars);
+            String function = dot <= 0 ? "" : command.substring(0, dot).toLowerCase(Locale.US);
+            if (!function.isEmpty()) {
+                throw new ParseException("Invalid function in '" + command + "' in template", start);
+            }
+
+            String replacement = value;
+            result.append(replacement);
+        }
+
+        return result.toString();
+    }
+
+    @NonNull
+    private String getVarValue(
+            @NonNull TemplateData data,
+            @NonNull String name,
+            @NonNull Map<String, String> vars) throws InvocationTargetException, IllegalAccessException {
+        String value = vars.get(name);
+        if (value != null) {
+            return value;
+        }
 
         for (Method method : data.getClass().getMethods()) {
             String mname = method.getName();
-            if (!mname.startsWith("get")) {
+            if (!mname.toLowerCase(Locale.US).equals("get" + name)) {
                 continue;
             }
-            mname = mname.substring("get".length());
             if ((method.getModifiers() & Modifier.PUBLIC) == 0
                     || !String.class.isAssignableFrom(method.getReturnType())) {
                 continue;
             }
-            String value = (String) method.invoke(data);
-            String key = "{{." + mname + "}}";
-            result = result.replaceAll(Pattern.quote(key), Matcher.quoteReplacement(value));
+            value = (String) method.invoke(data);
+            break;
         }
 
-        return result;
+        if (value == null) {
+            value = "";
+        }
+        vars.put(name, value);
+
+        return value;
     }
 
     @AutoValue

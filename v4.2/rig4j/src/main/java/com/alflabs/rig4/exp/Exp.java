@@ -32,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -87,7 +88,7 @@ public class Exp {
         mFlags.addString(EXP_SITE_BASE_URL, "http://localhost/folder/", "Web site base URL");
     }
 
-    public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
+    public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException, ParseException {
         boolean changed = checkVersionChanged();
         List<HtmlEntry> entries = readIndex();
         processEntries(entries, changed);
@@ -133,7 +134,7 @@ public class Exp {
     }
 
     private void processEntries(@NonNull List<HtmlEntry> entries, boolean changed)
-            throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException {
+            throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException, ParseException {
         String destDir = mFlags.getString(EXP_DEST_DIR);
         mLogger.d(TAG, "        Site URL: " + mFlags.getString(EXP_SITE_BASE_URL));
         mLogger.d(TAG, "     Destination: " + destDir);

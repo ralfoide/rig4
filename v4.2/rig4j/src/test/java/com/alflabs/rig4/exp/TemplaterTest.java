@@ -53,7 +53,7 @@ public class TemplaterTest {
                 "<meta property=\"og:url\"         content=\"http://Site URL/replacement/Page Filename replacement\" />\n" +
                 "<meta property=\"og:type\"        content=\"article\" />\n" +
                 "<meta property=\"og:title\"       content=\"Page Title replacement\" />\n" +
-                "<meta property=\"og:description\" content=\"{{.Description}}\" />\n" +
+                "<meta property=\"og:description\" content=\"\" />\n" +
                 "\n" +
                 "<title>Page Title replacement</title>\n" +
                 "CSS replacement\n" +
