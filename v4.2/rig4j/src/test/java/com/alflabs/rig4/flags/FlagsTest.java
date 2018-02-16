@@ -13,8 +13,6 @@ import java.io.File;
 import java.util.Properties;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.ArgumentMatchers.anyObject;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.when;
 
 /** Test for {@link Flags}. */

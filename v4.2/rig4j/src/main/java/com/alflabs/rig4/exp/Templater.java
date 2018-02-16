@@ -27,6 +27,11 @@ public class Templater {
         mFlags = flags;
     }
 
+    public Templater(Flags flags, String template) {
+        mFlags = flags;
+        mTemplate = template;
+    }
+
     public void declareFlags() {
         mFlags.addString(EXP_TEMPLATE_NAME, "template2.html", "Exp Template Name");
     }
