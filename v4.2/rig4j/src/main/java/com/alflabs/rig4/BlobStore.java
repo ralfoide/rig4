@@ -112,7 +112,7 @@ public class BlobStore {
     private byte[] retrieve(@NonNull String descriptor, @NonNull String suffix) throws IOException {
         String key = DigestUtils.shaHex(descriptor) + suffix;
         File file = new File(StringUtils.expandUserHome(mFlags.getString(BLOB_STORE_DIR)), key);
-        if (!file.isFile()) return null;
+        if (!mFileOps.isFile(file)) return null;
         return mFileOps.readBytes(file);
     }
 }
