@@ -1,6 +1,7 @@
 package com.alflabs.rig4.exp;
 
 import com.alflabs.annotations.NonNull;
+import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.ILogger;
 import com.alflabs.utils.StringUtils;
@@ -52,15 +53,17 @@ public class GDocReader {
     private final JsonFactory mJsonFactory;
     private final Flags mFlags;
     private final ILogger mLogger;
+    private final Timing.TimeAccumulator mTiming;
     private NetHttpTransport mHttpTransport;
     private Drive mDrive;
 
 
     @Inject
-    public GDocReader(JsonFactory jsonFactory, Flags flags, ILogger logger) {
+    public GDocReader(JsonFactory jsonFactory, Flags flags, Timing timing, ILogger logger) {
         mJsonFactory = jsonFactory;
         mFlags = flags;
         mLogger = logger;
+        mTiming = timing.get("GDocReader");
     }
 
     public void declareFlags() {
@@ -73,12 +76,14 @@ public class GDocReader {
     }
 
     public void init() throws GeneralSecurityException, IOException {
+        mTiming.start();
         mHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Credential credential = authorize();
         // set up the global Drive instance
         mDrive = new Drive.Builder(mHttpTransport, mJsonFactory, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+        mTiming.end();
     }
 
     /**
@@ -136,9 +141,14 @@ public class GDocReader {
      */
     public byte[] readFileById(String fileId, String mimeType) throws IOException {
         // https://developers.google.com/drive/v3/web/manage-downloads
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        mDrive.files().export(fileId, mimeType).executeAndDownloadTo(baos);
-        return baos.toByteArray();
+        mTiming.start();
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            mDrive.files().export(fileId, mimeType).executeAndDownloadTo(baos);
+            return baos.toByteArray();
+        } finally {
+            mTiming.end();
+        }
     }
 
     /**
@@ -149,26 +159,35 @@ public class GDocReader {
         // We need to explicitely tell which fields we want, otherwsie the response
         // contains nothing useful. This is still a hint and some fields might just
         // be missing (e.g. the md5 checksum on a gdoc).
-        Drive.Files.Get get = mDrive.files()
-                .get(fileId)
-                .setFields("md5Checksum,modifiedTime,version,name");
-        com.google.api.services.drive.model.File gfile = get.execute();
+        mTiming.start();
+        try {
+            Drive.Files.Get get = mDrive.files()
+                    .get(fileId)
+                    .setFields("md5Checksum,modifiedTime,version,name");
+            com.google.api.services.drive.model.File gfile = get.execute();
 
-        Long version = gfile.getVersion();
-        String checksum = gfile.getMd5Checksum();
-        DateTime dateTime = gfile.getModifiedTime();
+            Long version = gfile.getVersion();
+            String checksum = gfile.getMd5Checksum();
+            DateTime dateTime = gfile.getModifiedTime();
 
-        String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
-        hash = DigestUtils.shaHex(hash);
+            String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
+            hash = DigestUtils.shaHex(hash);
 
-        return GDocMetadata.create(gfile.getName(), hash);
+            return GDocMetadata.create(gfile.getName(), hash);
+        } finally {
+            mTiming.end();
+        }
     }
 
     public InputStream getDataByUrl(URL url) throws IOException {
-        HttpRequest request = mDrive.getRequestFactory().buildGetRequest(new GenericUrl(url));
-        request.setThrowExceptionOnExecuteError(true);
-        HttpResponse response = request.execute();
-        return response.getContent();
+        mTiming.start();
+        try {
+            HttpRequest request = mDrive.getRequestFactory().buildGetRequest(new GenericUrl(url));
+            request.setThrowExceptionOnExecuteError(true);
+            HttpResponse response = request.execute();
+            return response.getContent();
+        } finally {
+            mTiming.end();
+        }
     }
-
 }

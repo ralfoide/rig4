@@ -1,9 +1,12 @@
 package com.alflabs.rig4;
 
 import com.alflabs.rig4.flags.Flags;
+import com.alflabs.utils.FakeClock;
 import com.alflabs.utils.FakeFileOps;
 import com.alflabs.utils.FileOps;
+import com.alflabs.utils.IClock;
 import com.alflabs.utils.ILogger;
+import com.alflabs.utils.MockClock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,13 +15,13 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.verify;
 
 public class BlobStoreTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     private @Mock Flags mFlags;
     private @Mock ILogger mLogger;
+    private final Timing mTiming = new Timing(new MockClock(), mLogger);
 
     private FileOps mFileOps;
     private BlobStore mStore;
@@ -27,7 +30,7 @@ public class BlobStoreTest {
     @Before
     public void setUp() throws Exception {
         mFileOps = new FakeFileOps();
-        mStore = new BlobStore(mFlags, mFileOps, mLogger);
+        mStore = new BlobStore(mFlags, mFileOps, mTiming, mLogger);
     }
 
     @Test

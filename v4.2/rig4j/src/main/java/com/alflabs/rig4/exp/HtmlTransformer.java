@@ -1,5 +1,6 @@
 package com.alflabs.rig4.exp;
 
+import com.alflabs.rig4.Timing;
 import com.alflabs.utils.RPair;
 import com.alflabs.utils.RSparseArray;
 import com.google.common.base.Charsets;
@@ -57,9 +58,11 @@ public class HtmlTransformer {
     private static final String CLASS_CONSOLE = "console";
 
     private static final String HTML_NBSP = Entities.getByName("nbsp");
+    private final Timing.TimeAccumulator mTiming;
 
     @Inject
-    public HtmlTransformer() {
+    public HtmlTransformer(Timing timing) {
+        mTiming = timing.get("HtmlTransformer");
     }
 
     /**
@@ -67,6 +70,7 @@ public class HtmlTransformer {
      * Returns the <em>Body</em> element only.
      */
     public String simplify(byte[] content, Callback callback) throws IOException, URISyntaxException {
+        mTiming.start();
         try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
             Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
 
@@ -88,6 +92,8 @@ public class HtmlTransformer {
             // -- for debugging -- return doc.html();
             Element body = doc.getElementsByTag("body").first();
             return body.html();
+        } finally {
+            mTiming.end();
         }
     }
 

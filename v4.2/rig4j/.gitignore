@@ -3,3 +3,4 @@
 build
 src/dagger
 src/main/resources/com/alflabs/rig4/version.txt
+out

@@ -1,6 +1,10 @@
 package com.alflabs.rig4.exp;
 
+import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
+import com.alflabs.utils.IClock;
+import com.alflabs.utils.ILogger;
+import com.alflabs.utils.MockClock;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -14,6 +18,8 @@ public class TemplaterTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
     private @Mock Flags mFlags;
+    private @Mock ILogger mLogger;
+    private final Timing mTiming = new Timing(new MockClock(), mLogger);
 
     @Test
     public void testSimpleReplacements() throws Exception {
@@ -33,7 +39,7 @@ public class TemplaterTest {
                 "{{.Content}}\n" +
                 "    ga('create', '{{.GAUid}}', 'auto');\n";
 
-        Templater templater = new Templater(mFlags, template);
+        Templater templater = new Templater(mFlags, mTiming, template);
 
         String generated = templater.generate(Templater.TemplateData.create(
                 "CSS replacement",
@@ -78,7 +84,7 @@ public class TemplaterTest {
                 "{{if.content}}{{.Content}}{{endif}}\n" +
                 "    ga('create', '{{.GAUid}}', 'auto');\n";
 
-        Templater templater = new Templater(mFlags, template);
+        Templater templater = new Templater(mFlags, mTiming, template);
 
         String generated = templater.generate(Templater.TemplateData.create(
                 "CSS replacement",

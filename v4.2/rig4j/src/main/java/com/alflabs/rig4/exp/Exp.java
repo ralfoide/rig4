@@ -4,6 +4,7 @@ import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
 import com.alflabs.rig4.BlobStore;
 import com.alflabs.rig4.EntryPoint;
+import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
@@ -56,6 +57,7 @@ public class Exp {
     private final Flags mFlags;
     private final ILogger mLogger;
     private final FileOps mFileOps;
+    private final Timing mTiming;
     private final GDocReader mGDocReader;
     private final BlobStore mBlobStore;
     private final Templater mTemplater;
@@ -66,6 +68,7 @@ public class Exp {
             Flags flags,
             ILogger logger,
             FileOps fileOps,
+            Timing timing,
             GDocReader gDocReader,
             BlobStore blobStore,
             Templater templater,
@@ -73,6 +76,7 @@ public class Exp {
         mFlags = flags;
         mLogger = logger;
         mFileOps = fileOps;
+        mTiming = timing;
         mGDocReader = gDocReader;
         mBlobStore = blobStore;
         mTemplater = templater;
@@ -178,6 +182,8 @@ public class Exp {
                 mBlobStore.putString(htmlHashKey, entity.getMetadata().getContentHash());
             }
         }
+
+        mTiming.printToLog();
     }
 
     @NonNull
@@ -199,6 +205,7 @@ public class Exp {
     }
 
     private String downloadDrawing(String id, File destFile, int width, int height) throws IOException {
+        Timing.TimeAccumulator timing = mTiming.get("Html.Drawing").start();
         // Note: There is no Drive API for embedded drawings.
         // Experience shows that we can't even get the metadata like for a normal gdoc.
         // Instead we just download them every time the doc is generated.
@@ -226,10 +233,12 @@ public class Exp {
             destFile = new File(destFile.getParentFile(), destName);
             ImageIO.write(image, extension, destFile);
         }
+        timing.end();
         return destName;
     }
 
     private BufferedImage cropAndResizeDrawing(BufferedImage image, int width, int height) throws IOException {
+        Timing.TimeAccumulator timing = mTiming.get("Html.Drawing.Crop").start();
         int srcw = image.getWidth();
         int srch = image.getHeight();
 
@@ -302,11 +311,12 @@ public class Exp {
         mLogger.d(TAG, String.format("        Resizing: from [%dx%d] to (%dx%d)+[%dx%d]",
                 srcw, srch, x1, y1, destw, desth));
 
+        timing.end();
         return image;
     }
 
     private String downloadImage(URI uri, File destFile, int width, int height) throws IOException {
-
+        Timing.TimeAccumulator timing = mTiming.get("Html.Image").start();
         String path = uri.getPath();
 
         String destName = destFile.getName();
@@ -337,6 +347,7 @@ public class Exp {
             reader.copyTo(writer);
         }
 
+        timing.end();
         return destName;
     }
 
@@ -361,6 +372,7 @@ public class Exp {
      * @throws IOException
      */
     private String writeImageJpgOrPng(File destDir, String destName, BufferedImage image, int width, int height) throws IOException {
+        Timing.TimeAccumulator timing = mTiming.get("Html.JpegOrPng").start();
         int w = image.getWidth();
         int h = image.getHeight();
 
@@ -400,6 +412,7 @@ public class Exp {
                 + ", [png: " + pngSize + " " + (pngSize < jpgSize ? "<" : ">") + " jpg: " + jpgSize + "]");
         ByteSink writer = Files.asByteSink(destDir);
         writer.write(result.toByteArray());
+        timing.end();
         return destName;
     }
 

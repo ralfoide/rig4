@@ -38,8 +38,8 @@ public class RigModule {
 
     @Singleton
     @Provides
-    public GDocReader provideGDocReader(JsonFactory jsonFactory, Flags flags, ILogger logger) {
-        return new GDocReader(jsonFactory, flags, logger);
+    public GDocReader provideGDocReader(JsonFactory jsonFactory, Flags flags, Timing timing, ILogger logger) {
+        return new GDocReader(jsonFactory, flags, timing, logger);
     }
 
     @Singleton

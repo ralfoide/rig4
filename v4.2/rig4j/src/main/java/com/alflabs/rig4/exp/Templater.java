@@ -1,6 +1,7 @@
 package com.alflabs.rig4.exp;
 
 import com.alflabs.annotations.NonNull;
+import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
@@ -17,23 +18,24 @@ import java.text.ParseException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Singleton
 public class Templater {
     private static final String EXP_TEMPLATE_NAME = "exp-template-name";
 
     private final Flags mFlags;
+    private final Timing.TimeAccumulator mTiming;
+
     private String mTemplate;
 
     @Inject
-    public Templater(Flags flags) {
+    public Templater(Flags flags, Timing timing) {
         mFlags = flags;
+        mTiming = timing.get("Templater");
     }
 
-    public Templater(Flags flags, String template) {
-        mFlags = flags;
+    public Templater(Flags flags, Timing timing, String template) {
+        this(flags, timing);
         mTemplate = template;
     }
 
@@ -53,10 +55,15 @@ public class Templater {
     }
 
     public String generate(TemplateData data) throws IOException, InvocationTargetException, IllegalAccessException, ParseException {
-        String source = getTemplate();
-        Map<String, String> vars = new TreeMap<>();
+        mTiming.start();
+        try {
+            String source = getTemplate();
+            Map<String, String> vars = new TreeMap<>();
 
-        return generateImpl(data, source, vars);
+            return generateImpl(data, source, vars);
+        } finally {
+            mTiming.end();
+        }
     }
 
     private String generateImpl(TemplateData data, String source, Map<String, String> vars) throws ParseException, InvocationTargetException, IllegalAccessException {
