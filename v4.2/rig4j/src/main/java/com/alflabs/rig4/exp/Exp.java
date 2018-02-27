@@ -17,6 +17,7 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.resizers.configurations.Antialiasing;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.imageio.ImageIO;
@@ -25,6 +26,7 @@ import javax.inject.Singleton;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -34,6 +36,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,9 +101,12 @@ public class Exp {
     }
 
     public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException, ParseException {
+        Timing.TimeAccumulator timing = mTiming.get("Total").start();
         boolean changed = checkVersionChanged();
         List<HtmlEntry> entries = readIndex();
         processEntries(entries, changed);
+        timing.end();
+        mTiming.printToLog();
     }
 
     // ---
@@ -186,8 +193,6 @@ public class Exp {
                 mHashStore.putString(htmlHashKey, entity.getMetadata().getContentHash());
             }
         }
-
-        mTiming.printToLog();
     }
 
     @NonNull
@@ -210,35 +215,78 @@ public class Exp {
 
     private String downloadDrawing(String id, File destFile, int width, int height) throws IOException {
         Timing.TimeAccumulator timing = mTiming.get("Html.Drawing").start();
-        // Note: There is no Drive API for embedded drawings.
-        // Experience shows that we can't even get the metadata like for a normal gdoc.
-        // Instead we just download them every time the doc is generated.
+        try {
+            // Note: There is no Drive API for embedded drawings.
+            // Experience shows that we can't even get the metadata like for a normal gdoc.
+            // Instead we just download them every time the doc is generated.
 
-        String extension = "png";
-        String destName = destFile.getName();
-        destName = destName.replace(".html", "_");
-        destName = destName.replace(".", "_");
-        destName += DigestUtils.shaHex("_drawing_" + id) + "d";
+            String extension = "png";
+            String destName = destFile.getName();
+            destName = destName.replace(".html", "_");
+            destName = destName.replace(".", "_");
+            destName += DigestUtils.shaHex("_drawing_" + id) + "d";
 
-        mLogger.d(TAG, "         Drawing: " + destName + ", " + width + "x" + height);
+            mLogger.d(TAG, "         Drawing: " + destName + ", " + width + "x" + height);
 
-        URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
-        InputStream stream = mGDocReader.getDataByUrl(url);
-        BufferedImage image = ImageIO.read(stream);
+            URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
+            InputStream stream = mGDocReader.getDataByUrl(url);
+            BufferedImage image = ImageIO.read(stream);
 
-        if (width > 0 && height > 0) {
-            image = cropAndResizeDrawing(image, width, height);
+            final String keyImageHash = destName;
+            final String keyImageName = destName + "_name";
+            String imageHash = computeImageHash(image, width, height);
+            String storedImageHash = mHashStore.getString(keyImageHash);
+            if (imageHash.equals(storedImageHash)) {
+                String storedImageName = mHashStore.getString(keyImageName);
+                if (storedImageName != null) {
+                    File actualFile = new File(destFile.getParentFile(), storedImageName);
+                    if (mFileOps.isFile(actualFile)) {
+                        mLogger.d(TAG, "           Reuse: " + storedImageName);
+                        return storedImageName;
+                    }
+                }
+            }
+
+            if (width > 0 && height > 0) {
+                image = cropAndResizeDrawing(image, width, height);
+            }
+
+            if (CONVERT_IMAGES) {
+                destName = writeImageJpgOrPng(destFile, destName, image, width, height);
+            } else {
+                destName += "." + extension;
+                destFile = new File(destFile.getParentFile(), destName);
+                ImageIO.write(image, extension, destFile);
+            }
+
+            mHashStore.putString(keyImageHash, imageHash);
+            mHashStore.putString(keyImageName, destName);
+
+            return destName;
+        } finally {
+            timing.end();
+        }
+    }
+
+    private String computeImageHash(BufferedImage image, int width, int height) {
+        Timing.TimeAccumulator timing = mTiming.get("Html.Image.Hash").start();
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e.getMessage());
         }
 
-        if (CONVERT_IMAGES) {
-            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
-        } else {
-            destName += "." + extension;
-            destFile = new File(destFile.getParentFile(), destName);
-            ImageIO.write(image, extension, destFile);
-        }
+        String size = "w" + width + "h" + height + ".";
+        digest.update(size.getBytes(Charsets.UTF_8));
+
+        WritableRaster raster = image.getRaster();
+        DataBufferByte data = (DataBufferByte) raster.getDataBuffer();
+        digest.update(data.getData());
+
+        String hash = new String(Hex.encodeHex(digest.digest()));
         timing.end();
-        return destName;
+        return hash;
     }
 
     private BufferedImage cropAndResizeDrawing(BufferedImage image, int width, int height) throws IOException {
@@ -321,38 +369,62 @@ public class Exp {
 
     private String downloadImage(URI uri, File destFile, int width, int height) throws IOException {
         Timing.TimeAccumulator timing = mTiming.get("Html.Image").start();
-        String path = uri.getPath();
+        try {
+            String path = uri.getPath();
 
-        String destName = destFile.getName();
-        destName = destName.replace(".html", "_");
-        destName = destName.replace(".", "_");
-        destName += DigestUtils.shaHex("_image_" + path) + "i";
-        mLogger.d(TAG, "           Image: " + destName + ", " + width + "x" + height);
+            String destName = destFile.getName();
+            destName = destName.replace(".html", "_");
+            destName = destName.replace(".", "_");
+            destName += DigestUtils.shaHex("_image_" + path) + "i";
+            mLogger.d(TAG, "         Image  : " + destName + ", " + width + "x" + height);
 
-        if (CONVERT_IMAGES) {
-            // Download the image, then compares whether a PNG or JPG would be more compact.
-            //
-            // The gdoc exported images seem to always be PNG, even when copied from photos.
-            // Drawings are fairly compact in PNG, but not photos.
+            if (CONVERT_IMAGES) {
+                // Download the image, then compares whether a PNG or JPG would be more compact.
+                //
+                // The gdoc exported images seem to always be PNG, even when copied from photos.
+                // Drawings are fairly compact in PNG, but not photos.
 
-            BufferedImage image = ImageIO.read(uri.toURL());
-            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
+                BufferedImage image = ImageIO.read(uri.toURL());
 
-        } else {
-            // The stuff from gdocs appears to be mostly (if not always) PNG but there's
-            // no way to really know before actually downloading it.
-            String extension = "png";
-            destName += "." + extension;
-            destFile = new File(destFile.getParentFile(), destName);
+                final String keyImageHash = destName;
+                final String keyImageName = destName + "_name";
+                String imageHash = computeImageHash(image, width, height);
+                String storedImageHash = mHashStore.getString(keyImageHash);
+                if (imageHash.equals(storedImageHash)) {
+                    String storedImageName = mHashStore.getString(keyImageName);
+                    if (storedImageName != null) {
+                        File actualFile = new File(destFile.getParentFile(), storedImageName);
+                        if (mFileOps.isFile(actualFile)) {
+                            mLogger.d(TAG, "           Reuse: " + storedImageName);
+                            return storedImageName;
+                        }
+                    }
+                }
 
-            // Download as-is and do not convert
-            ByteSource reader = Resources.asByteSource(uri.toURL());
-            ByteSink writer = Files.asByteSink(destFile);
-            reader.copyTo(writer);
+                destName = writeImageJpgOrPng(destFile, destName, image, width, height);
+
+                mHashStore.putString(keyImageHash, imageHash);
+                mHashStore.putString(keyImageName, destName);
+
+            } else {
+                // OBSOLETE. Can be removed now.
+
+                // The stuff from gdocs appears to be mostly (if not always) PNG but there's
+                // no way to really know before actually downloading it.
+                String extension = "png";
+                destName += "." + extension;
+                destFile = new File(destFile.getParentFile(), destName);
+
+                // Download as-is and do not convert
+                ByteSource reader = Resources.asByteSource(uri.toURL());
+                ByteSink writer = Files.asByteSink(destFile);
+                reader.copyTo(writer);
+            }
+
+            return destName;
+        } finally {
+            timing.end();
         }
-
-        timing.end();
-        return destName;
     }
 
     /**
@@ -409,12 +481,12 @@ public class Exp {
         ByteArrayOutputStream result = pngSize < jpgSize ? pngStream : jpgStream;
         String extension = pngSize < jpgSize ? "png" : "jpg";
         destName += "." + extension;
-        destDir = new File(destDir.getParentFile(), destName);
+        File destFile = new File(destDir.getParentFile(), destName);
 
         mLogger.d(TAG, "         Writing: " + destName
                 + ", " + width + "x" + height
                 + ", [png: " + pngSize + " " + (pngSize < jpgSize ? "<" : ">") + " jpg: " + jpgSize + "]");
-        ByteSink writer = Files.asByteSink(destDir);
+        ByteSink writer = Files.asByteSink(destFile);
         writer.write(result.toByteArray());
         timing.end();
         return destName;
