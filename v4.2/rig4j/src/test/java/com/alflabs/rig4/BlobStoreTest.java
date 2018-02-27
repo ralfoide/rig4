@@ -1,10 +1,8 @@
 package com.alflabs.rig4;
 
 import com.alflabs.rig4.flags.Flags;
-import com.alflabs.utils.FakeClock;
 import com.alflabs.utils.FakeFileOps;
 import com.alflabs.utils.FileOps;
-import com.alflabs.utils.IClock;
 import com.alflabs.utils.ILogger;
 import com.alflabs.utils.MockClock;
 import org.junit.Before;

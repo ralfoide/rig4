@@ -4,6 +4,7 @@ import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
 import com.alflabs.rig4.BlobStore;
 import com.alflabs.rig4.EntryPoint;
+import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.FileOps;
@@ -60,6 +61,7 @@ public class Exp {
     private final Timing mTiming;
     private final GDocReader mGDocReader;
     private final BlobStore mBlobStore;
+    private final HashStore mHashStore;
     private final Templater mTemplater;
     private final HtmlTransformer mHtmlTransformer;
 
@@ -71,6 +73,7 @@ public class Exp {
             Timing timing,
             GDocReader gDocReader,
             BlobStore blobStore,
+            HashStore hashStore,
             Templater templater,
             HtmlTransformer htmlTransformer) {
         mFlags = flags;
@@ -79,6 +82,7 @@ public class Exp {
         mTiming = timing;
         mGDocReader = gDocReader;
         mBlobStore = blobStore;
+        mHashStore = hashStore;
         mTemplater = templater;
         mHtmlTransformer = htmlTransformer;
     }
@@ -105,9 +109,9 @@ public class Exp {
 
         String currVersion = EntryPoint.getVersion();
 
-        boolean changed = !currVersion.equals(mBlobStore.getString(versionKey));
+        boolean changed = !currVersion.equals(mHashStore.getString(versionKey));
         if (changed) {
-            mBlobStore.putString(versionKey, currVersion);
+            mHashStore.putString(versionKey, currVersion);
             mLogger.d(TAG, "Regenerating for new rig4j version: " + currVersion);
         }
 
@@ -156,7 +160,7 @@ public class Exp {
 
             String htmlHashKey = "html-hash-" + destFile.getPath();
             if (keepExisting) {
-                String htmlHash = mBlobStore.getString(htmlHashKey);
+                String htmlHash = mHashStore.getString(htmlHashKey);
                 keepExisting = htmlHash != null && htmlHash.equals(entity.getMetadata().getContentHash());
             }
 
@@ -179,7 +183,7 @@ public class Exp {
 
                 mFileOps.createParentDirs(destFile);
                 mFileOps.writeBytes(htmlContent, destFile);
-                mBlobStore.putString(htmlHashKey, entity.getMetadata().getContentHash());
+                mHashStore.putString(htmlHashKey, entity.getMetadata().getContentHash());
             }
         }
 
@@ -455,7 +459,7 @@ public class Exp {
         if (content != null) {
             // Check freshness
             try {
-                String storeHash = mBlobStore.getString(metadataKey);
+                String storeHash = mHashStore.getString(metadataKey);
                 updateToDate = metadata.getContentHash().equals(storeHash);
             } catch (IOException ignore) {}
         }
@@ -468,7 +472,7 @@ public class Exp {
                 if (content != null) {
                     // Update the store
                     mBlobStore.putBytes(contentKey, content);
-                    mBlobStore.putString(metadataKey, metadata.getContentHash());
+                    mHashStore.putString(metadataKey, metadata.getContentHash());
                 }
             } catch (IOException ignore) {}
         }

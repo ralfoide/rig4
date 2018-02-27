@@ -25,7 +25,7 @@ import java.io.IOException;
  * in the store.
  * <p/>
  * Only 3 data types are supported: String, byte[] and anything serializable via JSON.
- * (optionally the store could support Java serialization or LibUtils Serial, to be added when needed).
+ * (optionally the store could support Java serialization or LibUtils Serial, to be added if needed).
  */
 @Singleton
 public class BlobStore {
