@@ -4,8 +4,8 @@ Check `$JAVA_HOME` is defined. Any JRE or JDK 1.8 will do.
 
 Git pull, build & execute (expect Bash on Linux or Cygwin):
 
-    v4.2/rig4j/distrib/_pull.sh
-    v4.2/rig4j/distrib/rig4.sh
+    rig4j/distrib/_pull.sh
+    rig4j/distrib/rig4.sh
 
 The `rig4.sh` wrapper will automatically rebuild if git pull got a new version.
 
@@ -29,7 +29,7 @@ Application:
 * Single Instance Only
 * Main class: com.alflabs.rig4.EntryPoint
 * Module: rig4j
-* Working Dir: .../v4.2/rig4j
+* Working Dir: .../rig4j
 * JRE: Default (1.8 SDK)
 
 Gradle:

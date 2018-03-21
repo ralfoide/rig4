@@ -76,7 +76,7 @@ compileJava {
     // Generate a resource file with the jar version + git head hash
     // (this file should be in gitignore).
     def versionFile = new File("$buildDir/../src/main/resources/com/alflabs/rig4/version.txt")
-    def git = org.ajoberstar.grgit.Grgit.open(dir: "../..")
+    def git = org.ajoberstar.grgit.Grgit.open(dir: "..")
     def revision = git.head().abbreviatedId
     versionFile.write(project.version + "-" + revision)
 }
