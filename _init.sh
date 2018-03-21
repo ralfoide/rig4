@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 cd $(dirname "$0")
-ROOT=$(basename "$PWD")
-cd ..
+ROOT=.
 
 DRY=echo
 if [[ "$1" == "-f" ]]; then
