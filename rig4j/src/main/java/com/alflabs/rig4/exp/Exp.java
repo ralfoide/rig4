@@ -103,8 +103,8 @@ public class Exp {
     public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException, ParseException {
         Timing.TimeAccumulator timing = mTiming.get("Total").start();
         boolean changed = checkVersionChanged();
-        List<HtmlEntry> entries = readIndex();
-        processEntries(entries, changed);
+        Index index = readIndex();
+        processEntries(index.getHtmlEntries(), changed);
         timing.end();
         mTiming.printToLog();
     }
@@ -126,26 +126,33 @@ public class Exp {
     }
 
 
-    private static final Pattern indexLineRe = Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
+    private static final Pattern sArticleLineRe = Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
+    private static final Pattern sBlogLineRe    = Pattern.compile("^blog\\s+([a-zA-Z0-9_-]+)\\s*");
 
     @NonNull
-    private List<HtmlEntry> readIndex() throws IOException {
+    private Index readIndex() throws IOException {
         mLogger.d(TAG, "Processing document: index");
         String indexId = mFlags.getString(EXP_DOC_ID);
         Entity entity = getGDoc(indexId, "text/plain");
         String content = new String(entity.getContent(), Charsets.UTF_8);
 
         List<HtmlEntry> entries = new ArrayList<>();
+        List<String> blogIds = new ArrayList<>();
 
         for (String line : content.split("\n")) {
             line = line.trim();
-            Matcher matcher = indexLineRe.matcher(line);
+            Matcher matcher = sArticleLineRe.matcher(line);
             if (matcher.find()) {
                 entries.add(HtmlEntry.create(matcher.group(2), matcher.group(1)));
+                continue;
+            }
+            matcher = sBlogLineRe.matcher(line);
+            if (matcher.find()) {
+                blogIds.add(matcher.group(1));
             }
         }
 
-        return entries;
+        return Index.create(entries, blogIds);
     }
 
     private void processEntries(@NonNull List<HtmlEntry> entries, boolean changed)
@@ -550,6 +557,16 @@ public class Exp {
         }
 
         return new Entity(metadata, updateToDate, content);
+    }
+
+    @AutoValue
+    static abstract class Index {
+        public static Index create(@NonNull List<HtmlEntry> htmlEntries, @NonNull List<String> blogIds) {
+            return new AutoValue_Exp_Index(htmlEntries, blogIds);
+        }
+
+        abstract List<HtmlEntry> getHtmlEntries();
+        abstract List<String> getBlogIds();
     }
 
     @AutoValue
