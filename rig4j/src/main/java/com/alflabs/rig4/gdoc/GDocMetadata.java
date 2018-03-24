@@ -1,4 +1,4 @@
-package com.alflabs.rig4.exp;
+package com.alflabs.rig4.gdoc;
 
 import com.alflabs.annotations.NonNull;
 import com.google.auto.value.AutoValue;

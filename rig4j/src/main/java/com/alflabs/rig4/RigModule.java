@@ -1,7 +1,6 @@
 package com.alflabs.rig4;
 
-import com.alflabs.rig4.exp.Exp;
-import com.alflabs.rig4.exp.GDocReader;
+import com.alflabs.rig4.gdoc.GDocReader;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.IClock;
