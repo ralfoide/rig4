@@ -5,7 +5,7 @@ import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.rig4.gdoc.GDocHelper;
 import com.alflabs.rig4.struct.GDocEntity;
-import com.alflabs.rig4.struct.HtmlEntry;
+import com.alflabs.rig4.struct.ArticleEntry;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.common.base.Charsets;
@@ -54,13 +54,13 @@ public class ArticleGenerator {
         mHtmlTransformer = htmlTransformer;
     }
 
-    void processEntries(@NonNull List<HtmlEntry> entries, boolean changed)
+    void processEntries(@NonNull List<ArticleEntry> entries, boolean allChanged)
             throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException, ParseException {
         String destDir = mFlags.getString(EXP_DEST_DIR);
         mLogger.d(TAG, "        Site URL: " + mFlags.getString(EXP_SITE_BASE_URL));
         mLogger.d(TAG, "     Destination: " + destDir);
 
-        for (HtmlEntry entry : entries) {
+        for (ArticleEntry entry : entries) {
             String destName = entry.getDestName();
             File destFile = new File(destDir, destName);
 
@@ -69,7 +69,7 @@ public class ArticleGenerator {
             GDocEntity entity = mGDocHelper.getGDoc(entry.getFileId(), "text/html");
             byte[] docContent = entity.getContent();
             String title = entity.getMetadata().getTitle();
-            boolean keepExisting = !changed && entity.isUpdateToDate() && mFileOps.isFile(destFile);
+            boolean keepExisting = !allChanged && entity.isUpdateToDate() && mFileOps.isFile(destFile);
 
             String htmlHashKey = "html-hash-" + destFile.getPath();
             if (keepExisting) {

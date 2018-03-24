@@ -7,7 +7,7 @@ import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.rig4.gdoc.GDocHelper;
 import com.alflabs.rig4.struct.GDocEntity;
-import com.alflabs.rig4.struct.HtmlEntry;
+import com.alflabs.rig4.struct.ArticleEntry;
 import com.alflabs.rig4.struct.Index;
 import com.alflabs.utils.ILogger;
 import com.google.common.base.Charsets;
@@ -40,6 +40,7 @@ public class Exp {
     private final Timing mTiming;
     private final GDocHelper mGDocHelper;
     private final HashStore mHashStore;
+    private final BlogGenerator mBlogGenerator;
     private final ArticleGenerator mArticleGenerator;
 
     @Inject
@@ -49,29 +50,32 @@ public class Exp {
             Timing timing,
             GDocHelper gDocHelper,
             HashStore hashStore,
+            BlogGenerator blogGenerator,
             ArticleGenerator articleGenerator) {
         mFlags = flags;
         mLogger = logger;
         mTiming = timing;
         mGDocHelper = gDocHelper;
         mHashStore = hashStore;
+        mBlogGenerator = blogGenerator;
         mArticleGenerator = articleGenerator;
     }
 
     public void declareFlags() {
-        mFlags.addString(EXP_DOC_ID,      "",           "Exp gdoc id");
-        mFlags.addString(EXP_DEST_DIR,    "",           "Exp dest dir");
-        mFlags.addString(EXP_GA_UID,      "",           "Exp GA UID");
-        mFlags.addString(EXP_SITE_TITLE,  "Site Title", "Web site title");
-        mFlags.addString(EXP_SITE_BANNER, "header.jpg", "Web site banner filename");
+        mFlags.addString(EXP_DOC_ID,        "",           "Exp gdoc id");
+        mFlags.addString(EXP_DEST_DIR,      "",           "Exp dest dir");
+        mFlags.addString(EXP_GA_UID,        "",           "Exp GA UID");
+        mFlags.addString(EXP_SITE_TITLE,    "Site Title", "Web site title");
+        mFlags.addString(EXP_SITE_BANNER,   "header.jpg", "Web site banner filename");
         mFlags.addString(EXP_SITE_BASE_URL, "http://localhost/folder/", "Web site base URL");
     }
 
     public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException, ParseException {
         Timing.TimeAccumulator timing = mTiming.get("Total").start();
-        boolean changed = checkVersionChanged();
+        boolean allChanged = checkVersionChanged();
         Index index = readIndex();
-        mArticleGenerator.processEntries(index.getHtmlEntries(), changed);
+        mArticleGenerator.processEntries(index.getArticleEntries(), allChanged);
+        mBlogGenerator.processEntries(index.getBlogIds(), allChanged);
         timing.end();
         mTiming.printToLog();
     }
@@ -103,14 +107,14 @@ public class Exp {
         GDocEntity entity = mGDocHelper.getGDoc(indexId, "text/plain");
         String content = new String(entity.getContent(), Charsets.UTF_8);
 
-        List<HtmlEntry> entries = new ArrayList<>();
+        List<ArticleEntry> entries = new ArrayList<>();
         List<String> blogIds = new ArrayList<>();
 
         for (String line : content.split("\n")) {
             line = line.trim();
             Matcher matcher = sArticleLineRe.matcher(line);
             if (matcher.find()) {
-                entries.add(HtmlEntry.create(matcher.group(2), matcher.group(1)));
+                entries.add(ArticleEntry.create(matcher.group(2), matcher.group(1)));
                 continue;
             }
             matcher = sBlogLineRe.matcher(line);
