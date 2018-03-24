@@ -66,8 +66,7 @@ public class ArticleGenerator {
 
             mLogger.d(TAG, "Process document: " + destName);
 
-            GDocEntity entity = mGDocHelper.getGDoc(entry.getFileId(), "text/html");
-            byte[] docContent = entity.getContent();
+            GDocEntity entity = mGDocHelper.getGDocAsync(entry.getFileId(), "text/html");
             String title = entity.getMetadata().getTitle();
             boolean keepExisting = !allChanged && entity.isUpdateToDate() && mFileOps.isFile(destFile);
 
@@ -80,7 +79,8 @@ public class ArticleGenerator {
             if (keepExisting) {
                 mLogger.d(TAG, "   Keep existing: " + destName);
             } else {
-                String htmlBody = processHtml(docContent, title, destFile);
+                String htmlBody = processHtml(entity.getContent(), title, destFile);
+                entity.syncToStore();
 
                 Templater.TemplateData data = Templater.TemplateData.create(
                         "", // css

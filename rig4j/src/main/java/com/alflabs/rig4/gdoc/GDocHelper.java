@@ -345,6 +345,10 @@ public class GDocHelper {
 
     // ---
 
+    /**
+     * Retrieves both the content and the metadata for the given GDoc id immediately.
+     * The freshness "up-to-date" flag is computed using both. The store is updated immediately.
+     */
     @Null
     public GDocEntity getGDoc(@NonNull String fileId, @NonNull String mimeType) {
         final String metadataKey = "gdoc-hash-" + fileId;
@@ -400,6 +404,77 @@ public class GDocHelper {
         }
 
         return new GDocEntity(metadata, updateToDate, content);
+    }
+
+    /**
+     * Retrieves only the metadata for the given GDoc id immediately.
+     * Content retrieval is deferred till actually needed.
+     * The freshness "up-to-date" flag is computed only using the metadata.
+     */
+    @Null
+    public GDocEntity getGDocAsync(@NonNull String fileId, @NonNull String mimeType) {
+        final String metadataKey = "gdoc-hash-" + fileId;
+        final String contentKey = "gdoc-content-" + fileId + "-" + mimeType;
+
+        // Known implementation issue: the gdoc API calls to retrieve the file content
+        // and the freshness hash are not part of an atomic call. There's a chance the
+        // server-side data has changed when retrieving both. However we get the hash
+        // first (say v1) and later get the content (say v2). In the store we keep
+        // hash(v1) + data(v2). Next time this method is checked, it will check the hash
+        // and get hash(v2) from the server. It does not match and thus retrieves again
+        // data(v2).
+        // If synchronization were important, a way to mitigate this is to get the hash
+        // to check the freshness. When getting the data, get the hash again and retry
+        // few times if it keeps changing.
+        // In the current context of rig with very little server-side changes and a daily
+        // check, the current flaw is acceptable enough.
+
+        GDocMetadata metadata;
+        try {
+            metadata = mGDocReader.getMetadataById(fileId);
+        } catch (IOException e) {
+            mLogger.d(TAG, "Get metadata failed for " + fileId);
+            return null;
+        }
+
+        boolean updateToDate = false;
+        // Check freshness using metadata only.
+        try {
+            String storeHash = mHashStore.getString(metadataKey);
+            updateToDate = metadata.getContentHash().equals(storeHash);
+        } catch (IOException ignore) {}
+
+        GDocEntity.ContentFetcher fetcher = (entity) -> {
+            byte[] content = null;
+            if (entity.isUpdateToDate()) {
+                try {
+                    content = mBlobStore.getBytes(contentKey);
+                } catch (IOException ignore) {
+                }
+            }
+            if (content != null) {
+                try {
+                    mLogger.d(TAG, "        Fetching: " + fileId);
+                    content = mGDocReader.readFileById(fileId, mimeType);
+                } catch (IOException ignore) {
+                }
+            }
+            return content;
+        };
+
+        GDocEntity.Syncer syncToStore = (entity) -> {
+            if (entity.isUpdateToDate()) {
+                return;
+            }
+            try {
+                if (entity.isContentFetched() && entity.getContent() != null) {
+                    mBlobStore.putBytes(contentKey, entity.getContent());
+                }
+                mHashStore.putString(metadataKey, entity.getMetadata().getContentHash());
+            } catch (IOException ignore) {}
+        };
+
+        return new GDocEntity(metadata, updateToDate, fetcher, syncToStore);
     }
 
 }
