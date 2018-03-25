@@ -350,7 +350,7 @@ public class GDocHelper {
      * The freshness "up-to-date" flag is computed using both. The store is updated immediately.
      */
     @Null
-    public GDocEntity getGDoc(@NonNull String fileId, @NonNull String mimeType) {
+    public GDocEntity getGDocSync(@NonNull String fileId, @NonNull String mimeType) {
         final String metadataKey = "gdoc-hash-" + fileId;
         final String contentKey = "gdoc-content-" + fileId + "-" + mimeType;
 
