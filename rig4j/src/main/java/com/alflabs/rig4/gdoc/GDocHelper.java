@@ -472,7 +472,7 @@ public class GDocHelper {
                 } catch (IOException ignore) {
                 }
             }
-            if (content != null) {
+            if (content == null) {
                 try {
                     mLogger.d(TAG, "        Fetching: " + fileId);
                     content = mGDocReader.readFileById(fileId, mimeType);
