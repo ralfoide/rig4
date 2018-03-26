@@ -347,7 +347,15 @@ public class GDocHelper {
 
     /**
      * Retrieves both the content and the metadata for the given GDoc id immediately.
-     * The freshness "up-to-date" flag is computed using both. The store is updated immediately.
+     * The freshness "up-to-date" flag is computed using the metadata.
+     * <p/>
+     * If the entity is up-to-date, the content from the blog store is used (if available).
+     * Otherwise the content is fetched immediately.
+     * <p/>
+     * Which one to use: <br/>
+     * - {@link #getGDocSync} when the caller is going to fetch and use the content no matter what.
+     * <br/>
+     * - {@link #getGDocAsync} when the caller doesn't need the content if the metadata is up-to-date.
      */
     @Null
     public GDocEntity getGDocSync(@NonNull String fileId, @NonNull String mimeType) {
@@ -410,6 +418,18 @@ public class GDocHelper {
      * Retrieves only the metadata for the given GDoc id immediately.
      * Content retrieval is deferred till actually needed.
      * The freshness "up-to-date" flag is computed only using the metadata.
+     * <p/>
+     * The content fetcher also tries to use the blog store's content if available and the
+     * metadata indicates the content should be up-to-date.
+     * <p/>
+     * The major difference with {@link #getGDocSync(String, String)} is that the content
+     * fetch does not happen immediately (whether it's from the blog store or gdoc), nor
+     * are the blog/hash stores updated immediately.
+     * <p/>
+     * Which one to use: <br/>
+     * - {@link #getGDocSync} when the caller is going to fetch and use the content no matter what.
+     * <br/>
+     * - {@link #getGDocAsync} when the caller doesn't need the content if the metadata is up-to-date.
      */
     @Null
     public GDocEntity getGDocAsync(@NonNull String fileId, @NonNull String mimeType) {
