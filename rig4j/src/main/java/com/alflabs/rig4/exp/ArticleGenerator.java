@@ -103,7 +103,7 @@ public class ArticleGenerator {
 
     @NonNull
     private String processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
-        String htmlBody = mHtmlTransformer.simplify(
+        String htmlBody = mHtmlTransformer.simplifyForHtml(
                 content,
                 new HtmlTransformer.Callback() {
                     @Override

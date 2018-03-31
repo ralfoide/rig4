@@ -1,6 +1,9 @@
 package com.alflabs.rig4.exp;
 
+import com.alflabs.annotations.NonNull;
+import com.alflabs.annotations.Null;
 import com.alflabs.rig4.Timing;
+import com.alflabs.rig4.blog.BlogSourceParser;
 import com.alflabs.utils.RPair;
 import com.alflabs.utils.RSparseArray;
 import com.google.common.base.Charsets;
@@ -27,6 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
 
 public class HtmlTransformer {
 
@@ -67,9 +71,11 @@ public class HtmlTransformer {
 
     /**
      * Simplifies a GDoc exported HTML.
-     * Returns the <em>Body</em> element only.
+     * Returns the <em>Body</em> element only, usable for HTML export.
+     * This removes all Izu tags and transforms links, and images.
      */
-    public String simplify(byte[] content, Callback callback) throws IOException, URISyntaxException {
+    public String simplifyForHtml(@NonNull byte[] content, @NonNull Callback callback)
+            throws IOException, URISyntaxException {
         mTiming.start();
         try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
             Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
@@ -92,6 +98,35 @@ public class HtmlTransformer {
             // -- for debugging -- return doc.html();
             Element body = doc.getElementsByTag("body").first();
             return body.html();
+        } finally {
+            mTiming.end();
+        }
+    }
+
+    /**
+     * Simplifies a GDoc exported HTML.
+     * Returns the <em>Body</em> element only for intermediate processing.
+     * This does NOT removes Izu tags and does not transforms links, and images.
+     */
+    public Element simplifyForProcessing(@NonNull byte[] content)
+            throws IOException, URISyntaxException {
+        mTiming.start();
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
+            Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
+
+            doc = cleanup(doc);
+            removeEmptyElements(doc, ELEM_A);
+            removeEmptyElements(doc, ELEM_SPAN);
+            rewriteBulletLists(doc);
+            cleanupLineStyle(doc);
+            cleanupConsolasLineStyle(doc);
+            cleanupInlineStyle(doc);
+            rewriteYoutubeEmbed(doc);
+
+            doc.outputSettings().prettyPrint(true);
+            doc.outputSettings().charset(Charsets.UTF_8);
+
+            return doc.getElementsByTag("body").first();
         } finally {
             mTiming.end();
         }
@@ -136,7 +171,8 @@ public class HtmlTransformer {
                 Node node = element.childNode(i);
                 if (node instanceof TextNode) {
                     String text = ((TextNode) node).getWholeText();
-                    text = text.replaceAll("\\[izu[^\\]]*\\]", "");
+                    Matcher matcher = BlogSourceParser.RE_IZU_TAG.matcher(text);
+                    text = matcher.replaceAll("");
                     ((TextNode) node).text(text);
                 }
             }

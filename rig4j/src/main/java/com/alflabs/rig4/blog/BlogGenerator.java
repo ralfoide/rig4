@@ -1,13 +1,17 @@
-package com.alflabs.rig4.exp;
+package com.alflabs.rig4.blog;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.HashStore;
+import com.alflabs.rig4.exp.HtmlTransformer;
+import com.alflabs.rig4.exp.Templater;
 import com.alflabs.rig4.gdoc.GDocHelper;
 import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 
 public class BlogGenerator {
@@ -35,7 +39,8 @@ public class BlogGenerator {
         mHtmlTransformer = htmlTransformer;
     }
 
-    public void processEntries(List<String> blogIds, boolean allChanged) {
+    public void processEntries(List<String> blogIds, boolean allChanged)
+            throws IOException, URISyntaxException {
         SourceTree sourceTree = parseSources(blogIds);
         sourceTree.setRootChanged(allChanged);
         PostTree postTree = computePostTree(sourceTree);
@@ -45,7 +50,8 @@ public class BlogGenerator {
     }
 
     @NonNull
-    private SourceTree parseSources(List<String> blogIds) {
+    private SourceTree parseSources(List<String> blogIds)
+            throws IOException, URISyntaxException {
         SourceTree sourceTree = new SourceTree();
 
         for (String blogId : blogIds) {
@@ -55,9 +61,14 @@ public class BlogGenerator {
         return sourceTree;
     }
 
-    private void parseSource(SourceTree sourceTree, String blogId) {
+    private void parseSource(SourceTree sourceTree, String blogId)
+            throws IOException, URISyntaxException {
         GDocEntity entity = mGDocHelper.getGDocAsync(blogId, "text/html");
+        entity.isUpdateToDate(); // TODO use if false
+        byte[] content = entity.getContent();
 
+        BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);
+        blogSourceParser.parse(content);
     }
 
     @NonNull
@@ -66,22 +77,4 @@ public class BlogGenerator {
     }
 
 
-    private static class SourceTree {
-
-
-        public void setRootChanged(boolean allChanged) {
-        }
-
-        public void saveMetadata() {
-        }
-    }
-
-    private static class PostTree {
-
-        public void generate() {
-        }
-
-        public void saveMetadata() {
-        }
-    }
 }

@@ -3,6 +3,7 @@ package com.alflabs.rig4.exp;
 import com.alflabs.rig4.EntryPoint;
 import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.Timing;
+import com.alflabs.rig4.blog.BlogGenerator;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.rig4.struct.Index;
 import com.alflabs.utils.ILogger;
