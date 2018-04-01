@@ -42,7 +42,7 @@ public class BlogGenerator {
     public void processEntries(List<String> blogIds, boolean allChanged)
             throws IOException, URISyntaxException {
         SourceTree sourceTree = parseSources(blogIds);
-        sourceTree.setRootChanged(allChanged);
+        sourceTree.setChanged(allChanged);
         PostTree postTree = computePostTree(sourceTree);
         postTree.generate();
         postTree.saveMetadata();
@@ -64,12 +64,12 @@ public class BlogGenerator {
     private void parseSource(SourceTree sourceTree, String blogId)
             throws IOException, URISyntaxException {
         GDocEntity entity = mGDocHelper.getGDocAsync(blogId, "text/html");
-        entity.isUpdateToDate(); // TODO use if false
+        boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
 
         BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);
         BlogSourceParser.ParsedResult result = blogSourceParser.parse(content);
-        sourceTree.merge(result);
+        sourceTree.merge(result, fileChanged);
     }
 
     @NonNull

@@ -10,17 +10,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
-class SourceTree {
+class SourceTree extends TreeChange {
     Map<String, Blog> mBlogs = new TreeMap<>();
-
-    public void setRootChanged(boolean allChanged) {
-    }
 
     public void saveMetadata() {
     }
 
-
-    public void merge(BlogSourceParser.ParsedResult parsedResult)
+    public void merge(BlogSourceParser.ParsedResult parsedResult, boolean fileChanged)
             throws BlogSourceParser.ParseException {
         String category = parsedResult.getBlogCategory();
         Blog blog = mBlogs.get(category);
@@ -28,6 +24,8 @@ class SourceTree {
             blog = new Blog(category);
             mBlogs.put(category, blog);
         }
+        // LATER for now invalidate the whole blog.
+        blog.setChanged(blog.isChanged() || fileChanged);
 
         if (parsedResult.getIntermediaryHeader() != null) {
             if (blog.getHeaderContent() != null) {
@@ -40,15 +38,26 @@ class SourceTree {
         }
 
         for (BlogSourceParser.ParsedSection section : parsedResult.getParsedSections()) {
-            blog.addPost(BlogPost.from(section));
+            BlogPost post = BlogPost.from(section);
+            // LATER post.setChanged(...)
+            blog.addPost(post);
         }
-
-
-
-
     }
 
-    public static class Blog {
+    @Override
+    public boolean isTreeChanged() {
+        if (isChanged()) {
+            return true;
+        }
+        for (Blog blog : mBlogs.values()) {
+            if (blog.isChanged()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static class Blog extends TreeChange {
         private final String mCategory;
         private Content mHeaderContent;
         private Map<String, BlogPost> mPosts = new TreeMap<>();
@@ -77,9 +86,22 @@ class SourceTree {
             }
             mPosts.put(key, post);
         }
+
+        @Override
+        public boolean isTreeChanged() {
+            if (isChanged()) {
+                return true;
+            }
+            for (BlogPost post : mPosts.values()) {
+                if (post.isChanged()) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
-    public static class BlogPost implements Comparable<BlogPost> {
+    public static class BlogPost extends TreeChange implements Comparable<BlogPost> {
         private final LocalDate mDate;
         private final String mTitle;
         private final Content mShortContent;
@@ -136,6 +158,11 @@ class SourceTree {
         public int compareTo(BlogPost other) {
             return this.mKey.compareTo(other.mKey);
         }
+
+        @Override
+        public boolean isTreeChanged() {
+            return isChanged();
+        }
     }
 
     public static class Content {
@@ -162,4 +189,5 @@ class SourceTree {
             return intermediary == null ? null : new Content(null, intermediary);
         }
     }
+
 }
