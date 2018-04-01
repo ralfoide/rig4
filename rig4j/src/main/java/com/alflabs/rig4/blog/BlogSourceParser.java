@@ -320,7 +320,7 @@ public class BlogSourceParser {
         /**
          * Optional <em>intermediary</em> HTML-formatted short content.
          * <p/>
-         * Some elements have not been cleaned up and {@link HtmlTransformer#extractForHtml}
+         * Some elements have not been cleaned up and {@link HtmlTransformer.LazyTransformer}
          * must be called on this result before using it.
          * <p/>
          * Can be empty or null.
@@ -334,7 +334,7 @@ public class BlogSourceParser {
          * <em>Intermediary</em> HTML-formatted "full" content.
          * When the post does not have a short vs expanded content, all the content is "full".
          * <p/>
-         * Some elements have not been cleaned up and {@link HtmlTransformer#extractForHtml}
+         * Some elements have not been cleaned up and {@link HtmlTransformer.LazyTransformer}
          * must be called on this result before using it.
          * <p/>
          * Can not be empty neither null.

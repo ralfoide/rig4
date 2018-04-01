@@ -137,23 +137,29 @@ public class HtmlTransformer {
     /**
      * Finish processing content extracted using {@link #simplifyForProcessing(byte[])}.
      */
-    public String extractForHtml(Element start, Element end, @NonNull Callback callback)
-            throws IOException, URISyntaxException {
-        Element div = new Element(ELEM_DIV);
-        Node node = start;
-        while (node != null) {
-            div.appendChild(node.clone());
-            if (node == end) {
-                break;
-            }
-            node = node.nextSibling();
-        }
+    public interface LazyTransformer {
+        String lazyTransform(Element element) throws IOException, URISyntaxException;
+    }
 
-        rewriteUrls(div, ATTR_HREF, callback);
-        rewriteUrls(div, ATTR_SRC, callback);
-        rewriteYoutubeEmbed(div);
-        removeIzuTags(div);
-        return div.html();
+    /**
+     * Finish processing content extracted using {@link #simplifyForProcessing(byte[])}.
+     */
+    public LazyTransformer createLazyTransformer(@NonNull Callback callback) {
+        return new LazyTransformer() {
+            @Override
+            public String lazyTransform(Element element) throws IOException, URISyntaxException {
+                if (element == null) {
+                    return null;
+                }
+
+                element = element.clone();
+                rewriteUrls(element, ATTR_HREF, callback);
+                rewriteUrls(element, ATTR_SRC, callback);
+                rewriteYoutubeEmbed(element);
+                removeIzuTags(element);
+                return element.html();
+            }
+        };
     }
 
     /**

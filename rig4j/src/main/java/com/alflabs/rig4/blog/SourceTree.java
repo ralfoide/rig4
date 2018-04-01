@@ -2,16 +2,28 @@ package com.alflabs.rig4.blog;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.exp.HtmlTransformer;
 import org.jsoup.nodes.Element;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * The source tree contains a model of the blog input: category & header for each blog
+ * and its posts content list.
+ */
 class SourceTree extends TreeChange {
-    Map<String, Blog> mBlogs = new TreeMap<>();
+    private Map<String, Blog> mBlogs = new TreeMap<>();
+
+    public Map<String, Blog> getBlogs() {
+        return mBlogs;
+    }
 
     public void saveMetadata() {
     }
@@ -68,6 +80,10 @@ class SourceTree extends TreeChange {
 
         public String getCategory() {
             return mCategory;
+        }
+
+        public Collection<BlogPost> getPosts() {
+            return mPosts.values();
         }
 
         public Content getHeaderContent() {
@@ -166,12 +182,19 @@ class SourceTree extends TreeChange {
     }
 
     public static class Content {
-        private final String mFormatted;
         private final Element mIntermediary;
+        private String mFormatted;
 
         public Content(@Null String formatted, @Null Element intermediary) {
             mFormatted = formatted;
             mIntermediary = intermediary;
+        }
+
+        public void generate(@NonNull HtmlTransformer.LazyTransformer transformer)
+                throws IOException, URISyntaxException {
+            if (mFormatted == null && mIntermediary != null) {
+                mFormatted = transformer.lazyTransform(mIntermediary);
+            }
         }
 
         @Null
