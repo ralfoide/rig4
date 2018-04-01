@@ -68,7 +68,8 @@ public class BlogGenerator {
         byte[] content = entity.getContent();
 
         BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);
-        blogSourceParser.parse(content);
+        BlogSourceParser.ParsedResult result = blogSourceParser.parse(content);
+        sourceTree.merge(result);
     }
 
     @NonNull

@@ -4,11 +4,15 @@ import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
 import com.alflabs.rig4.exp.HtmlTransformer;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,8 +21,9 @@ import java.util.regex.Pattern;
  * Takes a blog page and returns:
  * - The header tags from the first line.
  * - The izu:blog tag must be present and indicates the start of the blog content.
+ * - Ensures the blog has an izu:cat(egory) defined.
  * - The izu:header if present.
- * - A list of posts' contents with date, title and 2 variations: summary & full.
+ * - A list of posts' contents with date, title and 2 variations: short (optional) & full.
  */
 public class BlogSourceParser {
 
@@ -41,7 +46,7 @@ public class BlogSourceParser {
         mHtmlTransformer = htmlTransformer;
     }
 
-    public void parse(byte[] content) throws IOException, URISyntaxException {
+    public ParsedResult parse(byte[] content) throws IOException, URISyntaxException {
         Element body = mHtmlTransformer.simplifyForProcessing(content);
 
         // Iterate on the top-level elements and keeps a state:
@@ -53,23 +58,35 @@ public class BlogSourceParser {
         // - Parse ends when [izu:blog:end] is found.
         // - Allow overrides using the [[s:] or [[izu:] syntax.
         boolean foundIzuBlogTag = false;
+        String blogCategory = null;
         List<String> headerTags = null;
         Element izuHeaderStart = null;
         Element izuHeaderEnd = null;
         ElementSection currentSection = null;
+        List<ParsedSection> parsedSections = new ArrayList<>();
 
         for (Element element : body.children()) {
             List<String> izuTags = parseIzuTags(element);
 
             if (!foundIzuBlogTag) {
-                if (izuTags != null && izuTags.contains("blog")) {
+                if (izuTags != null && izuTags.contains(IzuTags.IZU_BLOG)) {
                     foundIzuBlogTag = true;
                     headerTags = izuTags;
                     izuHeaderStart = element;
+
+                    for (String izuTag : izuTags) {
+                        if (izuTag.startsWith(IzuTags.IZU_CATEGORY)) {
+                            blogCategory = izuTag.substring(IzuTags.IZU_CATEGORY.length());
+                        }
+                    }
+                    if (blogCategory == null) {
+                        throw new ParseException(
+                                "Missing " + IzuTags.IZU_CATEGORY + "...] on the " + IzuTags.IZU_BLOG + " line");
+                    }
                 }
                 continue;
             }
-            if (izuHeaderEnd == null && izuTags != null && izuTags.contains("header:end")) {
+            if (izuHeaderEnd == null && izuTags != null && izuTags.contains(IzuTags.IZU_HEADER_END)) {
                 izuHeaderEnd = element;
             }
 
@@ -77,8 +94,17 @@ public class BlogSourceParser {
                 currentSection.start = element;
             }
 
+            if (currentSection != null && currentSection.start != null
+                    && currentSection.break_ == null
+                    && izuTags != null && izuTags.contains(IzuTags.IZU_BREAK)) {
+                currentSection.break_ = element;
+            }
+
             ElementSection newSection = parseSectionTag(element);
             if (newSection != null) {
+                if (currentSection != null) {  // commit last section if any
+                    parsedSections.add(generateSection(currentSection));
+                }
                 currentSection = newSection;
             }
 
@@ -86,10 +112,17 @@ public class BlogSourceParser {
                 currentSection.end = element;
             }
 
-            if (izuTags != null && izuTags.contains("blog:end")) {
+            if (izuTags != null && izuTags.contains(IzuTags.IZU_BLOG_END)) {
                 break;
             }
         }
+
+        if (currentSection != null) {  // commit last section if any
+            parsedSections.add(generateSection(currentSection));
+        }
+
+        Element headerElement = combineElements(izuHeaderStart, izuHeaderEnd);
+        return new ParsedResult(blogCategory, headerTags, headerElement, parsedSections);
     }
 
     @Null
@@ -116,39 +149,199 @@ public class BlogSourceParser {
         Matcher matcher = RE_S_TAG.matcher(text);
         if (matcher.find() && matcher.group(1).length() == 1) {
             ElementSection section = new ElementSection();
-            section.tag = matcher.group(2);
-            section.afterTag = text.substring(matcher.end());
+            section.tagS = matcher.group(2);
+            section.afterTagS = text.substring(matcher.end());
             section.title = element;
             return section;
         }
         return null;
     }
 
+    private ParsedSection generateSection(ElementSection section) throws ParseException {
+        LocalDate date;
+        String textTitle = "";
+        Element intermediaryShort;
+        Element intermediaryExpanded;
+
+        String tagS = section.tagS;
+        int pos = tagS.indexOf(":");
+        if (pos > 0) {
+            textTitle = tagS.substring(pos + 1);
+            tagS = tagS.substring(0, pos);
+        }
+
+        // Parse date.
+        try {
+            date = LocalDate.parse(tagS.trim(), DateTimeFormatter.ISO_DATE);
+        } catch (DateTimeParseException e) {
+            throw new ParseException("Date parsing failed. " + e.getMessage());
+        }
+
+        // Parse title from tag.
+        if (!textTitle.isEmpty()) {
+            textTitle = textTitle.trim();
+        }
+
+        // If not from tag, parse title from text.
+        if (textTitle.isEmpty()) {
+            textTitle = section.afterTagS.trim();
+        }
+
+        // Get the content.
+        intermediaryExpanded = combineElements(section.start, section.end);
+
+        if (section.break_ != null) {
+            intermediaryShort = combineElements(section.start, section.break_);
+        } else {
+            intermediaryShort = combineElements(null, null);
+        }
+
+        return new ParsedSection(date, textTitle, intermediaryShort, intermediaryExpanded);
+    }
+
+    @Null
+    private Element combineElements(@Null Element start, @Null Element end) {
+        if (start == null || end == null) {
+            return null;
+        }
+        Element div = new Element(HtmlTransformer.ELEM_DIV);
+        Node node = start;
+        while (node != null) {
+            div.appendChild(node.clone());
+            if (node == end) {
+                break;
+            }
+            node = node.nextSibling();
+        }
+
+        return div;
+    }
+
+    /** Internal temporary structure. */
     private static class ElementSection {
-        String tag;
-        String afterTag;
+        String tagS;
+        String afterTagS;
         Element title;
         Element start;
+        Element break_;
         Element end;
     }
 
-    private static class ParsedResult {
-        /** Tags should at least contain [blog], and typically [cat:...] */
-        List<String> mTags;
-        /** Optional HTML-formatted header. Can be null. */
-        String mFormattedHeader;
-        /** HTML-formatted sections (short & full), with date & title. */
-        List<ParsedSection> mParsedSections;
+    /** A {@link BlogSourceParser} exception. */
+    public static class ParseException extends IOException {
+        public ParseException() {
+            super();
+        }
+
+        public ParseException(String message) {
+            super(message);
+        }
     }
 
-    private static class ParsedSection {
+    /**
+     * Represents one parsed source file with its tags, optional header and sections.
+     */
+    public static class ParsedResult {
+        private final String mBlogCategory;
+        private final List<String> mTags;
+        private final Element mIntermediaryHeader;
+        private final List<ParsedSection> mParsedSections;
+
+        public ParsedResult(
+                @NonNull String blogCategory,
+                @NonNull List<String> tags,
+                @Null Element intermediaryHeader,
+                @NonNull List<ParsedSection> parsedSections) {
+            mBlogCategory = blogCategory;
+            mTags = Collections.unmodifiableList(tags);
+            mIntermediaryHeader = intermediaryHeader;
+            mParsedSections = parsedSections == null
+                    ? Collections.EMPTY_LIST
+                    : Collections.unmodifiableList(parsedSections);
+        }
+
+        @NonNull
+        public String getBlogCategory() {
+            return mBlogCategory;
+        }
+
+        /** Tags should at least contain [blog], and typically [cat:...] */
+        @NonNull
+        public List<String> getTags() {
+            return mTags;
+        }
+
+        /** Optional HTML-formatted header. Can be null. */
+        @Null
+        public Element getIntermediaryHeader() {
+            return mIntermediaryHeader;
+        }
+
+        /** HTML-formatted sections (short & full), with date & title. Can be empty but not null. */
+        public List<ParsedSection> getParsedSections() {
+            return mParsedSections;
+        }
+    }
+
+    /**
+     * Represents one section from the a parsed blog with its date/title and formatted content.
+     */
+    public static class ParsedSection {
+        private final LocalDate mDate;
+        private final String mTextTitle;
+        private final Element mIntermediaryShort;
+        private final Element mIntermediaryfull;
+
+        public ParsedSection(
+                @NonNull LocalDate date,
+                @NonNull String textTitle,
+                @NonNull Element intermediaryShort,
+                @NonNull Element intermediaryfull) {
+            mDate = date;
+            mTextTitle = textTitle;
+            mIntermediaryShort = intermediaryShort;
+            mIntermediaryfull = intermediaryfull;
+        }
+
         /** Date extracted from the title. */
-        Date mDate;
-        /** Title either from [s] tag or from the title line. Title is not part of formatted content. */
-        String mTextTitle;
-        /** Optional HTML-formatted short content. Can be null. */
-        String mFormattedShort;
-        /** HTML-formatted full content. */
-        String mFormattedFull;
+        @NonNull
+        public LocalDate getDate() {
+            return mDate;
+        }
+
+        /**
+         * Title either from [s] tag or from the title line. Title is not part of formatted content.
+         */
+        @NonNull
+        public String getTextTitle() {
+            return mTextTitle;
+        }
+
+        /**
+         * Optional <em>intermediary</em> HTML-formatted short content.
+         * <p/>
+         * Some elements have not been cleaned up and {@link HtmlTransformer#extractForHtml}
+         * must be called on this result before using it.
+         * <p/>
+         * Can be empty or null.
+         */
+        @Null
+        public Element getIntermediaryShort() {
+            return mIntermediaryShort;
+        }
+
+        /**
+         * <em>Intermediary</em> HTML-formatted "full" content.
+         * When the post does not have a short vs expanded content, all the content is "full".
+         * <p/>
+         * Some elements have not been cleaned up and {@link HtmlTransformer#extractForHtml}
+         * must be called on this result before using it.
+         * <p/>
+         * Can not be empty neither null.
+         */
+        @NonNull
+        public Element getIntermediaryfull() {
+            return mIntermediaryfull;
+        }
     }
 }

@@ -40,6 +40,7 @@ public class HtmlTransformer {
     private static final String ELEM_TD = "td";
     private static final String ELEM_UL = "ul";
     private static final String ELEM_LI = "li";
+    public static final String ELEM_DIV = "div";
     private static final String ELEM_IMG = "img";
     private static final String ELEM_SPAN = "span";
     private static final String ELEM_STYLE = "style";
@@ -106,7 +107,9 @@ public class HtmlTransformer {
     /**
      * Simplifies a GDoc exported HTML.
      * Returns the <em>Body</em> element only for intermediate processing.
+     *
      * This does NOT removes Izu tags and does not transforms links, and images.
+     * The output is designed to be given to {@link #extractForHtml(Element, Element, Callback)} later.
      */
     public Element simplifyForProcessing(@NonNull byte[] content)
             throws IOException, URISyntaxException {
@@ -121,7 +124,6 @@ public class HtmlTransformer {
             cleanupLineStyle(doc);
             cleanupConsolasLineStyle(doc);
             cleanupInlineStyle(doc);
-            rewriteYoutubeEmbed(doc);
 
             doc.outputSettings().prettyPrint(true);
             doc.outputSettings().charset(Charsets.UTF_8);
@@ -130,6 +132,28 @@ public class HtmlTransformer {
         } finally {
             mTiming.end();
         }
+    }
+
+    /**
+     * Finish processing content extracted using {@link #simplifyForProcessing(byte[])}.
+     */
+    public String extractForHtml(Element start, Element end, @NonNull Callback callback)
+            throws IOException, URISyntaxException {
+        Element div = new Element(ELEM_DIV);
+        Node node = start;
+        while (node != null) {
+            div.appendChild(node.clone());
+            if (node == end) {
+                break;
+            }
+            node = node.nextSibling();
+        }
+
+        rewriteUrls(div, ATTR_HREF, callback);
+        rewriteUrls(div, ATTR_SRC, callback);
+        rewriteYoutubeEmbed(div);
+        removeIzuTags(div);
+        return div.html();
     }
 
     /**
