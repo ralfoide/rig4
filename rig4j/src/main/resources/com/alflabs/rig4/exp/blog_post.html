@@ -1,0 +1,8 @@
+<div class="post">
+<hr/>
+<h2>{{.PostDate}} - {{.PostTitle}}</h2>
+
+{{.Content}}
+
+{{If.PostExtraLink}}<a href="{{.SiteBaseUrl}}{{.PostExtraLink}}">Click here to read more...</a>{{Endif}}
+</div>

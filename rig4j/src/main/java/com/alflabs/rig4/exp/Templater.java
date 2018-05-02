@@ -3,7 +3,6 @@ package com.alflabs.rig4.exp;
 import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
-import com.google.auto.value.AutoValue;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
@@ -15,18 +14,21 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
 @Singleton
 public class Templater {
-    private static final String EXP_TEMPLATE_NAME = "exp-template-name";
+    private static final String EXP_TEMPLATE_ARTICLE   = "exp-template-article";
+    private static final String EXP_TEMPLATE_BLOG_PAGE = "exp-template-blog-page";
+    private static final String EXP_TEMPLATE_BLOG_POST = "exp-template-blog-post";
 
     private final Flags mFlags;
     private final Timing.TimeAccumulator mTiming;
 
-    private String mTemplate;
+    private Map<Class<?>, String> mTemplates = new HashMap<>();
 
     @Inject
     public Templater(Flags flags, Timing timing) {
@@ -36,28 +38,40 @@ public class Templater {
 
     public Templater(Flags flags, Timing timing, String template) {
         this(flags, timing);
-        mTemplate = template;
+        mTemplates.put(null, template);  // set the default fallback template
     }
 
     public void declareFlags() {
-        mFlags.addString(EXP_TEMPLATE_NAME, "template2.html", "Exp Template Name");
+        mFlags.addString(EXP_TEMPLATE_ARTICLE, "article.html", "Exp Template Article");
+        mFlags.addString(EXP_TEMPLATE_BLOG_PAGE, "blog_page.html", "Exp Template Blog Page");
+        mFlags.addString(EXP_TEMPLATE_BLOG_POST, "blog_post.html", "Exp Template Blog Post Fragment");
     }
 
-    private String getTemplate() throws IOException {
-        if (mTemplate != null) {
-            return mTemplate;
+    private String getTemplate(TemplateProvider data) throws IOException {
+        // Find a template already loaded for this data class.
+        Class<?> clazz = data.getClass();
+        String template = mTemplates.get(clazz);
+        if (template != null) {
+            return template;
         }
-        mTemplate = Resources.toString(
-                Resources.getResource(this.getClass(), mFlags.getString(EXP_TEMPLATE_NAME)),
-                Charsets.UTF_8);
-        Preconditions.checkNotNull(mTemplate);
-        return mTemplate;
+
+        // Use the default fallback template if defined.
+        template = mTemplates.get(null);
+        if (template != null) {
+            return template;
+        }
+
+        // Get the template from the TemplateProvider and cache it.
+        template = data.getTemplate(mFlags);
+        Preconditions.checkNotNull(template);
+        mTemplates.put(clazz, template);
+        return template;
     }
 
-    public String generate(TemplateData data) throws IOException, InvocationTargetException, IllegalAccessException, ParseException {
+    public String generate(BaseData data) throws IOException, InvocationTargetException, IllegalAccessException, ParseException {
         mTiming.start();
         try {
-            String source = getTemplate();
+            String source = getTemplate(data);
             Map<String, String> vars = new TreeMap<>();
 
             return generateImpl(data, source, vars);
@@ -66,7 +80,7 @@ public class Templater {
         }
     }
 
-    private String generateImpl(TemplateData data, String source, Map<String, String> vars) throws ParseException, InvocationTargetException, IllegalAccessException {
+    private String generateImpl(BaseData data, String source, Map<String, String> vars) throws ParseException, InvocationTargetException, IllegalAccessException {
         StringBuilder result = new StringBuilder();
         String sourceLower = source.toLowerCase(Locale.US);
         int len = source.length();
@@ -121,7 +135,7 @@ public class Templater {
 
     @NonNull
     private String getVarValue(
-            @NonNull TemplateData data,
+            @NonNull BaseData data,
             @NonNull String name,
             @NonNull Map<String, String> vars) throws InvocationTargetException, IllegalAccessException {
         String value = vars.get(name);
@@ -150,9 +164,70 @@ public class Templater {
         return value;
     }
 
-    @AutoValue
-    public abstract static class TemplateData {
-        public static TemplateData create(
+    public interface TemplateProvider {
+        String getTemplate(Flags flags) throws IOException;
+    }
+
+    public static abstract class BaseData implements TemplateProvider {
+        private final String mCss;
+        private final String mGAUid;
+        private final String mPageTitle;
+        private final String mPageFilename;
+        private final String mSiteTitle;
+        private final String mSiteBaseUrl;
+        private final String mBannerFilename;
+
+        // Callers should use derived classes: ArticleData.create(), etc.
+        private BaseData(
+                String css,
+                String GAUid,
+                String pageTitle,
+                String pageFilename,
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename) {
+            mCss = css;
+            mGAUid = GAUid;
+            mPageTitle = pageTitle;
+            mPageFilename = pageFilename;
+            mSiteTitle = siteTitle;
+            mSiteBaseUrl = siteBaseUrl;
+            mBannerFilename = bannerFilename;
+        }
+
+        public String getCss() {
+            return mCss;
+        }
+
+        public String getGAUid() {
+            return mGAUid;
+        }
+
+        public String getPageTitle() {
+            return mPageTitle;
+        }
+
+        public String getPageFilename() {
+            return mPageFilename;
+        }
+
+        public String getSiteTitle() {
+            return mSiteTitle;
+        }
+
+        public String getSiteBaseUrl() {
+            return mSiteBaseUrl;
+        }
+
+        public String getBannerFilename() {
+            return mBannerFilename;
+        }
+    }
+
+    public static class ArticleData extends BaseData {
+        private final String mContent;
+
+        private ArticleData(
                 String css,
                 String GAUid,
                 String pageTitle,
@@ -161,7 +236,26 @@ public class Templater {
                 String siteBaseUrl,
                 String bannerFilename,
                 String content) {
-            return new AutoValue_Templater_TemplateData(
+            super(  css,
+                    GAUid,
+                    pageTitle,
+                    pageFilename,
+                    siteTitle,
+                    siteBaseUrl,
+                    bannerFilename);
+            mContent = content;
+        }
+
+        public static ArticleData create(
+                String css,
+                String GAUid,
+                String pageTitle,
+                String pageFilename,
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
+                String content) {
+            return new ArticleData(
                     css,
                     GAUid,
                     pageTitle,
@@ -172,14 +266,140 @@ public class Templater {
                     content);
         }
 
-        public abstract String getCss();
-        public abstract String getGAUid();
-        public abstract String getPageTitle();
-        public abstract String getPageFilename();
-        public abstract String getSiteTitle();
-        public abstract String getSiteBaseUrl();
-        public abstract String getBannerFilename();
-        public abstract String getContent();
+        @Override
+        public String getTemplate(Flags flags) throws IOException {
+            return Resources.toString(
+                    Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_ARTICLE)),
+                    Charsets.UTF_8);
+        }
+
+        public String getContent() {
+            return mContent;
+        }
     }
 
+    public static class BlogPageData extends ArticleData {
+        private final String mBlogHeader;
+        private final String mPostDate;
+        private final String mPostTitle;
+
+        private BlogPageData(
+                String css,
+                String GAUid,
+                String pageTitle,
+                String pageFilename,
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
+                String content,
+                String blogHeader,
+                String postDate,
+                String postTitle) {
+            super(  css,
+                    GAUid,
+                    pageTitle,
+                    pageFilename,
+                    siteTitle,
+                    siteBaseUrl,
+                    bannerFilename,
+                    content);
+            mBlogHeader = blogHeader;
+            mPostDate = postDate;
+            mPostTitle = postTitle;
+        }
+
+        public static BlogPageData create(
+                String css,
+                String GAUid,
+                String pageTitle,
+                String pageFilename,
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
+                String content,
+                String blogHeader,
+                String postDate,
+                String postTitle) {
+            return new BlogPageData(
+                    css,
+                    GAUid,
+                    pageTitle,
+                    pageFilename,
+                    siteTitle,
+                    siteBaseUrl,
+                    bannerFilename,
+                    content,
+                    blogHeader,
+                    postDate,
+                    postTitle);
+        }
+
+        @Override
+        public String getTemplate(Flags flags) throws IOException {
+            return Resources.toString(
+                    Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_PAGE)),
+                    Charsets.UTF_8);
+        }
+
+        public String getBlogHeader() {
+            return mBlogHeader;
+        }
+
+        public String getPostDate() {
+            return mPostDate;
+        }
+
+        public String getPostTitle() {
+            return mPostTitle;
+        }
+    }
+
+    public static class BlogPostData extends BlogPageData {
+        private final String mPostExtraLink;
+
+        private BlogPostData(
+                String siteBaseUrl,
+                String content,
+                String postDate,
+                String postTitle,
+                String postExtraLink) {
+            super(  "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    siteBaseUrl,
+                    "",
+                    content,
+                    "",
+                    postDate,
+                    postTitle);
+            mPostExtraLink = postExtraLink;
+        }
+
+        public static BlogPostData create(
+                String siteBaseUrl,
+                String content,
+                String postDate,
+                String postTitle,
+                String postExtraLink) {
+            return new BlogPostData(
+                    siteBaseUrl,
+                    content,
+                    postDate,
+                    postTitle,
+                    postExtraLink);
+        }
+
+        @Override
+        public String getTemplate(Flags flags) throws IOException {
+            return Resources.toString(
+                    Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_POST)),
+                    Charsets.UTF_8);
+        }
+
+        public String getPostExtraLink() {
+            return mPostExtraLink;
+        }
+    }
 }

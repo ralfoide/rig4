@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 public class FlagsTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    @Mock FileOps mFileOps;
+    @Mock private FileOps mFileOps;
 
     private final StringLogger mLogger = new StringLogger();
     private Flags mFlags;

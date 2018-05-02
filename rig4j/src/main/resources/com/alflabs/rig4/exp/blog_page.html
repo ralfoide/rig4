@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport"    content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="author"      content="">
+
+<meta property="og:url"         content="{{.SiteBaseUrl}}{{.PageFilename}}" />
+<meta property="og:type"        content="article" />
+<meta property="og:title"       content="{{.PageTitle}}" />
+{{If.Description}}<meta property="og:description" content="{{.Description}}" />{{Endif}}
+{{If.ImageFilename}}<meta property="og:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}
+
+<meta name="twitter:card"        content="summary" />
+<!-- meta name="twitter:site"    content="@flickr" / -->
+<meta name="twitter:title"       content="{{.PageTitle}}" />
+{{If.Description}}<meta name="twitter:description" content="{{.Description}}" />{{Endif}}
+{{If.ImageFilename}}<meta name="twitter:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}
+
+<title>{{.PageTitle}}</title>
+
+<!-- Custom styles for this template -->
+<style type="text/css">
+body {
+    font-family: serif;
+    margin: 0;
+}
+
+.main {
+    margin: 8px;
+}
+
+p, span {
+    /* line-height: 1.2; */
+    text-align: justify;
+}
+
+p.console {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 60rem;
+}
+
+.center-horiz {
+    margin: auto;
+}
+
+.no-margin-container {
+}
+
+/* Header + Title */
+.blog-header {
+  margin-bottom: 3rem;
+  background-color: #428bca;
+  box-shadow: inset 0 -.1rem .25rem rgba(0,0,0,.1);
+}
+
+.banner-bg-image {
+    height: 200px;
+    background-image: url("{{.BannerFilename}}");
+    background-position: center;
+    background-size: 100% auto;
+}
+
+.title-container {
+    color: #fff;
+    padding: 1rem;
+    line-height: 1.5;
+    font-weight: 500;
+    font-size: 24px;
+    font-family: sans-serif;
+}
+
+.title-container a {
+    color: #fff;
+    text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.text-hide {
+    font: 0/0 a;
+    color: transparent;
+    text-shadow: none;
+    background-color: transparent;
+    border: 0;
+}
+
+td p {
+    margin: 0;
+}
+
+{{.Css}}
+</style>
+</head>
+
+<body>
+
+<header class="blog-header">
+    <div class="no-margin-container banner-bg-image text-hide">
+        Site Banner Image
+    </div>
+    <div class="title-container">
+        <a href="{{.SiteBaseUrl}}">{{.SiteTitle}}</a>
+    </div>
+</header>
+
+<main role="main">
+<div class="main">
+<div class="container center-horiz">
+
+{{.BlogHeader}}
+
+{{If.PostTitle}}<hr/><h2>{{.PostDate}} - {{.PostTitle}}</h2>{{Endif}}
+
+{{.Content}}
+
+</div>
+</div>
+</main>
+
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', '{{.GAUid}}', 'auto');
+    ga('send', 'pageview');
+</script>
+
+</body>
+</html>
+
