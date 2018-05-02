@@ -17,8 +17,8 @@ import static com.google.common.truth.Truth.assertThat;
 public class BlobStoreTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    private @Mock Flags mFlags;
-    private @Mock ILogger mLogger;
+    @Mock private Flags mFlags;
+    @Mock private ILogger mLogger;
     private final Timing mTiming = new Timing(new MockClock(), mLogger);
 
     private FileOps mFileOps;

@@ -26,12 +26,12 @@ import static org.mockito.Mockito.when;
 public class GDocHelperTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    private @Mock ILogger mLogger;
-    private @Mock FileOps mFileOps;
-    private @Mock Timing mTiming;
-    private @Mock GDocReader mGDocReader;
-    private @Mock BlobStore mBlobStore;
-    private @Mock HashStore mHashStore;
+    @Mock private ILogger mLogger;
+    @Mock private FileOps mFileOps;
+    @Mock private Timing mTiming;
+    @Mock private GDocReader mGDocReader;
+    @Mock private BlobStore mBlobStore;
+    @Mock private HashStore mHashStore;
 
     private GDocHelper mHelper;
 

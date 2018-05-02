@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 public class IndexReaderTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    private @Mock ILogger mLogger;
-    private @Mock GDocHelper mGDocHelper;
+    @Mock private ILogger mLogger;
+    @Mock private GDocHelper mGDocHelper;
     private IndexReader mReader;
 
     @Before

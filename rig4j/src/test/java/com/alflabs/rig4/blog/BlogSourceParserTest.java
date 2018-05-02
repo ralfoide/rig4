@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 public class BlogSourceParserTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    private @Mock Timing mTiming;
-    private @Mock Timing.TimeAccumulator mTimeAccumulator;
+    @Mock private Timing mTiming;
+    @Mock private Timing.TimeAccumulator mTimeAccumulator;
 
     private HtmlTransformer mHtmlTransformer;
     private BlogSourceParser mBlogSourceParser;

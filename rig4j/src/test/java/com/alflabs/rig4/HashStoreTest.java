@@ -17,8 +17,8 @@ import static com.google.common.truth.Truth.assertThat;
 public class HashStoreTest {
     public @Rule MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    private @Mock Flags mFlags;
-    private @Mock ILogger mLogger;
+    @Mock private Flags mFlags;
+    @Mock private ILogger mLogger;
 
     private HashStore mStore;
 
