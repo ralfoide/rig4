@@ -6,8 +6,6 @@ import com.alflabs.rig4.exp.Templater;
 import com.google.common.base.Charsets;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,7 +19,10 @@ import java.util.TreeMap;
  * Each blog is composed of one index file, paged files, and individual post files.
  */
 class PostTree {
+    private final static String TAG = PostTree.class.getSimpleName();
     private final static String ROOT = "blog";
+    private static final String HTML = ".html";
+    private static final String INDEX_HTML = "index.html";
 
     private final Map<String, Blog> mBlogs = new TreeMap<>();
 
@@ -144,7 +145,11 @@ class PostTree {
         }
 
         private void generateMainPage(BlogGenerator.Generator generator) throws Exception {
-            File destFile = new File(generator.getDestDir(), mFileItem.getPath().getPath());
+            File destDir = new File(generator.getDestDir(), mFileItem.getLeafDir());
+            File destFile = new File(destDir, INDEX_HTML);
+            generator.getFileOps().createParentDirs(destFile);
+            generator.getLogger().d(TAG, "Generate page for blog: " + mBlog.getCategory()
+                    + ", file: " + destFile);
 
             StringBuilder content = new StringBuilder();
             for (PostShort postShort : mPostShorts) {
@@ -176,6 +181,9 @@ class PostTree {
                 File destFile,
                 PostShort postData)
                 throws Exception {
+            generator.getLogger().d(TAG, "Generate short: " + postData.mKey
+                    + ", title: '" + postData.mTitle + "'");
+
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
 
             String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.getExtraLink();
@@ -193,8 +201,13 @@ class PostTree {
 
         private void generateExtraPage(BlogGenerator.Generator generator, PostExtra postData)
                 throws Exception {
-            File destFile = new File(generator.getDestDir(), postData.mFileItem.getPath().getPath());
+            File destFile = new File(generator.getDestDir(), postData.mFileItem.getLeafFile(HTML));
+            generator.getFileOps().createParentDirs(destFile);
+
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
+
+            generator.getLogger().d(TAG, "Generate extra: " + postData.mKey + " (" + postData.mTitle + ")"
+                    + ", file: " + destFile);
 
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
                     generator.getSiteCss(),
@@ -215,7 +228,7 @@ class PostTree {
         }
     }
 
-    public static class PostShort {
+    public static class PostShort implements Comparable<PostShort> {
         private final String mKey;
         private final LocalDate mDate;
         private final String mTitle;
@@ -234,9 +247,14 @@ class PostTree {
             mContent = content;
             mPostExtra = postExtra;
         }
+
+        @Override
+        public int compareTo(PostShort other) {
+            return mKey.compareTo(other.mKey);
+        }
     }
 
-    public static class PostExtra {
+    public static class PostExtra implements Comparable<PostExtra> {
         private final FileItem mFileItem = new FileItem();
         private final SourceTree.Content mContent;
         private final String mKey;
@@ -261,6 +279,11 @@ class PostTree {
         public String getExtraLink() {
             return mKey;
         }
+
+        @Override
+        public int compareTo(PostExtra other) {
+            return mKey.compareTo(other.mKey);
+        }
     }
 
     public static class FileItem {
@@ -268,6 +291,22 @@ class PostTree {
 
         public File getPath() {
             return mPath;
+        }
+
+        public String getLeafDir() {
+            String path = mPath.getPath();
+            path = path.replace("..", "");
+            return path;
+        }
+
+        public String getLeafFile(String extension) {
+            String path = mPath.getPath();
+            if (!path.endsWith(extension)) {
+                path += extension;
+            }
+
+            path = path.replace("..", "");
+            return path;
         }
 
         public void setPath(File path) {

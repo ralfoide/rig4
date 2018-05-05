@@ -53,6 +53,7 @@ public class EntryPoint {
             logger.d(TAG, "Done.");
         } catch (Exception e) {
             logger.d(TAG, "Failure", e);
+            e.printStackTrace();
         }
     }
 

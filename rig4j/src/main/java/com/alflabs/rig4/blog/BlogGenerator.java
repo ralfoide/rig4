@@ -26,6 +26,7 @@ import static com.alflabs.rig4.exp.Exp.EXP_SITE_BASE_URL;
 import static com.alflabs.rig4.exp.Exp.EXP_SITE_TITLE;
 
 public class BlogGenerator {
+    private final static String TAG = BlogGenerator.class.getSimpleName();
     private final static int ITEM_PER_PAGE = 10;
 
     private final Flags mFlags;
@@ -78,6 +79,7 @@ public class BlogGenerator {
 
     private void parseSource(@NonNull SourceTree sourceTree, @NonNull String blogId)
             throws IOException, URISyntaxException {
+        mLogger.d(TAG, "Parse source: " + blogId);
         GDocEntity entity = mGDocHelper.getGDocAsync(blogId, "text/html");
         boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
@@ -89,6 +91,7 @@ public class BlogGenerator {
 
     @NonNull
     private PostTree computePostTree(@NonNull SourceTree sourceTree) {
+        mLogger.d(TAG, "computePostTree");
         PostTree postTree = new PostTree();
         for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
             PostTree.Blog blog = createPostBlogFrom(sourceBlog);
@@ -141,10 +144,14 @@ public class BlogGenerator {
         indexPosts.sort(Comparator.reverseOrder());
         blog.getBlogIndex().fillFrom(indexPosts);
 
+        mLogger.d(TAG, "Blog " + blog.getCategory()
+                + ", posts: " + sourceBlog.getPosts().size()
+                + ", pages: " + blog.getBlogPages().size());
         return blog;
     }
 
     private void generatePostTree(PostTree postTree) throws Exception {
+        mLogger.d(TAG, "generatePostTree");
         postTree.generate(new Generator());
     }
 
@@ -164,8 +171,8 @@ public class BlogGenerator {
             return mHtmlTransformer.createLazyTransformer(callback);
         }
 
-        public Templater getTemplater() {
-            return mTemplater;
+        public ILogger getLogger() {
+            return mLogger;
         }
 
         public FileOps getFileOps() {
@@ -174,6 +181,10 @@ public class BlogGenerator {
 
         public File getDestDir() {
             return new File(mFlags.getString(EXP_DEST_DIR));
+        }
+
+        public Templater getTemplater() {
+            return mTemplater;
         }
 
         public String getSiteCss() {

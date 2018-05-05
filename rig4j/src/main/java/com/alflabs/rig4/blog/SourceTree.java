@@ -19,6 +19,7 @@ import java.util.TreeMap;
  * and its posts content list.
  */
 class SourceTree extends TreeChange {
+    private final static String TAG = SourceTree.class.getSimpleName();
     private Map<String, Blog> mBlogs = new TreeMap<>();
 
     public Map<String, Blog> getBlogs() {
