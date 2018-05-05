@@ -205,6 +205,7 @@ class PostTree {
             generator.getFileOps().createParentDirs(destFile);
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
+            mBlog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
 
             generator.getLogger().d(TAG, "Generate extra: " + postData.mKey + " (" + postData.mTitle + ")"
                     + ", file: " + destFile);
@@ -212,13 +213,13 @@ class PostTree {
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
                     generator.getSiteCss(),
                     generator.getGAUid(),
-                    postData.mTitle,
+                    mBlog.getCategory(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
                     generator.getSiteTitle(),
                     generator.getSiteBaseUrl(),
                     generator.getSiteBanner(),
                     postData.mContent.getFormatted(),
-                    "blog header",
+                    mBlog.getBlogHeader().getFormatted(),
                     postData.mDate.toString(),
                     postData.mTitle
             );

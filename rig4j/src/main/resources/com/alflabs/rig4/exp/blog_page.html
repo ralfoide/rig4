@@ -120,6 +120,10 @@ td p {
     </div>
     <div class="title-container">
         <a href="{{.SiteBaseUrl}}">{{.SiteTitle}}</a>
+        {{If.PageTitle != .SiteTitle}}
+        /
+        <a href="{{.SiteBaseUrl}}{{.PageFilename}}">{{.PageTitle}}</a>
+        {{Endif}}
     </div>
 </header>
 
@@ -129,10 +133,16 @@ td p {
 
 {{.BlogHeader}}
 
-{{If.PostTitle}}<hr/><h2>{{.PostDate}} - {{.PostTitle}}</h2>{{Endif}}
+    {{If.PostTitle}}
+    <div class="post-container">
+    <h2 class="post-title">{{.PostDate}} - {{.PostTitle}}</h2>
+    {{Endif}}
 
-{{.Content}}
+    {{.Content}}
 
+    {{If.PostTitle}}
+    </div>
+    {{Endif}}
 </div>
 </div>
 </main>
