@@ -7,10 +7,6 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-import java.security.GeneralSecurityException;
-import java.text.ParseException;
 
 public class EntryPoint {
     private static final String TAG = EntryPoint.class.getSimpleName();
@@ -55,7 +51,7 @@ public class EntryPoint {
             component.getGDocReader().init();
             component.getExp().start();
             logger.d(TAG, "Done.");
-        } catch (GeneralSecurityException | IOException | URISyntaxException | ParseException | IllegalAccessException | InvocationTargetException e) {
+        } catch (Exception e) {
             logger.d(TAG, "Failure", e);
         }
     }

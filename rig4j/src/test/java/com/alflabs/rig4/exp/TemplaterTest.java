@@ -93,13 +93,13 @@ public class TemplaterTest {
                 "<meta property=\"og:title\"       content=\"{{.PageTitle}}\" />\n" +
                 "{{IF.Description}}<meta property=\"og:description\" content=\"{{.Description}}\" />{{ENDIF}}\n" +
                 "{{if.content}}{{.Content}}{{endif}}\n" +
-                "    ga('create', '{{.GAUid}}', 'auto');\n";
+                "{{if.GAUid}}ga('create', '{{.GAUid}} is null', 'auto');{{EndIf}}\n";
 
         Templater templater = new Templater(mFlags, mTiming, template);
 
         String generated = templater.generate(Templater.ArticleData.create(
                 "CSS replacement",
-                "GA UID replacement",
+                null,           // If.Var accepts both null and empty strings
                 "Page Title replacement",
                 "Page Filename replacement",
                 "Site Title replacement",
@@ -114,7 +114,7 @@ public class TemplaterTest {
                 "\n" +
                 "Content replacement\n" +
                 "Multiple content.\n" +
-                "    ga('create', 'GA UID replacement', 'auto');\n");
+                "\n");
 
     }
 

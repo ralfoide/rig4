@@ -109,7 +109,7 @@ public class HtmlTransformer {
      * Returns the <em>Body</em> element only for intermediate processing.
      *
      * This does NOT removes Izu tags and does not transforms links, and images.
-     * The output is designed to be given to {@link #extractForHtml(Element, Element, Callback)} later.
+     * The output is designed to be given to {@link LazyTransformer} later.
      */
     public Element simplifyForProcessing(@NonNull byte[] content)
             throws IOException, URISyntaxException {

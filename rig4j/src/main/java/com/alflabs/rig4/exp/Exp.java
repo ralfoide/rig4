@@ -19,13 +19,13 @@ import java.text.ParseException;
 public class Exp {
     private static final String TAG = Exp.class.getSimpleName();
 
-    static final String EXP_DOC_ID = "exp-doc-id";
-    static final String EXP_DEST_DIR = "exp-dest-dir";
-    static final String EXP_GA_UID = "exp-ga-uid";
-    static final String EXP_SITE_TITLE = "exp-site-title";
-    static final String EXP_SITE_BANNER = "exp-site-banner";
+    public static final String EXP_DOC_ID = "exp-doc-id";
+    public static final String EXP_DEST_DIR = "exp-dest-dir";
+    public static final String EXP_GA_UID = "exp-ga-uid";
+    public static final String EXP_SITE_TITLE = "exp-site-title";
+    public static final String EXP_SITE_BANNER = "exp-site-banner";
     /** Base URL is expected to be in the format http(s)://some.host(/folder)/ with trailing slash. */
-    static final String EXP_SITE_BASE_URL = "exp-site-base-url";
+    public static final String EXP_SITE_BASE_URL = "exp-site-base-url";
 
     private final Flags mFlags;
     private final ILogger mLogger;
@@ -62,7 +62,7 @@ public class Exp {
         mFlags.addString(EXP_SITE_BASE_URL, "http://localhost/folder/", "Web site base URL");
     }
 
-    public void start() throws IOException, URISyntaxException, InvocationTargetException, IllegalAccessException, ParseException {
+    public void start() throws Exception {
         Timing.TimeAccumulator timing = mTiming.get("Total").start();
         boolean allChanged = checkVersionChanged();
         Index index = mIndexReader.readIndex(mFlags.getString(EXP_DOC_ID));

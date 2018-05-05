@@ -4,21 +4,31 @@ import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.exp.HtmlTransformer;
 import com.alflabs.rig4.exp.Templater;
+import com.alflabs.rig4.flags.Flags;
 import com.alflabs.rig4.gdoc.GDocHelper;
 import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.alflabs.rig4.exp.Exp.EXP_DEST_DIR;
+import static com.alflabs.rig4.exp.Exp.EXP_GA_UID;
+import static com.alflabs.rig4.exp.Exp.EXP_SITE_BANNER;
+import static com.alflabs.rig4.exp.Exp.EXP_SITE_BASE_URL;
+import static com.alflabs.rig4.exp.Exp.EXP_SITE_TITLE;
+
 public class BlogGenerator {
     private final static int ITEM_PER_PAGE = 10;
 
+    private final Flags mFlags;
     private final ILogger mLogger;
     private final FileOps mFileOps;
     private final GDocHelper mGDocHelper;
@@ -28,12 +38,14 @@ public class BlogGenerator {
 
     @Inject
     public BlogGenerator(
+            Flags flags,
             ILogger logger,
             FileOps fileOps,
             GDocHelper gDocHelper,
             HashStore hashStore,
             Templater templater,
             HtmlTransformer htmlTransformer) {
+        mFlags = flags;
         mLogger = logger;
         mFileOps = fileOps;
         mGDocHelper = gDocHelper;
@@ -43,7 +55,7 @@ public class BlogGenerator {
     }
 
     public void processEntries(@NonNull List<String> blogIds, boolean allChanged)
-            throws IOException, URISyntaxException {
+            throws Exception {
         SourceTree sourceTree = parseSources(blogIds);
         sourceTree.setChanged(allChanged);
         PostTree postTree = computePostTree(sourceTree);
@@ -119,7 +131,7 @@ public class BlogGenerator {
                 // Keep the posts list reverse-ordered (from most recent to older one).
                 pendingPosts.sort(Comparator.reverseOrder());
 
-                PostTree.BlogPage page = new PostTree.BlogPage(blog.getBlogIndex(), pageCount++);
+                PostTree.BlogPage page = new PostTree.BlogPage(blog, blog.getBlogIndex(), pageCount++);
                 page.fillFrom(pendingPosts);
                 pendingPosts.clear();
             }
@@ -132,9 +144,56 @@ public class BlogGenerator {
         return blog;
     }
 
-    private void generatePostTree(PostTree postTree) {
-        postTree.generate();
+    private void generatePostTree(PostTree postTree) throws Exception {
+        postTree.generate(new Generator());
     }
 
+    public class Generator {
+        public HtmlTransformer.LazyTransformer getLazyHtmlTransformer(File destFile) {
+            HtmlTransformer.Callback callback = new HtmlTransformer.Callback() {
+                @Override
+                public String processDrawing(String id, int width, int height) throws IOException {
+                    return mGDocHelper.downloadDrawing(id, destFile, width, height);
+                }
 
+                @Override
+                public String processImage(URI uri, int width, int height) throws IOException {
+                    return mGDocHelper.downloadImage(uri, destFile, width, height);
+                }
+            };
+            return mHtmlTransformer.createLazyTransformer(callback);
+        }
+
+        public Templater getTemplater() {
+            return mTemplater;
+        }
+
+        public FileOps getFileOps() {
+            return mFileOps;
+        }
+
+        public File getDestDir() {
+            return new File(mFlags.getString(EXP_DEST_DIR));
+        }
+
+        public String getSiteCss() {
+            return "";
+        }
+
+        public String getGAUid() {
+            return mFlags.getString(EXP_GA_UID);
+        }
+
+        public String getSiteTitle() {
+            return mFlags.getString(EXP_SITE_TITLE);
+        }
+
+        public String getSiteBaseUrl() {
+            return mFlags.getString(EXP_SITE_BASE_URL);
+        }
+
+        public String getSiteBanner() {
+            return mFlags.getString(EXP_SITE_BANNER);
+        }
+    }
 }

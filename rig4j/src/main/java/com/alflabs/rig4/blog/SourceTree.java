@@ -184,21 +184,22 @@ class SourceTree extends TreeChange {
     public static class Content {
         private final Element mIntermediary;
         private String mFormatted;
+        private HtmlTransformer.LazyTransformer mTransformer;
 
         public Content(@Null String formatted, @Null Element intermediary) {
             mFormatted = formatted;
             mIntermediary = intermediary;
         }
 
-        public void generate(@NonNull HtmlTransformer.LazyTransformer transformer)
-                throws IOException, URISyntaxException {
-            if (mFormatted == null && mIntermediary != null) {
-                mFormatted = transformer.lazyTransform(mIntermediary);
-            }
+        public void setTransformer(@NonNull HtmlTransformer.LazyTransformer transformer) {
+            mTransformer = transformer;
         }
 
         @Null
-        public String getFormatted() {
+        public String getFormatted() throws IOException, URISyntaxException {
+            if (mFormatted == null && mIntermediary != null) {
+                mFormatted = mTransformer.lazyTransform(mIntermediary);
+            }
             return mFormatted;
         }
 

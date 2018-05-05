@@ -2,8 +2,12 @@ package com.alflabs.rig4.blog;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.exp.Templater;
+import com.google.common.base.Charsets;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,9 +29,9 @@ class PostTree {
         mBlogs.put(blog.getCategory(), blog);
     }
 
-    public void generate() {
+    public void generate(BlogGenerator.Generator generator) throws Exception {
         for (Blog blog : mBlogs.values()) {
-            blog.generate();
+            blog.generate(generator);
         }
     }
 
@@ -43,7 +47,7 @@ class PostTree {
         public Blog(String category, SourceTree.Content blogHeader) {
             mCategory = category;
             mBlogHeader = blogHeader;
-            mBlogIndex = new BlogPage(new File(ROOT, category));
+            mBlogIndex = new BlogPage(this, new File(ROOT, category));
         }
 
         public String getCategory() {
@@ -62,25 +66,28 @@ class PostTree {
             return mBlogHeader;
         }
 
-        public void generate() {
-            mBlogIndex.generate();
+        public void generate(BlogGenerator.Generator generator) throws Exception {
+            mBlogIndex.generate(generator);
             for (BlogPage blogPage : mBlogPages) {
-                blogPage.generate();
+                blogPage.generate(generator);
             }
         }
     }
 
     public static class BlogPage {
+        private final Blog mBlog;
         private final FileItem mFileItem = new FileItem();
         private final List<PostShort> mPostShorts = new ArrayList<>();
         private final List<PostExtra> mPostExtras = new ArrayList<>();
 
-        public BlogPage(BlogPage parent, int index) {
+        public BlogPage(Blog blog, BlogPage parent, int index) {
+            mBlog = blog;
             File path = new File(parent.getFileItem().getPath(), String.format("%03d", index));
             mFileItem.setPath(path);
         }
 
-        public BlogPage(File path) {
+        public BlogPage(Blog blog, File path) {
+            mBlog = blog;
             mFileItem.setPath(path);
         }
 
@@ -126,8 +133,85 @@ class PostTree {
             mPostShorts.sort(Collections.reverseOrder());
         }
 
-        public void generate() {
+        public void generate(BlogGenerator.Generator generator) throws Exception {
+            // Write one file with all the short entries.
+            generateMainPage(generator);
 
+            // Write one file per extra entry.
+            for (PostExtra postExtra : mPostExtras) {
+                generateExtraPage(generator, postExtra);
+            }
+        }
+
+        private void generateMainPage(BlogGenerator.Generator generator) throws Exception {
+            File destFile = new File(generator.getDestDir(), mFileItem.getPath().getPath());
+
+            StringBuilder content = new StringBuilder();
+            for (PostShort postShort : mPostShorts) {
+                content.append(generateShort(generator, destFile, postShort));
+            }
+
+            mBlog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
+
+            Templater.BlogPageData templateData = Templater.BlogPageData.create(
+                    generator.getSiteCss(),
+                    generator.getGAUid(),
+                    mBlog.getCategory(),
+                    destFile.getName(),  // page filename (for base-url/page-filename.html)
+                    generator.getSiteTitle(),
+                    generator.getSiteBaseUrl(),
+                    generator.getSiteBanner(),
+                    content.toString(),
+                    mBlog.getBlogHeader().getFormatted(),
+                    "", // no post date  for an index
+                    ""  // no post title for an index
+            );
+
+            String generated = generator.getTemplater().generate(templateData);
+            generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
+        }
+
+        private String generateShort(
+                BlogGenerator.Generator generator,
+                File destFile,
+                PostShort postData)
+                throws Exception {
+            postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
+
+            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.getExtraLink();
+
+            Templater.BlogPostData templateData = Templater.BlogPostData.create(
+                    generator.getSiteBaseUrl(),
+                    postData.mContent.getFormatted(),
+                    postData.mDate.toString(),
+                    postData.mTitle,
+                    extraLink
+            );
+
+            return generator.getTemplater().generate(templateData);
+        }
+
+        private void generateExtraPage(BlogGenerator.Generator generator, PostExtra postData)
+                throws Exception {
+            File destFile = new File(generator.getDestDir(), postData.mFileItem.getPath().getPath());
+            postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
+
+            Templater.BlogPageData templateData = Templater.BlogPageData.create(
+                    generator.getSiteCss(),
+                    generator.getGAUid(),
+                    postData.mTitle,
+                    destFile.getName(),  // page filename (for base-url/page-filename.html)
+                    generator.getSiteTitle(),
+                    generator.getSiteBaseUrl(),
+                    generator.getSiteBanner(),
+                    postData.mContent.getFormatted(),
+                    "blog header",
+                    postData.mDate.toString(),
+                    postData.mTitle
+            );
+
+            String generated = generator.getTemplater().generate(templateData);
+            generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
         }
     }
 
@@ -168,9 +252,14 @@ class PostTree {
             mKey = key;
             mDate = date;
             mTitle = title;
-            File path = new File(parent.mFileItem.getPath(), key);
+            File path = new File(parent.mFileItem.getPath(), getExtraLink());
             mFileItem.setPath(path);
             mContent = content;
+        }
+
+        /** Link to the extra relative to the root page. */
+        public String getExtraLink() {
+            return mKey;
         }
     }
 
