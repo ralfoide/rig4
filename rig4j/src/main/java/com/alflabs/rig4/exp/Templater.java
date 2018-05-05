@@ -6,6 +6,7 @@ import com.alflabs.rig4.flags.Flags;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
+import org.eclipse.osgi.baseadaptor.BaseData;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -103,25 +104,58 @@ public class Templater {
             }
 
             String name = command.substring(dot + 1).toLowerCase(Locale.US);
-            String value = getVarValue(data, name, vars);
             String function = dot <= 0 ? "" : command.substring(0, dot).toLowerCase(Locale.US);
 
-            String replacement = value;
+            String replacement = "";
             switch (function) {
             case "if":
                 int endif = sourceLower.indexOf("{{endif}}", offset);
                 if (endif < offset) {
                     throw new ParseException("Missing '{{EndIf}}' for '" + command + "' in template", offset);
                 }
-                if (value.trim().isEmpty()) {
-                    replacement = "";
+
+                boolean isEq = false;
+                boolean isNeq = false;
+                String value1 = "";
+                String value2 = "";
+                int pos = name.indexOf("==");
+                if (pos != -1) {
+                    isEq = true;
                 } else {
+                    pos = name.indexOf("!=");
+                    isNeq = pos != -1;
+                }
+                if (isEq || isNeq) {
+                    String name1 = name.substring(0, pos).trim();
+                    value1 = getVarValue(data, name1, vars);
+
+                    value2 = name.substring(pos + 2).trim();
+                    if (value2.startsWith(".")) {
+                        value2 = getVarValue(data, value2.substring(1), vars);
+                    }
+                } else {
+                    value1 = getVarValue(data, name, vars);
+                }
+
+                boolean useInnerSource = false;
+                if (isEq && value1.equals(value2)) {
+                    useInnerSource = true;
+                } else if (isNeq && !value1.equals(value2)) {
+                    useInnerSource = true;
+                } else if (!isEq && !isNeq && !value1.trim().isEmpty()) {
+                    useInnerSource = true;
+                }
+
+                if (useInnerSource) {
                     String innerSource = source.substring(offset, endif);
                     replacement = generateImpl(data, innerSource, vars);
                 }
+
                 offset = endif + "{{endif}}".length();
                 break;
             case "":
+                // Straight replacement e.g. {{.Var}} ==> value of Var
+                replacement = getVarValue(data, name, vars);
                 break;
             default:
                 throw new ParseException("Invalid function in '" + command + "' in template", start);
@@ -165,7 +199,7 @@ public class Templater {
     }
 
     public interface TemplateProvider {
-        String getTemplate(Flags flags) throws IOException;
+        @NonNull String getTemplate(Flags flags) throws IOException;
     }
 
     public static abstract class BaseData implements TemplateProvider {
@@ -178,7 +212,7 @@ public class Templater {
         private final String mBannerFilename;
 
         // Callers should use derived classes: ArticleData.create(), etc.
-        private BaseData(
+        BaseData(
                 String css,
                 String GAUid,
                 String pageTitle,
@@ -266,6 +300,7 @@ public class Templater {
                     content);
         }
 
+        @NonNull
         @Override
         public String getTemplate(Flags flags) throws IOException {
             return Resources.toString(
@@ -334,6 +369,7 @@ public class Templater {
                     postTitle);
         }
 
+        @NonNull
         @Override
         public String getTemplate(Flags flags) throws IOException {
             return Resources.toString(
@@ -391,6 +427,7 @@ public class Templater {
                     postExtraLink);
         }
 
+        @NonNull
         @Override
         public String getTemplate(Flags flags) throws IOException {
             return Resources.toString(

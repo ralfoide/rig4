@@ -12,7 +12,10 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.io.IOException;
+
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
 
 public class TemplaterTest {
@@ -33,7 +36,62 @@ public class TemplaterTest {
     }
 
     @Test
-    public void testSimpleReplacements() throws Exception {
+    public void testVarReplacement() throws Exception {
+        String template = "<h2> {{.SiteTitle}} - {{.PageTitle}} </h2>";
+        Templater templater = new Templater(mFlags, mTiming, template);
+        String generated = templater.generate(new TestTemplateData("A Site Title", "A Page Title"));
+        assertThat(generated).isEqualTo("<h2> A Site Title - A Page Title </h2>");
+    }
+
+    @Test
+    public void testVarReplacement_NullIsEmpty() throws Exception {
+        String template = "<h2> {{.SiteTitle}} - {{.PageTitle}} </h2>";
+        Templater templater = new Templater(mFlags, mTiming, template);
+        String generated = templater.generate(new TestTemplateData(null, ""));
+        assertThat(generated).isEqualTo("<h2>  -  </h2>");
+    }
+
+    @Test
+    public void testIfEmpty() throws Exception {
+        String template = "<h2> {{.SiteTitle}} {{If.PageTitle}}- {{.PageTitle}} {{Endif}}</h2>";
+        Templater templater = new Templater(mFlags, mTiming, template);
+
+        String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
+        assertThat(generated1).isEqualTo("<h2> A Site - A Page </h2>");
+
+        String generated2 = templater.generate(new TestTemplateData("A Site", ""));
+        assertThat(generated2).isEqualTo("<h2> A Site </h2>");
+
+        String generated3 = templater.generate(new TestTemplateData("A Site", null));
+        assertThat(generated3).isEqualTo("<h2> A Site </h2>");
+    }
+
+    @Test
+    public void testIfEqual() throws Exception {
+        String template = "<h2> {{.SiteTitle}} {{If.PageTitle == .SiteTitle}}eq {{.PageTitle}} {{Endif}}</h2>";
+        Templater templater = new Templater(mFlags, mTiming, template);
+
+        String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
+        assertThat(generated1).isEqualTo("<h2> A Site </h2>");
+
+        String generated2 = templater.generate(new TestTemplateData("A Site", "A Site"));
+        assertThat(generated2).isEqualTo("<h2> A Site eq A Site </h2>");
+    }
+
+    @Test
+    public void testIfNotEqual() throws Exception {
+        String template = "<h2> {{.SiteTitle}} {{If.PageTitle != .SiteTitle}}+ {{.PageTitle}} {{Endif}}</h2>";
+        Templater templater = new Templater(mFlags, mTiming, template);
+
+        String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
+        assertThat(generated1).isEqualTo("<h2> A Site + A Page </h2>");
+
+        String generated2 = templater.generate(new TestTemplateData("A Site", "A Site"));
+        assertThat(generated2).isEqualTo("<h2> A Site </h2>");
+    }
+
+    @Test
+    public void testComplexTemplate_SimpleReplacements() throws Exception {
         String template = "" +
                 "<!doctype html>\n" +
                 "<html lang=\"en\">\n" +
@@ -83,7 +141,7 @@ public class TemplaterTest {
     }
 
     @Test
-    public void testIfEmpty() throws Exception {
+    public void testComplexTemplate_IfEmpty() throws Exception {
         String template = "" +
                 "{{If.NonExistent}}<!doctype html>\n" +
                 "<html lang=\"en\">\n" +
@@ -205,5 +263,24 @@ public class TemplaterTest {
         assertThat(generated).contains("<a href=\"http://Site URL/replacement/extra link/\">Click here to read more...</a>");
         assertThat(generated).containsMatch(">\\s+Post Content data\\s+<");
 
+    }
+
+    public static class TestTemplateData extends Templater.BaseData {
+
+        private TestTemplateData(String siteTitle, String pageTitle) {
+            super(  "css",
+                    "GAUid",
+                    pageTitle,
+                    "pageFilename",
+                    siteTitle,
+                    "siteBaseUrl",
+                    "bannerFilename");
+        }
+
+        @Override
+        public String getTemplate(Flags flags) throws IOException {
+            fail("TestTemplateData.getTemplate is not defined in tests");
+            return null;
+        }
     }
 }

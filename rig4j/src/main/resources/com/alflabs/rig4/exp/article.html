@@ -109,6 +109,10 @@ td p {
     </div>
     <div class="title-container">
         <a href="{{.SiteBaseUrl}}">{{.SiteTitle}}</a>
+        {{If.PageTitle != .SiteTitle}}
+        /
+        <a href="{{.SiteBaseUrl}}{{.PageFilename}}">{{.PageTitle}}</a>
+        {{Endif}}
     </div>
 </header>
 
