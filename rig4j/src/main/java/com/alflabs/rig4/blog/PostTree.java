@@ -186,7 +186,7 @@ class PostTree {
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
 
-            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.getExtraLink();
+            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.mFileItem.getLeafFile(HTML);
 
             Templater.BlogPostData templateData = Templater.BlogPostData.create(
                     generator.getSiteBaseUrl(),
@@ -270,14 +270,9 @@ class PostTree {
             mKey = key;
             mDate = date;
             mTitle = title;
-            File path = new File(parent.mFileItem.getPath(), getExtraLink());
+            File path = new File(parent.mFileItem.getPath(), mKey);
             mFileItem.setPath(path);
             mContent = content;
-        }
-
-        /** Link to the extra relative to the root page. */
-        public String getExtraLink() {
-            return mKey;
         }
 
         @Override

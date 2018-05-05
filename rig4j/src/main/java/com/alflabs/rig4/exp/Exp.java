@@ -60,6 +60,11 @@ public class Exp {
     }
 
     public void start() throws Exception {
+        // Sanity check...
+        if (!mFlags.getString(EXP_SITE_BASE_URL).endsWith("/")) {
+            throw new IllegalArgumentException("Error: URL for " + EXP_SITE_BASE_URL + " needs to terminate with a /. Current value: " + mFlags.getString(EXP_SITE_BASE_URL));
+        }
+
         Timing.TimeAccumulator timing = mTiming.get("Total").start();
         boolean allChanged = checkVersionChanged();
         Index index = mIndexReader.readIndex(mFlags.getString(EXP_DOC_ID));
