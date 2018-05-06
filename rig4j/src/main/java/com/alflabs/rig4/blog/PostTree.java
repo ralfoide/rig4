@@ -41,33 +41,44 @@ class PostTree {
 
     public static class Blog {
         private final String mCategory;
+        private final String mTitle;
         private final SourceTree.Content mBlogHeader;
         private final BlogPage mBlogIndex;
         private final List<BlogPage> mBlogPages = new ArrayList<>();
 
-        public Blog(String category, SourceTree.Content blogHeader) {
+        public Blog(@NonNull String category, @Null String title, @Null SourceTree.Content blogHeader) {
             mCategory = category;
+            mTitle = title == null ? "" : title;
             mBlogHeader = blogHeader;
             mBlogIndex = new BlogPage(this, new File(ROOT, category));
         }
 
+        @NonNull
         public String getCategory() {
             return mCategory;
         }
 
+        @NonNull
+        public String getTitle() {
+            return mTitle;
+        }
+
+        @NonNull
         public BlogPage getBlogIndex() {
             return mBlogIndex;
         }
 
+        @NonNull
         public List<BlogPage> getBlogPages() {
             return mBlogPages;
         }
 
+        @Null
         public SourceTree.Content getBlogHeader() {
             return mBlogHeader;
         }
 
-        public void generate(BlogGenerator.Generator generator) throws Exception {
+        public void generate(@NonNull BlogGenerator.Generator generator) throws Exception {
             mBlogIndex.generate(generator);
             for (BlogPage blogPage : mBlogPages) {
                 blogPage.generate(generator);
@@ -77,21 +88,22 @@ class PostTree {
 
     public static class BlogPage {
         private final Blog mBlog;
-        private final FileItem mFileItem = new FileItem();
+        private final FileItem mFileItem;
         private final List<PostShort> mPostShorts = new ArrayList<>();
         private final List<PostExtra> mPostExtras = new ArrayList<>();
 
-        public BlogPage(Blog blog, BlogPage parent, int index) {
+        public BlogPage(@NonNull Blog blog, @NonNull BlogPage parent, int index) {
             mBlog = blog;
             File path = new File(parent.getFileItem().getPath(), String.format("%03d", index));
-            mFileItem.setPath(path);
+            mFileItem = new FileItem(path);
         }
 
-        public BlogPage(Blog blog, File path) {
+        public BlogPage(@NonNull Blog blog, @NonNull File path) {
             mBlog = blog;
-            mFileItem.setPath(path);
+            mFileItem = new FileItem(path);
         }
 
+        @NonNull
         public FileItem getFileItem() {
             return mFileItem;
         }
@@ -100,7 +112,7 @@ class PostTree {
          * Fill the page with the given posts.
          * The input collection should already be ordered as it should be presented on the page.
          */
-        public void fillFrom(Collection<SourceTree.BlogPost> sourcePosts) {
+        public void fillFrom(@NonNull Collection<SourceTree.BlogPost> sourcePosts) {
             for (SourceTree.BlogPost sourcePost : sourcePosts) {
                 SourceTree.Content pageContent = sourcePost.getFullContent();
                 SourceTree.Content extraContent = null;
@@ -134,7 +146,7 @@ class PostTree {
             mPostShorts.sort(Collections.reverseOrder());
         }
 
-        public void generate(BlogGenerator.Generator generator) throws Exception {
+        public void generate(@NonNull BlogGenerator.Generator generator) throws Exception {
             // Write one file with all the short entries.
             generateMainPage(generator);
 
@@ -144,7 +156,7 @@ class PostTree {
             }
         }
 
-        private void generateMainPage(BlogGenerator.Generator generator) throws Exception {
+        private void generateMainPage(@NonNull BlogGenerator.Generator generator) throws Exception {
             File destDir = new File(generator.getDestDir(), mFileItem.getLeafDir());
             File destFile = new File(destDir, INDEX_HTML);
             generator.getFileOps().createParentDirs(destFile);
@@ -161,7 +173,7 @@ class PostTree {
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
                     generator.getSiteCss(),
                     generator.getGAUid(),
-                    mBlog.getCategory(),
+                    mBlog.getTitle(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
                     generator.getSiteTitle(),
                     generator.getSiteBaseUrl(),
@@ -177,9 +189,9 @@ class PostTree {
         }
 
         private String generateShort(
-                BlogGenerator.Generator generator,
-                File destFile,
-                PostShort postData)
+                @NonNull BlogGenerator.Generator generator,
+                @NonNull File destFile,
+                @NonNull PostShort postData)
                 throws Exception {
             generator.getLogger().d(TAG, "Generate short: " + postData.mKey
                     + ", title: '" + postData.mTitle + "'");
@@ -199,7 +211,9 @@ class PostTree {
             return generator.getTemplater().generate(templateData);
         }
 
-        private void generateExtraPage(BlogGenerator.Generator generator, PostExtra postData)
+        private void generateExtraPage(
+                @NonNull BlogGenerator.Generator generator,
+                @NonNull PostExtra postData)
                 throws Exception {
             File destFile = new File(generator.getDestDir(), postData.mFileItem.getLeafFile(HTML));
             generator.getFileOps().createParentDirs(destFile);
@@ -213,7 +227,7 @@ class PostTree {
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
                     generator.getSiteCss(),
                     generator.getGAUid(),
-                    mBlog.getCategory(),
+                    mBlog.getTitle(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
                     generator.getSiteTitle(),
                     generator.getSiteBaseUrl(),
@@ -256,7 +270,7 @@ class PostTree {
     }
 
     public static class PostExtra implements Comparable<PostExtra> {
-        private final FileItem mFileItem = new FileItem();
+        private final FileItem mFileItem;
         private final SourceTree.Content mContent;
         private final String mKey;
         private final LocalDate mDate;
@@ -272,7 +286,7 @@ class PostTree {
             mDate = date;
             mTitle = title;
             File path = new File(parent.mFileItem.getPath(), mKey);
-            mFileItem.setPath(path);
+            mFileItem = new FileItem(path);
             mContent = content;
         }
 
@@ -283,19 +297,26 @@ class PostTree {
     }
 
     public static class FileItem {
-        private File mPath;
+        private final File mPath;
 
+        public FileItem(@NonNull File path) {
+            mPath = path;
+        }
+
+        @NonNull
         public File getPath() {
             return mPath;
         }
 
+        @NonNull
         public String getLeafDir() {
             String path = mPath.getPath();
             path = path.replace("..", "");
             return path;
         }
 
-        public String getLeafFile(String extension) {
+        @NonNull
+        public String getLeafFile(@NonNull String extension) {
             String path = mPath.getPath();
             if (!path.endsWith(extension)) {
                 path += extension;
@@ -303,10 +324,6 @@ class PostTree {
 
             path = path.replace("..", "");
             return path;
-        }
-
-        public void setPath(File path) {
-            mPath = path;
         }
     }
 

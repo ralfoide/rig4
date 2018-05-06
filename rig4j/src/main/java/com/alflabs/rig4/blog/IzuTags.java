@@ -3,6 +3,7 @@ package com.alflabs.rig4.blog;
 public class IzuTags {
 
     public static final String IZU_BLOG = "izu:blog";
+    public static final String IZU_BLOG_TITLE = "izu:blog-title:";
     public static final String IZU_BLOG_END = "izu:blog:end";
     public static final String IZU_HEADER_END = "izu:header:end";
     public static final String IZU_BREAK = "izu:break";

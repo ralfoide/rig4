@@ -40,6 +40,17 @@ class SourceTree extends TreeChange {
         // LATER for now invalidate the whole blog.
         blog.setChanged(blog.isChanged() || fileChanged);
 
+        if (blog.getTitle() == null) {
+            for (String izuTag : parsedResult.getTags()) {
+                if (izuTag.startsWith(IzuTags.IZU_BLOG_TITLE)) {
+                    String title = izuTag.substring(IzuTags.IZU_BLOG_TITLE.length()).trim();
+                    if (!title.isEmpty()) {
+                        blog.setTitle(title);
+                    }
+                }
+            }
+        }
+
         if (parsedResult.getIntermediaryHeader() != null) {
             if (blog.getHeaderContent() != null) {
                 throw new BlogSourceParser.ParseException("Duplicate blog headers defined for category "
@@ -72,30 +83,43 @@ class SourceTree extends TreeChange {
 
     public static class Blog extends TreeChange {
         private final String mCategory;
+        private String mTitle;
         private Content mHeaderContent;
         private Map<String, BlogPost> mPosts = new TreeMap<>();
 
-        public Blog(String category) {
+        public Blog(@NonNull String category) {
             mCategory = category;
         }
 
+        @NonNull
         public String getCategory() {
             return mCategory;
         }
 
+        @NonNull
         public Collection<BlogPost> getPosts() {
             return mPosts.values();
         }
 
+        @Null
+        public String getTitle() {
+            return mTitle;
+        }
+
+        public void setTitle(@NonNull String title) {
+            mTitle = title;
+        }
+
+        @Null
         public Content getHeaderContent() {
             return mHeaderContent;
         }
 
-        public void setHeaderContent(Content headerContent) {
+        public void setHeaderContent(@NonNull Content headerContent) {
             mHeaderContent = headerContent;
         }
 
-        public void addPost(BlogPost post) throws BlogSourceParser.ParseException {
+        public void addPost(@NonNull BlogPost post) throws BlogSourceParser.ParseException {
             String key = post.getKey();
             if (mPosts.containsKey(key)) {
                 throw new BlogSourceParser.ParseException(
@@ -142,22 +166,27 @@ class SourceTree extends TreeChange {
                         .replaceAll("_+", "_");
         }
 
+        @NonNull
         public String getKey() {
             return mKey;
         }
 
+        @NonNull
         public LocalDate getDate() {
             return mDate;
         }
 
+        @NonNull
         public String getTitle() {
             return mTitle;
         }
 
+        @Null
         public Content getShortContent() {
             return mShortContent;
         }
 
+        @NonNull
         public Content getFullContent() {
             return mFullContent;
         }

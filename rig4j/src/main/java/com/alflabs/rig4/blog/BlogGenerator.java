@@ -102,7 +102,10 @@ public class BlogGenerator {
 
     @NonNull
     private PostTree.Blog createPostBlogFrom(@NonNull SourceTree.Blog sourceBlog) {
-        PostTree.Blog blog = new PostTree.Blog(sourceBlog.getCategory(), sourceBlog.getHeaderContent());
+        PostTree.Blog blog = new PostTree.Blog(
+                sourceBlog.getCategory(),
+                sourceBlog.getTitle(),
+                sourceBlog.getHeaderContent());
 
         // EXPERIMENTAL SIMPLIFICATION
         // ---------------------------
