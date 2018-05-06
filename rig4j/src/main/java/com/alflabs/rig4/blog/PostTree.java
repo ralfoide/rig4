@@ -49,7 +49,7 @@ class PostTree {
         public Blog(@NonNull String category, @Null String title, @Null SourceTree.Content blogHeader) {
             mCategory = category;
             mTitle = title == null ? "" : title;
-            mBlogHeader = blogHeader;
+            mBlogHeader = blogHeader != null ? blogHeader : new SourceTree.Content("", null);
             mBlogIndex = new BlogPage(this, new File(ROOT, category));
         }
 
@@ -73,7 +73,7 @@ class PostTree {
             return mBlogPages;
         }
 
-        @Null
+        @NonNull
         public SourceTree.Content getBlogHeader() {
             return mBlogHeader;
         }

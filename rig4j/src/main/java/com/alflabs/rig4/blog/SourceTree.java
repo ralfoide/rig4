@@ -24,6 +24,7 @@ class SourceTree extends TreeChange {
     private final static String TAG = SourceTree.class.getSimpleName();
     private Map<String, Blog> mBlogs = new TreeMap<>();
 
+    @NonNull
     public Map<String, Blog> getBlogs() {
         return mBlogs;
     }
@@ -31,9 +32,20 @@ class SourceTree extends TreeChange {
     public void saveMetadata() {
     }
 
-    public void merge(BlogSourceParser.ParsedResult parsedResult, boolean fileChanged)
+    public void merge(@NonNull BlogSourceParser.ParsedResult parsedResult,
+                      boolean fileChanged,
+                      @NonNull CatFilter catAcceptFilter,
+                      @NonNull CatFilter catRejectFilter)
             throws BlogSourceParser.ParseException {
         String category = parsedResult.getBlogCategory();
+
+        if (!catAcceptFilter.matches(category)) {
+            return;
+        }
+        if (catRejectFilter.matches(category)) {
+            return;
+        }
+
         Blog blog = mBlogs.get(category);
         if (blog == null) {
             blog = new Blog(category);
@@ -65,9 +77,42 @@ class SourceTree extends TreeChange {
 
         for (BlogSourceParser.ParsedSection section : parsedResult.getParsedSections()) {
             BlogPost post = BlogPost.from(section);
+            // LATER post.getCategory... and match against accept/reject filters.
             // LATER post.setChanged(...)
             blog.addPost(post);
         }
+    }
+
+    /**
+     * Creates a new synthetic source blog merging all the posts from blogs matching the
+     * mixed cat filter.
+     */
+    @NonNull
+    public Blog createMixedBlog(@NonNull String mixedCategory, @NonNull CatFilter mixedCatFilter) throws BlogSourceParser.ParseException {
+
+        // If there's already a blog matching the mixed category name, clone it and use it as-is.
+        // This way we get the header and all the posts already set. Note that all inside elements
+        // (posts, header) are duplicated references and not clones by themselves.
+        Blog mixed = mBlogs.get(mixedCategory);
+        if (mixed != null) {
+            mixed = mixed.cloneBlog();
+        } else {
+            mixed = new Blog(mixedCategory);
+        }
+
+        for (Blog blog : mBlogs.values()) {
+            // Note: right now all posts from a source blog have the same category.
+            // LATER each post will be able to override its own category.
+            if (!mixedCatFilter.matches(blog.getCategory())) {
+                continue;
+            }
+
+            for (BlogPost post : blog.getPosts()) {
+                mixed.addPost(post);
+            }
+        }
+
+        return mixed;
     }
 
     @Override
@@ -91,6 +136,20 @@ class SourceTree extends TreeChange {
 
         public Blog(@NonNull String category) {
             mCategory = category;
+        }
+
+        /**
+         * Creates a shallow clone of this blog.
+         * Note that all inside elements (posts, header) are duplicated references
+         * and not clones by themselves.
+         */
+        @NonNull
+        public Blog cloneBlog() {
+            Blog copy = new Blog(mCategory);
+            copy.mTitle = mTitle;
+            copy.mHeaderContent = mHeaderContent;
+            copy.mPosts.putAll(mPosts);
+            return copy;
         }
 
         @NonNull

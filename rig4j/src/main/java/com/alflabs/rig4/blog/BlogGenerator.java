@@ -28,6 +28,7 @@ import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_TITLE;
 public class BlogGenerator {
     private final static String TAG = BlogGenerator.class.getSimpleName();
     private final static int ITEM_PER_PAGE = 10;
+    private static final String MIXED_CATEGORY = "all";
 
     private final Flags mFlags;
     private final ILogger mLogger;
@@ -36,6 +37,12 @@ public class BlogGenerator {
     private final HashStore mHashStore;
     private final Templater mTemplater;
     private final HtmlTransformer mHtmlTransformer;
+
+    private CatFilter mCatAcceptFilter;
+    private CatFilter mCatRejectFilter;
+    private CatFilter mCatBannerFilter;
+    private CatFilter mGenSingleFilter;
+    private CatFilter mGenMixedFilter;
 
     @Inject
     public BlogGenerator(
@@ -57,6 +64,12 @@ public class BlogGenerator {
 
     public void processEntries(@NonNull List<String> blogIds, boolean allChanged)
             throws Exception {
+        mCatAcceptFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_ACCEPT_CAT));
+        mCatRejectFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_REJECT_CAT));
+        mCatBannerFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_BANNER_EXCLUDE));
+        mGenSingleFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_GEN_SINGLE));
+        mGenMixedFilter  = new CatFilter(mFlags.getString(BlogFlags.BLOG_GEN_MIXED));
+
         SourceTree sourceTree = parseSources(blogIds);
         sourceTree.setChanged(allChanged);
         PostTree postTree = computePostTree(sourceTree);
@@ -86,17 +99,31 @@ public class BlogGenerator {
 
         BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);
         BlogSourceParser.ParsedResult result = blogSourceParser.parse(content);
-        sourceTree.merge(result, fileChanged);
+        sourceTree.merge(result, fileChanged, mCatAcceptFilter, mCatRejectFilter);
     }
 
     @NonNull
-    private PostTree computePostTree(@NonNull SourceTree sourceTree) {
+    private PostTree computePostTree(@NonNull SourceTree sourceTree)
+            throws BlogSourceParser.ParseException {
         mLogger.d(TAG, "computePostTree");
         PostTree postTree = new PostTree();
-        for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
-            PostTree.Blog blog = createPostBlogFrom(sourceBlog);
-            postTree.add(blog);
+
+        // Generate per-category blogs
+        if (!mGenSingleFilter.isEmpty()) {
+            for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
+                if (mGenSingleFilter.matches(sourceBlog.getCategory())) {
+                    PostTree.Blog blog = createPostBlogFrom(sourceBlog);
+                    postTree.add(blog);
+                }
+            }
         }
+
+        // Generate mixed-categories blog
+        if (!mGenMixedFilter.isEmpty()) {
+            PostTree.Blog mixed = createPostBlogFrom(sourceTree.createMixedBlog(MIXED_CATEGORY, mGenMixedFilter));
+            postTree.add(mixed);
+        }
+
         return postTree;
     }
 
