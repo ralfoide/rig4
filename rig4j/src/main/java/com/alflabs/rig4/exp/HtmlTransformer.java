@@ -138,13 +138,23 @@ public class HtmlTransformer {
      * Finish processing content extracted using {@link #simplifyForProcessing(byte[])}.
      */
     public interface LazyTransformer {
+        /**
+         * A key tying the transformer to the output (typically the generated file path or a hash
+         * of it or a blog category). Next time the transformer is called, any cached generated
+         * output should be ignored if the transformer key has changed. This would happen when
+         * a post's content is used in multiple blogs. All intermediary asset files typically
+         * need to be generated for each one.
+         */
+        String getTransformKey();
+
+        /** Transforms the HTML element into the desired HTML text. */
         String lazyTransform(Element element) throws IOException, URISyntaxException;
     }
 
     /**
      * Finish processing content extracted using {@link #simplifyForProcessing(byte[])}.
      */
-    public LazyTransformer createLazyTransformer(@NonNull Callback callback) {
+    public LazyTransformer createLazyTransformer(@NonNull String transformKey, @NonNull Callback callback) {
         return new LazyTransformer() {
             @Override
             public String lazyTransform(Element element) throws IOException, URISyntaxException {
@@ -158,6 +168,11 @@ public class HtmlTransformer {
                 rewriteYoutubeEmbed(element);
                 removeIzuTags(element);
                 return element.html();
+            }
+
+            @Override
+            public String getTransformKey() {
+                return transformKey;
             }
         };
     }

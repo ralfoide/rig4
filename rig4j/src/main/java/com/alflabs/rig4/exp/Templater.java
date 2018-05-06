@@ -3,10 +3,10 @@ package com.alflabs.rig4.exp;
 import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
-import org.eclipse.osgi.baseadaptor.BaseData;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -202,6 +202,7 @@ public class Templater {
         @NonNull String getTemplate(Flags flags) throws IOException;
     }
 
+    @SuppressWarnings("unused")
     public static abstract class BaseData implements TemplateProvider {
         private final String mCss;
         private final String mGAUid;
@@ -212,6 +213,7 @@ public class Templater {
         private final String mBannerFilename;
 
         // Callers should use derived classes: ArticleData.create(), etc.
+        @VisibleForTesting
         BaseData(
                 String css,
                 String GAUid,
@@ -262,13 +264,13 @@ public class Templater {
         private final String mContent;
 
         private ArticleData(
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
                 String css,
                 String GAUid,
                 String pageTitle,
                 String pageFilename,
-                String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
                 String content) {
             super(  css,
                     GAUid,
@@ -281,22 +283,22 @@ public class Templater {
         }
 
         public static ArticleData create(
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
                 String css,
                 String GAUid,
                 String pageTitle,
                 String pageFilename,
-                String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
                 String content) {
             return new ArticleData(
+                    siteTitle,
+                    siteBaseUrl,
+                    bannerFilename,
                     css,
                     GAUid,
                     pageTitle,
                     pageFilename,
-                    siteTitle,
-                    siteBaseUrl,
-                    bannerFilename,
                     content);
         }
 
@@ -313,30 +315,31 @@ public class Templater {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class BlogPageData extends ArticleData {
         private final String mBlogHeader;
         private final String mPostDate;
         private final String mPostTitle;
 
         private BlogPageData(
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
                 String css,
                 String GAUid,
                 String pageTitle,
                 String pageFilename,
-                String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
-                String content,
                 String blogHeader,
+                String postTitle,
                 String postDate,
-                String postTitle) {
-            super(  css,
+                String content) {
+            super(siteTitle,
+                    siteBaseUrl,
+                    bannerFilename,
+                    css,
                     GAUid,
                     pageTitle,
                     pageFilename,
-                    siteTitle,
-                    siteBaseUrl,
-                    bannerFilename,
                     content);
             mBlogHeader = blogHeader;
             mPostDate = postDate;
@@ -344,29 +347,30 @@ public class Templater {
         }
 
         public static BlogPageData create(
+                String siteTitle,
+                String siteBaseUrl,
+                String bannerFilename,
                 String css,
                 String GAUid,
                 String pageTitle,
                 String pageFilename,
-                String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
-                String content,
                 String blogHeader,
+                String postTitle,
                 String postDate,
-                String postTitle) {
+                String content) {
             return new BlogPageData(
+                    siteTitle,
+                    siteBaseUrl,
+                    bannerFilename,
                     css,
                     GAUid,
                     pageTitle,
                     pageFilename,
-                    siteTitle,
-                    siteBaseUrl,
-                    bannerFilename,
-                    content,
                     blogHeader,
+                    postTitle,
                     postDate,
-                    postTitle);
+                    content
+            );
         }
 
         @NonNull
@@ -390,41 +394,44 @@ public class Templater {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class BlogPostData extends BlogPageData {
         private final String mPostExtraLink;
 
         private BlogPostData(
                 String siteBaseUrl,
-                String content,
-                String postDate,
                 String postTitle,
-                String postExtraLink) {
+                String postDate,
+                String postExtraLink,
+                String content) {
             super(  "",
-                    "",
-                    "",
-                    "",
-                    "",
                     siteBaseUrl,
                     "",
-                    content,
                     "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    postTitle,
                     postDate,
-                    postTitle);
+                    content
+            );
             mPostExtraLink = postExtraLink;
         }
 
         public static BlogPostData create(
                 String siteBaseUrl,
-                String content,
-                String postDate,
                 String postTitle,
-                String postExtraLink) {
+                String postDate,
+                String postExtraLink,
+                String content) {
             return new BlogPostData(
                     siteBaseUrl,
-                    content,
-                    postDate,
                     postTitle,
-                    postExtraLink);
+                    postDate,
+                    postExtraLink,
+                    content
+            );
         }
 
         @NonNull

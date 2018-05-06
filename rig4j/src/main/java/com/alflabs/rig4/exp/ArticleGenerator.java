@@ -83,13 +83,13 @@ public class ArticleGenerator {
                 entity.syncToStore();
 
                 Templater.ArticleData data = Templater.ArticleData.create(
+                        mFlags.getString(EXP_SITE_TITLE),
+                        mFlags.getString(EXP_SITE_BASE_URL),
+                        mFlags.getString(EXP_SITE_BANNER),
                         "", // css
                         mFlags.getString(EXP_GA_UID),
                         title,
                         destName,
-                        mFlags.getString(EXP_SITE_TITLE),
-                        mFlags.getString(EXP_SITE_BASE_URL),
-                        mFlags.getString(EXP_SITE_BANNER),
                         htmlBody);
                 String html = mTemplater.generate(data);
                 byte[] htmlContent = html.getBytes(Charsets.UTF_8);

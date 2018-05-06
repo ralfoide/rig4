@@ -159,6 +159,14 @@ public class BlogGenerator {
         postTree.generate(new Generator());
     }
 
+    /**
+     * Generator used by {@link PostTree} to actually generate HTML files out of posts and pages.
+     * This serves as a way to provide site-level configuration & data (e.g. site name, banner URL).
+     * The HTML transformer is provided here as it both depends on the drawing/images helpers (which
+     * PostTree does not need to be aware of) yet the transformer is keyed on the output file (for
+     * generating the image assets). Thus each post & blog header has its own custom transformer
+     * depending on the page where it is used.
+     */
     public class Generator {
         public HtmlTransformer.LazyTransformer getLazyHtmlTransformer(File destFile) {
             HtmlTransformer.Callback callback = new HtmlTransformer.Callback() {
@@ -172,7 +180,9 @@ public class BlogGenerator {
                     return mGDocHelper.downloadImage(uri, destFile, width, height);
                 }
             };
-            return mHtmlTransformer.createLazyTransformer(callback);
+            // Transformer key is the directory of the file generated. If a post is reused in
+            // a different directory, its assets should be regenerated for that directory.
+            return mHtmlTransformer.createLazyTransformer(destFile.getParent(), callback);
         }
 
         public ILogger getLogger() {

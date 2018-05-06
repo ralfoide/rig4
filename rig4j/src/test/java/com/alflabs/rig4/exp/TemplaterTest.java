@@ -111,13 +111,13 @@ public class TemplaterTest {
         Templater templater = new Templater(mFlags, mTiming, template);
 
         String generated = templater.generate(Templater.ArticleData.create(
+                "Site Title replacement",
+                "http://Site URL/replacement/",
+                "Banner replacement",
                 "CSS replacement",
                 "GA UID replacement",
                 "Page Title replacement",
                 "Page Filename replacement",
-                "Site Title replacement",
-                "http://Site URL/replacement/",
-                "Banner replacement",
                 "Content replacement\n" +
                 "Multiple content."));
 
@@ -156,13 +156,13 @@ public class TemplaterTest {
         Templater templater = new Templater(mFlags, mTiming, template);
 
         String generated = templater.generate(Templater.ArticleData.create(
+                "Site Title replacement",
+                "http://Site URL/replacement/",
+                "Banner replacement",
                 "CSS replacement",
                 null,           // If.Var accepts both null and empty strings
                 "Page Title replacement",
                 "Page Filename replacement",
-                "Site Title replacement",
-                "http://Site URL/replacement/",
-                "Banner replacement",
                 "Content replacement\n" +
                         "Multiple content."));
 
@@ -179,13 +179,13 @@ public class TemplaterTest {
     @Test
     public void testArticleTemplate() throws Exception {
         Templater.ArticleData data = Templater.ArticleData.create(
+                "Site Title replacement",
+                "http://Site URL/replacement/",
+                "Banner replacement",
                 "CSS replacement",
                 "GA UID replacement",
                 "Page Title replacement",
                 "Page Filename replacement",
-                "Site Title replacement",
-                "http://Site URL/replacement/",
-                "Banner replacement",
                 "Content replacement first line\n" +
                         "Content replacement second line.");
         String generated = mTemplater.generate(data);
@@ -212,17 +212,18 @@ public class TemplaterTest {
     @Test
     public void testBlogPageTemplate() throws Exception {
         Templater.ArticleData data = Templater.BlogPageData.create(
+                "Site Title replacement",
+                "http://Site URL/replacement/",
+                "Banner replacement",
                 "CSS replacement",
                 "GA UID replacement",
                 "Page Title replacement",
                 "Page Filename replacement",
-                "Site Title replacement",
-                "http://Site URL/replacement/",
-                "Banner replacement",
-                "Content replacement",
                 "<div>Blog Header as HTML</div>",
+                "Post Title replacement",
                 "2001-02-03",
-                "Post Title replacement");
+                "Content replacement"
+        );
         String generated = mTemplater.generate(data);
 
         // --- This part is common with an article page
@@ -253,10 +254,11 @@ public class TemplaterTest {
     public void testBlogPostTemplate() throws Exception {
         Templater.ArticleData data = Templater.BlogPostData.create(
                 "http://Site URL/replacement/",
-                "Post Content data",
-                "2001-02-03",
                 "Post Title replacement",
-                "extra link/");
+                "2001-02-03",
+                "extra link/",
+                "Post Content data"
+        );
         String generated = mTemplater.generate(data);
 
         assertThat(generated).containsMatch("<h2[^>]+>2001-02-03 - Post Title replacement</h2>");

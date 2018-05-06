@@ -172,17 +172,13 @@ class PostTree {
             mBlog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
 
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
-                    generator.getSiteCss(),
+                    generator.getSiteTitle(), generator.getSiteBaseUrl(), generator.getSiteBanner(), generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
-                    generator.getSiteTitle(),
-                    generator.getSiteBaseUrl(),
-                    generator.getSiteBanner(),
-                    content.toString(),
-                    mBlog.getBlogHeader().getFormatted(),
-                    "", // no post date  for an index
-                    ""  // no post title for an index
+                    mBlog.getBlogHeader().getFormatted(), "", "", content.toString()
+                    // no post date  for an index
+                    // no post title for an index
             );
 
             String generated = generator.getTemplater().generate(templateData);
@@ -203,10 +199,7 @@ class PostTree {
 
             Templater.BlogPostData templateData = Templater.BlogPostData.create(
                     generator.getSiteBaseUrl(),
-                    postData.mContent.getFormatted(),
-                    postData.mDate.toString(),
-                    postData.mTitle,
-                    extraLink
+                    postData.mTitle, postData.mDate.toString(), extraLink, postData.mContent.getFormatted()
             );
 
             return generator.getTemplater().generate(templateData);
@@ -226,17 +219,11 @@ class PostTree {
                     + ", file: " + destFile);
 
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
-                    generator.getSiteCss(),
+                    generator.getSiteTitle(), generator.getSiteBaseUrl(), generator.getSiteBanner(), generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
-                    generator.getSiteTitle(),
-                    generator.getSiteBaseUrl(),
-                    generator.getSiteBanner(),
-                    postData.mContent.getFormatted(),
-                    mBlog.getBlogHeader().getFormatted(),
-                    postData.mDate.toString(),
-                    postData.mTitle
+                    mBlog.getBlogHeader().getFormatted(), postData.mTitle, postData.mDate.toString(), postData.mContent.getFormatted()
             );
 
             String generated = generator.getTemplater().generate(templateData);
