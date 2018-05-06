@@ -67,6 +67,21 @@ public class TemplaterTest {
     }
 
     @Test
+    public void testIfNegEmpty() throws Exception {
+        String template = "<h2> {{.SiteTitle}} {{If!.PageTitle}}- {{.PageTitle}} {{Endif}}</h2>";
+        Templater templater = new Templater(mFlags, mTiming, template);
+
+        String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
+        assertThat(generated1).isEqualTo("<h2> A Site </h2>");
+
+        String generated2 = templater.generate(new TestTemplateData("A Site", ""));
+        assertThat(generated2).isEqualTo("<h2> A Site -  </h2>");
+
+        String generated3 = templater.generate(new TestTemplateData("A Site", null));
+        assertThat(generated3).isEqualTo("<h2> A Site -  </h2>");
+    }
+
+    @Test
     public void testIfEqual() throws Exception {
         String template = "<h2> {{.SiteTitle}} {{If.PageTitle == .SiteTitle}}eq {{.PageTitle}} {{Endif}}</h2>";
         Templater templater = new Templater(mFlags, mTiming, template);

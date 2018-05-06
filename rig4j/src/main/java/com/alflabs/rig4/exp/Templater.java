@@ -107,7 +107,11 @@ public class Templater {
             String function = dot <= 0 ? "" : command.substring(0, dot).toLowerCase(Locale.US);
 
             String replacement = "";
+            boolean negate = false;
             switch (function) {
+            case "if!":
+                negate = true;
+                // explicit break-through
             case "if":
                 int endif = sourceLower.indexOf("{{endif}}", offset);
                 if (endif < offset) {
@@ -144,6 +148,9 @@ public class Templater {
                     useInnerSource = true;
                 } else if (!isEq && !isNeq && !value1.trim().isEmpty()) {
                     useInnerSource = true;
+                }
+                if (negate) {
+                    useInnerSource = !useInnerSource;
                 }
 
                 if (useInnerSource) {
