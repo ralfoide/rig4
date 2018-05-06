@@ -271,6 +271,8 @@ public class TemplaterTest {
                 "http://Site URL/replacement/",
                 "Post Title replacement",
                 "2001-02-03",
+                "A Category",
+                "category/",
                 "extra link/",
                 "Post Content data"
         );
@@ -278,6 +280,7 @@ public class TemplaterTest {
 
         assertThat(generated).containsMatch("<h2[^>]+>2001-02-03 - Post Title replacement</h2>");
         assertThat(generated).containsMatch("<a href=\"http://Site URL/replacement/extra link/\">Click here[^<]+</a>");
+        assertThat(generated).containsMatch("<a href=\"http://Site URL/replacement/category/\">A Category</a>");
         assertThat(generated).containsMatch(">\\s+Post Content data\\s+<");
 
     }

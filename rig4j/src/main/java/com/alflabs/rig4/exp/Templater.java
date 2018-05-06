@@ -403,12 +403,16 @@ public class Templater {
 
     @SuppressWarnings("unused")
     public static class BlogPostData extends BlogPageData {
+        private final String mPostCategory;
+        private final String mPostCategoryLink;
         private final String mPostExtraLink;
 
         private BlogPostData(
                 String siteBaseUrl,
                 String postTitle,
                 String postDate,
+                String postCategory,
+                String postCategoryLink,
                 String postExtraLink,
                 String content) {
             super(  "",
@@ -423,6 +427,8 @@ public class Templater {
                     postDate,
                     content
             );
+            mPostCategory = postCategory;
+            mPostCategoryLink = postCategoryLink;
             mPostExtraLink = postExtraLink;
         }
 
@@ -430,12 +436,16 @@ public class Templater {
                 String siteBaseUrl,
                 String postTitle,
                 String postDate,
+                String postCategory,
+                String postCategoryLink,
                 String postExtraLink,
                 String content) {
             return new BlogPostData(
                     siteBaseUrl,
                     postTitle,
                     postDate,
+                    postCategory,
+                    postCategoryLink,
                     postExtraLink,
                     content
             );
@@ -447,6 +457,14 @@ public class Templater {
             return Resources.toString(
                     Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_POST)),
                     Charsets.UTF_8);
+        }
+
+        public String getPostCategory() {
+            return mPostCategory;
+        }
+
+        public String getPostCategoryLink() {
+            return mPostCategoryLink;
         }
 
         public String getPostExtraLink() {

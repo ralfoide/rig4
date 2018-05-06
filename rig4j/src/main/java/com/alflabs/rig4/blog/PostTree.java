@@ -26,11 +26,16 @@ class PostTree {
 
     private final Map<String, Blog> mBlogs = new TreeMap<>();
 
-    public void add(Blog blog) {
+    public void add(@NonNull Blog blog) {
         mBlogs.put(blog.getCategory(), blog);
     }
 
-    public void generate(BlogGenerator.Generator generator) throws Exception {
+    @Null
+    public Blog get(@NonNull String category) {
+        return mBlogs.get(category);
+    }
+
+    public void generate(@NonNull BlogGenerator.Generator generator) throws Exception {
         for (Blog blog : mBlogs.values()) {
             blog.generate(generator);
         }
@@ -175,10 +180,13 @@ class PostTree {
                     generator.getSiteTitle(), generator.getSiteBaseUrl(), generator.getSiteBanner(), generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
-                    destFile.getName(),  // page filename (for base-url/page-filename.html)
-                    mBlog.getBlogHeader().getFormatted(), "", "", content.toString()
-                    // no post date  for an index
-                    // no post title for an index
+                    destFile.getName(), // page filename (for base-url/page-filename.html)
+                    mBlog.getBlogHeader().getFormatted(),
+                    "",                 // no post title for an index
+                    "",                 // no post date  for an index
+                    content.toString()
+
+
             );
 
             String generated = generator.getTemplater().generate(templateData);
@@ -199,7 +207,12 @@ class PostTree {
 
             Templater.BlogPostData templateData = Templater.BlogPostData.create(
                     generator.getSiteBaseUrl(),
-                    postData.mTitle, postData.mDate.toString(), extraLink, postData.mContent.getFormatted()
+                    postData.mTitle,
+                    postData.mDate.toString(),
+                    generator.categoryToHtml(mBlog.getCategory()),
+                    generator.linkForCategory(mBlog.getCategory()),
+                    extraLink,
+                    postData.mContent.getFormatted()
             );
 
             return generator.getTemplater().generate(templateData);
@@ -219,11 +232,17 @@ class PostTree {
                     + ", file: " + destFile);
 
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
-                    generator.getSiteTitle(), generator.getSiteBaseUrl(), generator.getSiteBanner(), generator.getSiteCss(),
+                    generator.getSiteTitle(),
+                    generator.getSiteBaseUrl(),
+                    generator.getSiteBanner(),
+                    generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
-                    mBlog.getBlogHeader().getFormatted(), postData.mTitle, postData.mDate.toString(), postData.mContent.getFormatted()
+                    mBlog.getBlogHeader().getFormatted(),
+                    postData.mTitle,
+                    postData.mDate.toString(),
+                    postData.mContent.getFormatted()
             );
 
             String generated = generator.getTemplater().generate(templateData);

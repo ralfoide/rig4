@@ -1,6 +1,7 @@
 package com.alflabs.rig4.blog;
 
 import com.alflabs.annotations.NonNull;
+import com.alflabs.annotations.Null;
 import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.exp.HtmlTransformer;
 import com.alflabs.rig4.exp.Templater;
@@ -9,6 +10,7 @@ import com.alflabs.rig4.gdoc.GDocHelper;
 import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
+import com.alflabs.utils.StringUtils;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -43,6 +45,7 @@ public class BlogGenerator {
     private CatFilter mCatBannerFilter;
     private CatFilter mGenSingleFilter;
     private CatFilter mGenMixedFilter;
+    private PostTree mPostTree;
 
     @Inject
     public BlogGenerator(
@@ -106,14 +109,14 @@ public class BlogGenerator {
     private PostTree computePostTree(@NonNull SourceTree sourceTree)
             throws BlogSourceParser.ParseException {
         mLogger.d(TAG, "computePostTree");
-        PostTree postTree = new PostTree();
+        mPostTree = new PostTree();
 
         // Generate per-category blogs
         if (!mGenSingleFilter.isEmpty()) {
             for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
                 if (mGenSingleFilter.matches(sourceBlog.getCategory())) {
                     PostTree.Blog blog = createPostBlogFrom(sourceBlog);
-                    postTree.add(blog);
+                    mPostTree.add(blog);
                 }
             }
         }
@@ -121,10 +124,10 @@ public class BlogGenerator {
         // Generate mixed-categories blog
         if (!mGenMixedFilter.isEmpty()) {
             PostTree.Blog mixed = createPostBlogFrom(sourceTree.createMixedBlog(MIXED_CATEGORY, mGenMixedFilter));
-            postTree.add(mixed);
+            mPostTree.add(mixed);
         }
 
-        return postTree;
+        return mPostTree;
     }
 
     @NonNull
@@ -246,6 +249,26 @@ public class BlogGenerator {
 
         public String getSiteBanner() {
             return mFlags.getString(EXP_SITE_BANNER);
+        }
+
+        /** Transforms the category into what we want for the template, mainly capitalize it. */
+        @NonNull
+        public String categoryToHtml(@NonNull String category) {
+            return StringUtils.capitalize(category);
+        }
+
+        /**
+         * Generates the link added in a post for a category.
+         * That link should only be generated if per-category pages are created for it.
+         * Can be null to remove the link.
+         */
+        @Null
+        public String linkForCategory(@NonNull String category) {
+            PostTree.Blog blog = mPostTree.get(category);
+            if (blog == null) {
+                return  null;
+            }
+            return blog.getBlogIndex().getFileItem().getLeafDir();
         }
     }
 }
