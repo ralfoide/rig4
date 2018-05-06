@@ -1,5 +1,6 @@
 package com.alflabs.rig4;
 
+import com.alflabs.rig4.blog.BlogFlags;
 import com.alflabs.rig4.exp.Exp;
 import com.alflabs.rig4.exp.ExpFlags;
 import com.alflabs.rig4.gdoc.GDocReader;
@@ -15,12 +16,13 @@ import javax.inject.Singleton;
 public interface IRigComponent {
 
     Exp getExp();
-    ExpFlags getExpFlags();
     Flags getFlags();
-    ILogger getLogger();
+    ExpFlags getExpFlags();
+    BlogFlags getBlogFlags();
     GDocReader getGDocReader();
     BlobStore getBlobStore();
     Templater getTemplater();
+    ILogger getLogger();
 
     @Component.Builder
     interface Builder {

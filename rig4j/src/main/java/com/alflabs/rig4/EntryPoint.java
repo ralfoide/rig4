@@ -24,6 +24,7 @@ public class EntryPoint {
         final ILogger logger = component.getLogger();
         final Flags flags = component.getFlags();
         component.getExpFlags().declareFlags();
+        component.getBlogFlags().declareFlags();
         component.getTemplater().declareFlags();
         component.getBlobStore().declareFlags();
         component.getGDocReader().declareFlags();
