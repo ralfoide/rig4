@@ -3,6 +3,7 @@ package com.alflabs.rig4.blog;
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
 import com.alflabs.rig4.exp.HtmlTransformer;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
@@ -159,11 +160,20 @@ class SourceTree extends TreeChange {
             mShortContent = shortContent;
             mFullContent = fullContent;
 
-            mKey = mDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
+            String key = mDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
                     + "_"
-                    + title.toLowerCase(Locale.US)
+                    + title.trim().toLowerCase(Locale.US)
                         .replaceAll("[^a-z0-9_-]", "_")
                         .replaceAll("_+", "_");
+
+            final int maxKeyLen = 48;
+            final int maxShaLen =  8;
+            if (key.length() > maxKeyLen) {
+                String shaHex = DigestUtils.shaHex(key);
+                key = key.substring(0, maxKeyLen - 1 - maxShaLen) + "_" + shaHex.substring(0, maxShaLen);
+            }
+
+            mKey = key;
         }
 
         @NonNull

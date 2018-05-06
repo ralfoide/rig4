@@ -140,6 +140,7 @@ public class BlogGenerator {
                 PostTree.BlogPage page = new PostTree.BlogPage(blog, blog.getBlogIndex(), pageCount++);
                 page.fillFrom(pendingPosts);
                 pendingPosts.clear();
+                blog.getBlogPages().add(page);
             }
         }
 

@@ -92,15 +92,16 @@ class PostTree {
         private final List<PostShort> mPostShorts = new ArrayList<>();
         private final List<PostExtra> mPostExtras = new ArrayList<>();
 
-        public BlogPage(@NonNull Blog blog, @NonNull BlogPage parent, int index) {
+        /** Create a top-level index page. */
+        public BlogPage(@NonNull Blog blog, @NonNull File dir) {
             mBlog = blog;
-            File path = new File(parent.getFileItem().getPath(), String.format("%03d", index));
-            mFileItem = new FileItem(path);
+            mFileItem = new FileItem(dir, INDEX_HTML);
         }
 
-        public BlogPage(@NonNull Blog blog, @NonNull File path) {
+        /** Create a numbered index page. */
+        public BlogPage(@NonNull Blog blog, @NonNull BlogPage parent, int index) {
             mBlog = blog;
-            mFileItem = new FileItem(path);
+            mFileItem = new FileItem(parent.getFileItem().getDir(), String.format("%04x", index) + HTML);
         }
 
         @NonNull
@@ -157,8 +158,8 @@ class PostTree {
         }
 
         private void generateMainPage(@NonNull BlogGenerator.Generator generator) throws Exception {
-            File destDir = new File(generator.getDestDir(), mFileItem.getLeafDir());
-            File destFile = new File(destDir, INDEX_HTML);
+            File destFile = new File(generator.getDestDir(), mFileItem.getLeafFile());
+
             generator.getFileOps().createParentDirs(destFile);
             generator.getLogger().d(TAG, "Generate page for blog: " + mBlog.getCategory()
                     + ", file: " + destFile);
@@ -198,7 +199,7 @@ class PostTree {
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
 
-            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.mFileItem.getLeafFile(HTML);
+            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.mFileItem.getLeafFile();
 
             Templater.BlogPostData templateData = Templater.BlogPostData.create(
                     generator.getSiteBaseUrl(),
@@ -215,7 +216,7 @@ class PostTree {
                 @NonNull BlogGenerator.Generator generator,
                 @NonNull PostExtra postData)
                 throws Exception {
-            File destFile = new File(generator.getDestDir(), postData.mFileItem.getLeafFile(HTML));
+            File destFile = new File(generator.getDestDir(), postData.mFileItem.getLeafFile());
             generator.getFileOps().createParentDirs(destFile);
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
@@ -285,8 +286,7 @@ class PostTree {
             mKey = key;
             mDate = date;
             mTitle = title;
-            File path = new File(parent.mFileItem.getPath(), mKey);
-            mFileItem = new FileItem(path);
+            mFileItem = new FileItem(parent.mFileItem.getDir(), mKey + HTML);
             mContent = content;
         }
 
@@ -297,31 +297,30 @@ class PostTree {
     }
 
     public static class FileItem {
-        private final File mPath;
+        private final File mDir;
+        private final String mName;
 
-        public FileItem(@NonNull File path) {
-            mPath = path;
+        public FileItem(@NonNull File dir, @NonNull String name) {
+            mDir = dir;
+            mName = name;
         }
 
         @NonNull
-        public File getPath() {
-            return mPath;
+        public File getDir() {
+            return mDir;
         }
 
         @NonNull
         public String getLeafDir() {
-            String path = mPath.getPath();
+            String path = mDir.getPath();
             path = path.replace("..", "");
             return path;
         }
 
         @NonNull
-        public String getLeafFile(@NonNull String extension) {
-            String path = mPath.getPath();
-            if (!path.endsWith(extension)) {
-                path += extension;
-            }
-
+        public String getLeafFile() {
+            File file = new File(mDir, mName);
+            String path = file.getPath();
             path = path.replace("..", "");
             return path;
         }
