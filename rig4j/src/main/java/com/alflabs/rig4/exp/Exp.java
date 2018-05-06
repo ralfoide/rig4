@@ -19,6 +19,7 @@ public class Exp {
     private static final String TAG = Exp.class.getSimpleName();
 
     private final Flags mFlags;
+    private final ExpFlags mExpFlags;
     private final ILogger mLogger;
     private final Timing mTiming;
     private final HashStore mHashStore;
@@ -29,6 +30,7 @@ public class Exp {
     @Inject
     public Exp(
             Flags flags,
+            ExpFlags expFlags,
             ILogger logger,
             Timing timing,
             HashStore hashStore,
@@ -36,21 +38,13 @@ public class Exp {
             BlogGenerator blogGenerator,
             ArticleGenerator articleGenerator) {
         mFlags = flags;
+        mExpFlags = expFlags;
         mLogger = logger;
         mTiming = timing;
         mHashStore = hashStore;
         mIndexReader = indexReader;
         mBlogGenerator = blogGenerator;
         mArticleGenerator = articleGenerator;
-    }
-
-    public void declareFlags() {
-        mFlags.addString(EXP_DOC_ID,        "",           "Exp gdoc id");
-        mFlags.addString(EXP_DEST_DIR,      "",           "Exp dest dir");
-        mFlags.addString(EXP_GA_UID,        "",           "Exp GA UID");
-        mFlags.addString(EXP_SITE_TITLE,    "Site Title", "Web site title");
-        mFlags.addString(EXP_SITE_BANNER,   "header.jpg", "Web site banner filename");
-        mFlags.addString(EXP_SITE_BASE_URL, "http://localhost/folder/", "Web site base URL");
     }
 
     public void start() throws Exception {
