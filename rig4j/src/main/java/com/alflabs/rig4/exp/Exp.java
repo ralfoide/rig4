@@ -12,17 +12,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 
+import static com.alflabs.rig4.exp.ExpFlags.*;
+
 @Singleton
 public class Exp {
     private static final String TAG = Exp.class.getSimpleName();
-
-    public static final String EXP_DOC_ID = "exp-doc-id";
-    public static final String EXP_DEST_DIR = "exp-dest-dir";
-    public static final String EXP_GA_UID = "exp-ga-uid";
-    public static final String EXP_SITE_TITLE = "exp-site-title";
-    public static final String EXP_SITE_BANNER = "exp-site-banner";
-    /** Base URL is expected to be in the format http(s)://some.host(/folder)/ with trailing slash. */
-    public static final String EXP_SITE_BASE_URL = "exp-site-base-url";
 
     private final Flags mFlags;
     private final ILogger mLogger;

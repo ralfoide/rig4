@@ -19,11 +19,11 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 
-import static com.alflabs.rig4.exp.Exp.EXP_DEST_DIR;
-import static com.alflabs.rig4.exp.Exp.EXP_GA_UID;
-import static com.alflabs.rig4.exp.Exp.EXP_SITE_BANNER;
-import static com.alflabs.rig4.exp.Exp.EXP_SITE_BASE_URL;
-import static com.alflabs.rig4.exp.Exp.EXP_SITE_TITLE;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_DEST_DIR;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_GA_UID;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_BANNER;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_BASE_URL;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_TITLE;
 
 public class ArticleGenerator {
     private static final String TAG = ArticleGenerator.class.getSimpleName();

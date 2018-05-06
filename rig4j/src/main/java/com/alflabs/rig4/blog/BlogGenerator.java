@@ -19,11 +19,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.alflabs.rig4.exp.Exp.EXP_DEST_DIR;
-import static com.alflabs.rig4.exp.Exp.EXP_GA_UID;
-import static com.alflabs.rig4.exp.Exp.EXP_SITE_BANNER;
-import static com.alflabs.rig4.exp.Exp.EXP_SITE_BASE_URL;
-import static com.alflabs.rig4.exp.Exp.EXP_SITE_TITLE;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_DEST_DIR;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_GA_UID;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_BANNER;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_BASE_URL;
+import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_TITLE;
 
 public class BlogGenerator {
     private final static String TAG = BlogGenerator.class.getSimpleName();

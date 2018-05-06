@@ -1,6 +1,7 @@
 package com.alflabs.rig4.blog;
 
-public class IzuTags {
+public final class IzuTags {
+    private IzuTags() {}
 
     public static final String IZU_BLOG = "izu:blog";
     public static final String IZU_BLOG_TITLE = "izu:blog-title:";

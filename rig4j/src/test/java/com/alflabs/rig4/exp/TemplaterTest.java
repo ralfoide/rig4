@@ -245,7 +245,7 @@ public class TemplaterTest {
 
         // --- This part is specific to a blog page
         assertThat(generated).contains("<div>Blog Header as HTML</div>");
-        assertThat(generated).contains("<hr/><h2>2001-02-03 - Post Title replacement</h2>");
+        assertThat(generated).containsMatch("<h2[^>]*>2001-02-03 - Post Title replacement</h2>");
         assertThat(generated).containsMatch(">\\s+Content replacement\\s+<");
     }
 
@@ -260,7 +260,7 @@ public class TemplaterTest {
         String generated = mTemplater.generate(data);
 
         assertThat(generated).containsMatch("<h2[^>]+>2001-02-03 - Post Title replacement</h2>");
-        assertThat(generated).contains("<a href=\"http://Site URL/replacement/extra link/\">Click here to read more...</a>");
+        assertThat(generated).containsMatch("<a href=\"http://Site URL/replacement/extra link/\">Click here[^<]+</a>");
         assertThat(generated).containsMatch(">\\s+Post Content data\\s+<");
 
     }
