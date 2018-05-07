@@ -161,7 +161,7 @@ public class BlogSourceParser {
         LocalDate date;
         String textTitle = "";
         Element intermediaryShort;
-        Element intermediaryExpanded;
+        Element intermediaryfull;
 
         String tagS = section.tagS;
         int pos = tagS.indexOf(":");
@@ -188,7 +188,7 @@ public class BlogSourceParser {
         }
 
         // Get the content.
-        intermediaryExpanded = combineElements(section.start, section.end);
+        intermediaryfull = combineElements(section.start, section.end);
 
         if (section.break_ != null) {
             intermediaryShort = combineElements(section.start, section.break_);
@@ -196,7 +196,7 @@ public class BlogSourceParser {
             intermediaryShort = combineElements(null, null);
         }
 
-        return new ParsedSection(date, textTitle, intermediaryShort, intermediaryExpanded);
+        return new ParsedSection(date, textTitle, intermediaryShort, intermediaryfull);
     }
 
     @Null

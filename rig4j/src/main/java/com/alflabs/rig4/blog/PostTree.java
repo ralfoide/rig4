@@ -86,7 +86,15 @@ class PostTree {
         }
 
         public void generate(@NonNull BlogGenerator.Generator generator) throws Exception {
+
+            PostFull nextFull = null;
+            for (int i = mBlogPages.size() - 1; i >= 0; i--) {
+                nextFull = mBlogPages.get(i).computeNextFullPage(nextFull);
+            }
+
+            PostFull prevFull = null;
             for (int i = 0; i < mBlogPages.size(); i++) {
+                prevFull = mBlogPages.get(i).computePrevFullPage(prevFull);
                 mBlogPages.get(i).generate(i, mBlogPages, generator);
             }
         }
@@ -96,7 +104,7 @@ class PostTree {
         private final Blog mBlog;
         private final FileItem mFileItem;
         private final List<PostShort> mPostShorts = new ArrayList<>();
-        private final List<PostExtra> mPostExtras = new ArrayList<>();
+        private final List<PostFull> mPostFulls = new ArrayList<>();
 
         /** Create a top-level index page. */
         public BlogPage(@NonNull Blog blog, @NonNull File dir) {
@@ -121,37 +129,37 @@ class PostTree {
          */
         public void fillFrom(@NonNull Collection<SourceTree.BlogPost> sourcePosts) {
             for (SourceTree.BlogPost sourcePost : sourcePosts) {
-                SourceTree.Content pageContent = sourcePost.getFullContent();
-                SourceTree.Content extraContent = null;
-                if (sourcePost.getShortContent() != null) {
-                    extraContent = pageContent;
-                    pageContent = sourcePost.getShortContent();
+                SourceTree.Content fullContent = sourcePost.getFullContent();
+                SourceTree.Content shortContent = sourcePost.getShortContent();
+                boolean readMoreLink = true;
+                if (shortContent == null) {
+                    shortContent = fullContent;
+                    readMoreLink = false;
                 }
 
-                PostExtra postExtra = null;
-                if (extraContent != null) {
-                    postExtra = new PostExtra(
-                            this,
-                            sourcePost.getCategory(),
-                            sourcePost.getKey(),
-                            sourcePost.getDate(),
-                            sourcePost.getTitle(),
-                            extraContent);
-                    mPostExtras.add(postExtra);
-                }
+                PostFull postFull = new PostFull(
+                        this,
+                        sourcePost.getCategory(),
+                        sourcePost.getKey(),
+                        sourcePost.getDate(),
+                        sourcePost.getTitle(),
+                        fullContent);
 
-                if (pageContent != null) {
-                    mPostShorts.add(
-                            new PostShort(
-                                    sourcePost.getCategory(),
-                                    sourcePost.getKey(),
-                                    sourcePost.getDate(),
-                                    sourcePost.getTitle(),
-                                    pageContent,
-                                    postExtra));
-                }
+                PostShort postShort = new PostShort(
+                        sourcePost.getCategory(),
+                        sourcePost.getKey(),
+                        sourcePost.getDate(),
+                        sourcePost.getTitle(),
+                        shortContent,
+                        postFull,
+                        readMoreLink);
+
+                mPostFulls .add(postFull);
+                mPostShorts.add(postShort);
             }
 
+            // The posts comparator compares using ascending keys. We want to descending order.
+            mPostFulls .sort(Collections.reverseOrder());
             mPostShorts.sort(Collections.reverseOrder());
         }
 
@@ -162,9 +170,26 @@ class PostTree {
             generateMainPage(index, blogPages, generator);
 
             // Write one file per extra entry.
-            for (PostExtra postExtra : mPostExtras) {
-                generateExtraPage(generator, postExtra);
+            for (PostFull postFull : mPostFulls) {
+                generateFullPage(generator, postFull);
             }
+        }
+
+        public PostFull computePrevFullPage(PostFull lastFull) {
+            for (PostFull postFull : mPostFulls) {
+                postFull.mPrevFull = lastFull;
+                lastFull = postFull;
+            }
+            return lastFull;
+        }
+
+        public PostFull computeNextFullPage(PostFull lastFull) {
+            for (int i = mPostFulls.size() - 1; i >= 0; i--) {
+                PostFull postFull = mPostFulls.get(i);
+                postFull.mNextFull = lastFull;
+                lastFull = postFull;
+            }
+            return lastFull;
         }
 
         private void generateMainPage(int index,
@@ -208,8 +233,6 @@ class PostTree {
                     "",                 // no post category for an index
                     "",                 // no post cat link for an index
                     content.toString()
-
-
             );
 
             String generated = generator.getTemplater().generate(templateData);
@@ -226,7 +249,7 @@ class PostTree {
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
 
-            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.mFileItem.getName();
+            String extraLink = postData.mReadMoreLink ? postData.mPostFull.mFileItem.getName() : null;
 
             Templater.BlogPostData templateData = Templater.BlogPostData.create(
                     generator.getSiteBaseUrl(),
@@ -241,9 +264,9 @@ class PostTree {
             return generator.getTemplater().generate(templateData);
         }
 
-        private void generateExtraPage(
+        private void generateFullPage(
                 @NonNull BlogGenerator.Generator generator,
-                @NonNull PostExtra postData)
+                @NonNull PostFull postData)
                 throws Exception {
             File destFile = new File(generator.getDestDir(), postData.mFileItem.getLeafFile());
             generator.getFileOps().createParentDirs(destFile);
@@ -254,6 +277,13 @@ class PostTree {
             generator.getLogger().d(TAG, "Generate extra: " + postData.mKey + " (" + postData.mTitle + ")"
                     + ", file: " + destFile);
 
+            String prevPageLink = postData.mPrevFull == null
+                    ? null
+                    : postData.mPrevFull.mFileItem.getName();
+            String nextPageLink = postData.mNextFull == null
+                    ? null
+                    : postData.mNextFull.mFileItem.getName();
+
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
                     generator.getSiteTitle(),
                     generator.getSiteBaseUrl(),
@@ -262,8 +292,8 @@ class PostTree {
                     generator.getGAUid(),
                     mBlog.getTitle(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
-                    "", // prevPageLink,
-                    "", // nextPageLink
+                    prevPageLink,
+                    nextPageLink,
                     mBlog.getBlogHeader().getFormatted(),
                     postData.mTitle,
                     postData.mDate.toString(),
@@ -283,7 +313,8 @@ class PostTree {
         private final LocalDate mDate;
         private final String mTitle;
         private final SourceTree.Content mContent;
-        private final PostExtra mPostExtra;
+        private final PostFull mPostFull;
+        private final boolean mReadMoreLink;
 
         public PostShort(
                 @NonNull String category,
@@ -291,13 +322,15 @@ class PostTree {
                 @NonNull LocalDate date,
                 @NonNull String title,
                 @NonNull SourceTree.Content content,
-                @Null PostExtra postExtra) {
+                @NonNull PostFull postFull,
+                boolean readMoreLink) {
             mCategory = category;
             mKey = key;
             mDate = date;
             mTitle = title;
             mContent = content;
-            mPostExtra = postExtra;
+            mPostFull = postFull;
+            mReadMoreLink = readMoreLink;
         }
 
         @Override
@@ -306,15 +339,17 @@ class PostTree {
         }
     }
 
-    public static class PostExtra implements Comparable<PostExtra> {
+    public static class PostFull implements Comparable<PostFull> {
         private final FileItem mFileItem;
         private final SourceTree.Content mContent;
         private final String mCategory;
         private final String mKey;
         private final LocalDate mDate;
         private final String mTitle;
+        private PostFull mPrevFull;
+        private PostFull mNextFull;
 
-        public PostExtra(
+        public PostFull(
                 @NonNull BlogPage parent,
                 @NonNull String category,
                 @NonNull String key,
@@ -330,7 +365,7 @@ class PostTree {
         }
 
         @Override
-        public int compareTo(PostExtra other) {
+        public int compareTo(PostFull other) {
             return mKey.compareTo(other.mKey);
         }
     }
