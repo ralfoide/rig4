@@ -76,7 +76,7 @@ class SourceTree extends TreeChange {
         }
 
         for (BlogSourceParser.ParsedSection section : parsedResult.getParsedSections()) {
-            BlogPost post = BlogPost.from(section);
+            BlogPost post = BlogPost.from(category, section);
             // LATER post.getCategory... and match against accept/reject filters.
             // LATER post.setChanged(...)
             blog.addPost(post);
@@ -204,6 +204,7 @@ class SourceTree extends TreeChange {
     }
 
     public static class BlogPost extends TreeChange implements Comparable<BlogPost> {
+        private final String mCategory;
         private final LocalDate mDate;
         private final String mTitle;
         private final Content mShortContent;
@@ -211,10 +212,12 @@ class SourceTree extends TreeChange {
         private final String mKey;
 
         public BlogPost(
+                @NonNull String category,
                 @NonNull LocalDate date,
                 @NonNull String title,
                 @Null Content shortContent,
                 @NonNull Content fullContent) {
+            mCategory = category;
             mDate = date;
             mTitle = title;
             mShortContent = shortContent;
@@ -234,6 +237,10 @@ class SourceTree extends TreeChange {
             }
 
             mKey = key;
+        }
+
+        public String getCategory() {
+            return mCategory;
         }
 
         @NonNull
@@ -262,8 +269,11 @@ class SourceTree extends TreeChange {
         }
 
         @NonNull
-        public static BlogPost from(@NonNull BlogSourceParser.ParsedSection section) {
+        public static BlogPost from(@NonNull String blogCategory,
+                                    @NonNull BlogSourceParser.ParsedSection section) {
+            // LATER: override blogCategory with a per-post category if defined.
             return new BlogPost(
+                    blogCategory,
                     section.getDate(),
                     section.getTextTitle(),
                     Content.from(section.getIntermediaryShort()),

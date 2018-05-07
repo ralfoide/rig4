@@ -1,7 +1,8 @@
 <div class="post-container">
-<h2 class="post-title">{{.PostDate}} - {{.PostTitle}}</h2>
-{{If!.PostCategoryLink}}{{.PostCategory}}{{Endif}}
+<div class="post-title-container"><h2 class="post-title">{{.PostDate}} - {{.PostTitle}}</h2>
+<span class="post-cat" title="Category">{{If!.PostCategoryLink}}{{.PostCategory}}{{Endif}}
 {{If.PostCategoryLink}}<a href="{{.SiteBaseUrl}}{{.PostCategoryLink}}">{{.PostCategory}}</a>{{Endif}}
+</span></div>
 
 {{.Content}}
 

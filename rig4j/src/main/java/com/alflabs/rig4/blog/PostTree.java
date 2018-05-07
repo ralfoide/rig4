@@ -131,6 +131,7 @@ class PostTree {
                 if (extraContent != null) {
                     postExtra = new PostExtra(
                             this,
+                            sourcePost.getCategory(),
                             sourcePost.getKey(),
                             sourcePost.getDate(),
                             sourcePost.getTitle(),
@@ -141,6 +142,7 @@ class PostTree {
                 if (pageContent != null) {
                     mPostShorts.add(
                             new PostShort(
+                                    sourcePost.getCategory(),
                                     sourcePost.getKey(),
                                     sourcePost.getDate(),
                                     sourcePost.getTitle(),
@@ -209,8 +211,8 @@ class PostTree {
                     generator.getSiteBaseUrl(),
                     postData.mTitle,
                     postData.mDate.toString(),
-                    generator.categoryToHtml(mBlog.getCategory()),
-                    generator.linkForCategory(mBlog.getCategory()),
+                    generator.categoryToHtml(postData.mCategory),
+                    generator.linkForCategory(postData.mCategory),
                     extraLink,
                     postData.mContent.getFormatted()
             );
@@ -251,6 +253,7 @@ class PostTree {
     }
 
     public static class PostShort implements Comparable<PostShort> {
+        private final String mCategory;
         private final String mKey;
         private final LocalDate mDate;
         private final String mTitle;
@@ -258,11 +261,13 @@ class PostTree {
         private final PostExtra mPostExtra;
 
         public PostShort(
+                @NonNull String category,
                 @NonNull String key,
                 @NonNull LocalDate date,
                 @NonNull String title,
                 @NonNull SourceTree.Content content,
                 @Null PostExtra postExtra) {
+            mCategory = category;
             mKey = key;
             mDate = date;
             mTitle = title;
@@ -279,16 +284,19 @@ class PostTree {
     public static class PostExtra implements Comparable<PostExtra> {
         private final FileItem mFileItem;
         private final SourceTree.Content mContent;
+        private final String mCategory;
         private final String mKey;
         private final LocalDate mDate;
         private final String mTitle;
 
         public PostExtra(
                 @NonNull BlogPage parent,
+                @NonNull String category,
                 @NonNull String key,
                 @NonNull LocalDate date,
                 @NonNull String title,
                 @NonNull SourceTree.Content content) {
+            mCategory = category;
             mKey = key;
             mDate = date;
             mTitle = title;
