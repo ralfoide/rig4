@@ -234,9 +234,13 @@ public class TemplaterTest {
                 "GA UID replacement",
                 "Page Title replacement",
                 "Page Filename replacement",
+                "prev/page/link/",
+                "next/page/link/",
                 "<div>Blog Header as HTML</div>",
                 "Post Title replacement",
                 "2001-02-03",
+                "A Category",
+                "category/link/",
                 "Content replacement"
         );
         String generated = mTemplater.generate(data);
@@ -261,6 +265,9 @@ public class TemplaterTest {
 
         // --- This part is specific to a blog page
         assertThat(generated).contains("<div>Blog Header as HTML</div>");
+        assertThat(generated).containsMatch("<span class=\"post-cat\"[^>]*>A Category</span>");
+        assertThat(generated).containsMatch("<a href=\"prev/page/link/\">[^<]*Previous Page</a>");
+        assertThat(generated).containsMatch("<a href=\"next/page/link/\">[^<]*Next Page[^<]*</a>");
         assertThat(generated).containsMatch("<h2[^>]*>2001-02-03 - Post Title replacement</h2>");
         assertThat(generated).containsMatch(">\\s+Content replacement\\s+<");
     }
@@ -272,15 +279,15 @@ public class TemplaterTest {
                 "Post Title replacement",
                 "2001-02-03",
                 "A Category",
-                "category/",
-                "extra link/",
+                "category/link/",
+                "extra/link/",
                 "Post Content data"
         );
         String generated = mTemplater.generate(data);
 
         assertThat(generated).containsMatch("<h2[^>]+>2001-02-03 - Post Title replacement</h2>");
-        assertThat(generated).containsMatch("<a href=\"http://Site URL/replacement/extra link/\">Click here[^<]+</a>");
-        assertThat(generated).containsMatch("<a href=\"http://Site URL/replacement/category/\">A Category</a>");
+        assertThat(generated).containsMatch("<a href=\"extra/link/\">Click here[^<]+</a>");
+        assertThat(generated).containsMatch("<a href=\"http://Site URL/replacement/category/link/\">A Category</a>");
         assertThat(generated).containsMatch(">\\s+Post Content data\\s+<");
 
     }

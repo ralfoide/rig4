@@ -83,6 +83,10 @@ p.console {
 .post-container {
 }
 
+.bottom-container {
+    background-color: #428bca;
+}
+
 .post-title-container {
     position: relative;
     background-color: #428bca;
@@ -113,6 +117,20 @@ p.console {
 .post-cat a {
     color: #000;
     text-decoration: none;
+}
+
+.prev-next-container {
+    overflow: auto;
+}
+
+.prev-page {
+    float: left;
+    line-height: 2em;
+}
+
+.next-page {
+    float: right;
+    line-height: 2em;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -157,18 +175,35 @@ td p {
 
 {{.BlogHeader}}
 
-    {{If.PostTitle}}
+<div class="prev-next-container">
+    <span class="prev-page">{{If.PrevPageLink}}<a href="{{.PrevPageLink}}">⇐ Previous Page</a><br/>{{Endif}}</span>
+    <span class="next-page">{{If.NextPageLink}}<a href="{{.NextPageLink}}">Next Page ⇒</a><br/>{{Endif}}</span>
+</div>
+
+{{If.PostTitle}}
     <div class="post-container">
-    <h2 class="post-title">{{.PostDate}} - {{.PostTitle}}</h2>
-    {{Endif}}
+    <div class="post-title-container"><h2 class="post-title">{{.PostDate}} - {{.PostTitle}}</h2>
+    <span class="post-cat" title="Category">{{.PostCategory}}</span>
+    </div>
+{{Endif}}
 
     {{.Content}}
 
-    {{If.PostTitle}}
+{{If.PostTitle}}
     </div>
-    {{Endif}}
+{{Endif}}
+
+
+<div class="prev-next-container">
+    <span class="prev-page">{{If.PrevPageLink}}<a href="{{.PrevPageLink}}">⇐ Previous Page</a>{{Endif}}</span>
+    <span class="next-page">{{If.NextPageLink}}<a href="{{.NextPageLink}}">Next Page ⇒</a>{{Endif}}</span>
 </div>
-</div>
+
+</div> <!-- container -->
+</div> <!-- main -->
+
+<div class="bottom-container">&nbsp;</div>
+
 </main>
 
 <script>

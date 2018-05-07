@@ -48,6 +48,7 @@ class PostTree {
         private final String mCategory;
         private final String mTitle;
         private final SourceTree.Content mBlogHeader;
+        /** mBlogIndex is page in mBlogPages. */
         private final BlogPage mBlogIndex;
         private final List<BlogPage> mBlogPages = new ArrayList<>();
 
@@ -56,6 +57,7 @@ class PostTree {
             mTitle = title == null ? "" : title;
             mBlogHeader = blogHeader != null ? blogHeader : new SourceTree.Content("", null);
             mBlogIndex = new BlogPage(this, new File(ROOT, category));
+            mBlogPages.add(mBlogIndex);
         }
 
         @NonNull
@@ -84,9 +86,8 @@ class PostTree {
         }
 
         public void generate(@NonNull BlogGenerator.Generator generator) throws Exception {
-            mBlogIndex.generate(generator);
-            for (BlogPage blogPage : mBlogPages) {
-                blogPage.generate(generator);
+            for (int i = 0; i < mBlogPages.size(); i++) {
+                mBlogPages.get(i).generate(i, mBlogPages, generator);
             }
         }
     }
@@ -154,9 +155,11 @@ class PostTree {
             mPostShorts.sort(Collections.reverseOrder());
         }
 
-        public void generate(@NonNull BlogGenerator.Generator generator) throws Exception {
+        public void generate(int index,
+                             @NonNull List<BlogPage> blogPages,
+                             @NonNull BlogGenerator.Generator generator) throws Exception {
             // Write one file with all the short entries.
-            generateMainPage(generator);
+            generateMainPage(index, blogPages, generator);
 
             // Write one file per extra entry.
             for (PostExtra postExtra : mPostExtras) {
@@ -164,7 +167,9 @@ class PostTree {
             }
         }
 
-        private void generateMainPage(@NonNull BlogGenerator.Generator generator) throws Exception {
+        private void generateMainPage(int index,
+                                      @NonNull List<BlogPage> blogPages,
+                                      @NonNull BlogGenerator.Generator generator) throws Exception {
             File destFile = new File(generator.getDestDir(), mFileItem.getLeafFile());
 
             generator.getFileOps().createParentDirs(destFile);
@@ -178,14 +183,30 @@ class PostTree {
 
             mBlog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
 
+            String prevPageLink = null;
+            String nextPageLink = null;
+            if (index > 0) {
+                prevPageLink = blogPages.get(index - 1).mFileItem.getName();
+            }
+            if (index < blogPages.size() - 1) {
+                nextPageLink = blogPages.get(index + 1).mFileItem.getName();
+            }
+
             Templater.BlogPageData templateData = Templater.BlogPageData.create(
-                    generator.getSiteTitle(), generator.getSiteBaseUrl(), generator.getSiteBanner(), generator.getSiteCss(),
+                    generator.getSiteTitle(),
+                    generator.getSiteBaseUrl(),
+                    generator.getSiteBanner(),
+                    generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
                     destFile.getName(), // page filename (for base-url/page-filename.html)
+                    prevPageLink,
+                    nextPageLink,
                     mBlog.getBlogHeader().getFormatted(),
                     "",                 // no post title for an index
                     "",                 // no post date  for an index
+                    "",                 // no post category for an index
+                    "",                 // no post cat link for an index
                     content.toString()
 
 
@@ -205,7 +226,7 @@ class PostTree {
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
 
-            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.mFileItem.getLeafFile();
+            String extraLink = postData.mPostExtra == null ? null : postData.mPostExtra.mFileItem.getName();
 
             Templater.BlogPostData templateData = Templater.BlogPostData.create(
                     generator.getSiteBaseUrl(),
@@ -241,9 +262,13 @@ class PostTree {
                     generator.getGAUid(),
                     mBlog.getTitle(),
                     destFile.getName(),  // page filename (for base-url/page-filename.html)
+                    "", // prevPageLink,
+                    "", // nextPageLink
                     mBlog.getBlogHeader().getFormatted(),
                     postData.mTitle,
                     postData.mDate.toString(),
+                    generator.categoryToHtml(postData.mCategory),
+                    generator.linkForCategory(postData.mCategory),
                     postData.mContent.getFormatted()
             );
 
@@ -322,6 +347,11 @@ class PostTree {
         @NonNull
         public File getDir() {
             return mDir;
+        }
+
+        @NonNull
+        public String getName() {
+            return mName;
         }
 
         @NonNull

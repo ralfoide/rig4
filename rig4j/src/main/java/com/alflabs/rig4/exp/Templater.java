@@ -324,9 +324,13 @@ public class Templater {
 
     @SuppressWarnings("unused")
     public static class BlogPageData extends ArticleData {
+        private final String mPrevPageLink;
+        private final String mNextPageLink;
         private final String mBlogHeader;
         private final String mPostDate;
         private final String mPostTitle;
+        private final String mPostCategory;
+        private final String mPostCategoryLink;
 
         private BlogPageData(
                 String siteTitle,
@@ -336,9 +340,13 @@ public class Templater {
                 String GAUid,
                 String pageTitle,
                 String pageFilename,
+                String prevPageLink,
+                String nextPageLink,
                 String blogHeader,
                 String postTitle,
                 String postDate,
+                String postCategory,
+                String postCategoryLink,
                 String content) {
             super(siteTitle,
                     siteBaseUrl,
@@ -348,9 +356,13 @@ public class Templater {
                     pageTitle,
                     pageFilename,
                     content);
+            mPrevPageLink = prevPageLink;
+            mNextPageLink = nextPageLink;
             mBlogHeader = blogHeader;
             mPostDate = postDate;
             mPostTitle = postTitle;
+            mPostCategory = postCategory;
+            mPostCategoryLink = postCategoryLink;
         }
 
         public static BlogPageData create(
@@ -361,9 +373,13 @@ public class Templater {
                 String GAUid,
                 String pageTitle,
                 String pageFilename,
+                String prevPageLink,
+                String nextPageLink,
                 String blogHeader,
                 String postTitle,
                 String postDate,
+                String postCategory,
+                String postCategoryLink,
                 String content) {
             return new BlogPageData(
                     siteTitle,
@@ -373,9 +389,13 @@ public class Templater {
                     GAUid,
                     pageTitle,
                     pageFilename,
+                    prevPageLink,
+                    nextPageLink,
                     blogHeader,
                     postTitle,
                     postDate,
+                    postCategory,
+                    postCategoryLink,
                     content
             );
         }
@@ -399,12 +419,26 @@ public class Templater {
         public String getPostTitle() {
             return mPostTitle;
         }
+
+        public String getPrevPageLink() {
+            return mPrevPageLink;
+        }
+
+        public String getNextPageLink() {
+            return mNextPageLink;
+        }
+
+        public String getPostCategory() {
+            return mPostCategory;
+        }
+
+        public String getPostCategoryLink() {
+            return mPostCategoryLink;
+        }
     }
 
     @SuppressWarnings("unused")
     public static class BlogPostData extends BlogPageData {
-        private final String mPostCategory;
-        private final String mPostCategoryLink;
         private final String mPostExtraLink;
 
         private BlogPostData(
@@ -423,12 +457,14 @@ public class Templater {
                     "",
                     "",
                     "",
+                    "",
+                    "",
                     postTitle,
                     postDate,
+                    postCategory,
+                    postCategoryLink,
                     content
             );
-            mPostCategory = postCategory;
-            mPostCategoryLink = postCategoryLink;
             mPostExtraLink = postExtraLink;
         }
 
@@ -457,14 +493,6 @@ public class Templater {
             return Resources.toString(
                     Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_POST)),
                     Charsets.UTF_8);
-        }
-
-        public String getPostCategory() {
-            return mPostCategory;
-        }
-
-        public String getPostCategoryLink() {
-            return mPostCategoryLink;
         }
 
         public String getPostExtraLink() {
