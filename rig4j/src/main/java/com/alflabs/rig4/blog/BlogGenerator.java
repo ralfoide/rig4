@@ -123,7 +123,8 @@ public class BlogGenerator {
 
         // Generate mixed-categories blog
         if (!mGenMixedFilter.isEmpty()) {
-            PostTree.Blog mixed = createPostBlogFrom(sourceTree.createMixedBlog(MIXED_CATEGORY, mGenMixedFilter));
+            SourceTree.Blog mixedSource = sourceTree.createMixedBlog(MIXED_CATEGORY, mGenMixedFilter);
+            PostTree.Blog mixed = createPostBlogFrom(mixedSource);
             mPostTree.add(mixed);
         }
 
@@ -149,6 +150,7 @@ public class BlogGenerator {
         // as the blog grows, assuming there is no back-dating of posts.
 
         int pageCount = 1;
+        List<PostTree.BlogPage> pages = new ArrayList<>();
         List<SourceTree.BlogPost> indexPosts = new ArrayList<>();
         List<SourceTree.BlogPost> pendingPosts = new ArrayList<>();
         // Note: sourcePosts should be "naturally" ordered from older to newer due to the treemap.
@@ -170,13 +172,18 @@ public class BlogGenerator {
                 PostTree.BlogPage page = new PostTree.BlogPage(blog, blog.getBlogIndex(), pageCount++);
                 page.fillFrom(pendingPosts);
                 pendingPosts.clear();
-                blog.getBlogPages().add(page);
+                pages.add(page);
             }
         }
 
         // Prepare the index
         indexPosts.sort(Comparator.reverseOrder());
         blog.getBlogIndex().fillFrom(indexPosts);
+
+        // Add the pages in reverse order
+        for (int i = pages.size() - 1; i >= 0; i--) {
+            blog.getBlogPages().add(pages.get(i));
+        }
 
         mLogger.d(TAG, "Blog " + blog.getCategory()
                 + ", posts: " + sourceBlog.getPosts().size()
