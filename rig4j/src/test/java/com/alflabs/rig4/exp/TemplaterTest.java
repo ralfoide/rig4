@@ -125,7 +125,7 @@ public class TemplaterTest {
 
         Templater templater = new Templater(mFlags, mTiming, template);
 
-        String generated = templater.generate(Templater.ArticleData.create(
+        String generated = templater.generate(new Templater.ArticleData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
                 "Banner replacement",
@@ -170,7 +170,7 @@ public class TemplaterTest {
 
         Templater templater = new Templater(mFlags, mTiming, template);
 
-        String generated = templater.generate(Templater.ArticleData.create(
+        String generated = templater.generate(new Templater.ArticleData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
                 "Banner replacement",
@@ -193,7 +193,7 @@ public class TemplaterTest {
 
     @Test
     public void testArticleTemplate() throws Exception {
-        Templater.ArticleData data = Templater.ArticleData.create(
+        Templater.ArticleData data = new Templater.ArticleData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
                 "Banner replacement",
@@ -226,7 +226,7 @@ public class TemplaterTest {
 
     @Test
     public void testBlogPageTemplate() throws Exception {
-        Templater.ArticleData data = Templater.BlogPageData.create(
+        Templater.ArticleData data = new Templater.BlogPageData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
                 "Banner replacement",
@@ -265,7 +265,7 @@ public class TemplaterTest {
 
         // --- This part is specific to a blog page
         assertThat(generated).contains("<div>Blog Header as HTML</div>");
-        assertThat(generated).containsMatch("<span class=\"post-cat\"[^>]*>A Category</span>");
+        assertThat(generated).containsMatch("<span class=\"post-cat-text\">A Category</span>");
         assertThat(generated).containsMatch("<a href=\"prev/page/link/\">[^<]*Previous Page</a>");
         assertThat(generated).containsMatch("<a href=\"next/page/link/\">[^<]*Next Page[^<]*</a>");
         assertThat(generated).containsMatch("<h2[^>]*>2001-02-03 - Post Title replacement</h2>");
@@ -274,20 +274,22 @@ public class TemplaterTest {
 
     @Test
     public void testBlogPostTemplate() throws Exception {
-        Templater.ArticleData data = Templater.BlogPostData.create(
+        Templater.ArticleData data = new Templater.BlogPostData(
                 "http://Site URL/replacement/",
                 "Post Title replacement",
                 "2001-02-03",
                 "A Category",
                 "category/link/",
+                "full/link/",
                 "extra/link/",
                 "Post Content data"
         );
         String generated = mTemplater.generate(data);
 
         assertThat(generated).containsMatch("<h2[^>]+>2001-02-03 - Post Title replacement</h2>");
-        assertThat(generated).containsMatch("<a href=\"extra/link/\">Click here[^<]+</a>");
-        assertThat(generated).containsMatch("<a href=\"http://Site URL/replacement/category/link/\">A Category</a>");
+        assertThat(generated).containsMatch("<a[^>]+href=\"full/link/\">");
+        assertThat(generated).containsMatch("<a[^>]+href=\"extra/link/\">Click here[^<]+</a>");
+        assertThat(generated).containsMatch("<a[^>]+href=\"http://Site URL/replacement/category/link/\"[^>]+>A Category</a>");
         assertThat(generated).containsMatch(">\\s+Post Content data\\s+<");
 
     }

@@ -82,7 +82,7 @@ public class ArticleGenerator {
                 String htmlBody = processHtml(entity.getContent(), title, destFile);
                 entity.syncToStore();
 
-                Templater.ArticleData data = Templater.ArticleData.create(
+                Templater.ArticleData data = new Templater.ArticleData(
                         mFlags.getString(EXP_SITE_TITLE),
                         mFlags.getString(EXP_SITE_BASE_URL),
                         mFlags.getString(EXP_SITE_BANNER),

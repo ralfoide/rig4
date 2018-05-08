@@ -270,7 +270,7 @@ public class Templater {
     public static class ArticleData extends BaseData {
         private final String mContent;
 
-        private ArticleData(
+        public ArticleData(
                 String siteTitle,
                 String siteBaseUrl,
                 String bannerFilename,
@@ -287,26 +287,6 @@ public class Templater {
                     siteBaseUrl,
                     bannerFilename);
             mContent = content;
-        }
-
-        public static ArticleData create(
-                String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
-                String css,
-                String GAUid,
-                String pageTitle,
-                String pageFilename,
-                String content) {
-            return new ArticleData(
-                    siteTitle,
-                    siteBaseUrl,
-                    bannerFilename,
-                    css,
-                    GAUid,
-                    pageTitle,
-                    pageFilename,
-                    content);
         }
 
         @NonNull
@@ -332,7 +312,7 @@ public class Templater {
         private final String mPostCategory;
         private final String mPostCategoryLink;
 
-        private BlogPageData(
+        public BlogPageData(
                 String siteTitle,
                 String siteBaseUrl,
                 String bannerFilename,
@@ -363,41 +343,6 @@ public class Templater {
             mPostTitle = postTitle;
             mPostCategory = postCategory;
             mPostCategoryLink = postCategoryLink;
-        }
-
-        public static BlogPageData create(
-                String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
-                String css,
-                String GAUid,
-                String pageTitle,
-                String pageFilename,
-                String prevPageLink,
-                String nextPageLink,
-                String blogHeader,
-                String postTitle,
-                String postDate,
-                String postCategory,
-                String postCategoryLink,
-                String content) {
-            return new BlogPageData(
-                    siteTitle,
-                    siteBaseUrl,
-                    bannerFilename,
-                    css,
-                    GAUid,
-                    pageTitle,
-                    pageFilename,
-                    prevPageLink,
-                    nextPageLink,
-                    blogHeader,
-                    postTitle,
-                    postDate,
-                    postCategory,
-                    postCategoryLink,
-                    content
-            );
         }
 
         @NonNull
@@ -439,14 +384,16 @@ public class Templater {
 
     @SuppressWarnings("unused")
     public static class BlogPostData extends BlogPageData {
+        private final String mPostFullLink;
         private final String mPostExtraLink;
 
-        private BlogPostData(
+        public BlogPostData(
                 String siteBaseUrl,
                 String postTitle,
                 String postDate,
                 String postCategory,
                 String postCategoryLink,
+                String postFullLink,
                 String postExtraLink,
                 String content) {
             super(  "",
@@ -465,26 +412,8 @@ public class Templater {
                     postCategoryLink,
                     content
             );
+            mPostFullLink = postFullLink;
             mPostExtraLink = postExtraLink;
-        }
-
-        public static BlogPostData create(
-                String siteBaseUrl,
-                String postTitle,
-                String postDate,
-                String postCategory,
-                String postCategoryLink,
-                String postExtraLink,
-                String content) {
-            return new BlogPostData(
-                    siteBaseUrl,
-                    postTitle,
-                    postDate,
-                    postCategory,
-                    postCategoryLink,
-                    postExtraLink,
-                    content
-            );
         }
 
         @NonNull
@@ -497,6 +426,10 @@ public class Templater {
 
         public String getPostExtraLink() {
             return mPostExtraLink;
+        }
+
+        public String getPostFullLink() {
+            return mPostFullLink;
         }
     }
 }

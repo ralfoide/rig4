@@ -217,7 +217,7 @@ class PostTree {
                 nextPageLink = blogPages.get(index + 1).mFileItem.getName();
             }
 
-            Templater.BlogPageData templateData = Templater.BlogPageData.create(
+            Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
                     generator.getSiteBaseUrl(),
                     generator.getSiteBanner(),
@@ -249,15 +249,16 @@ class PostTree {
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
 
-            String extraLink = postData.mReadMoreLink ? postData.mPostFull.mFileItem.getName() : null;
+            String fullLink = postData.mPostFull.mFileItem.getName();
 
-            Templater.BlogPostData templateData = Templater.BlogPostData.create(
+            Templater.BlogPostData templateData = new Templater.BlogPostData(
                     generator.getSiteBaseUrl(),
                     postData.mTitle,
                     postData.mDate.toString(),
                     generator.categoryToHtml(postData.mCategory),
                     generator.linkForCategory(postData.mCategory),
-                    extraLink,
+                    fullLink,
+                    postData.mReadMoreLink ? fullLink : null,
                     postData.mContent.getFormatted()
             );
 
@@ -284,7 +285,7 @@ class PostTree {
                     ? null
                     : postData.mNextFull.mFileItem.getName();
 
-            Templater.BlogPageData templateData = Templater.BlogPageData.create(
+            Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
                     generator.getSiteBaseUrl(),
                     generator.getSiteBanner(),

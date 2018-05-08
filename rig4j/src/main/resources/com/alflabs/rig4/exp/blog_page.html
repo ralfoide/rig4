@@ -101,12 +101,17 @@ p.console {
     font-size: 1.5em;
 }
 
+a.post-title-link {
+    color: #fff;
+    text-decoration: none;
+}
+
 .post-cat {
     position: absolute;
     right: 0;
     top: 0;
     bottom: 0;
-    padding: 0.5rem;
+    padding: 0.25rem;
     background-color: #d0e0e3;
     color: #000;
     font-weight: 500;
@@ -114,9 +119,16 @@ p.console {
     font-size: 1.5em;
 }
 
-.post-cat a {
+a.post-cat-link {
     color: #000;
     text-decoration: none;
+}
+
+.post-cat-label {
+    display: block;
+    text-align: right;
+    color: #000;
+    font-size: 0.4em;
 }
 
 .prev-next-container {
@@ -164,7 +176,7 @@ td p {
         <a href="{{.SiteBaseUrl}}">{{.SiteTitle}}</a>
         {{If.PageTitle != .SiteTitle}}
         /
-        <a href="{{.SiteBaseUrl}}{{.PageFilename}}">{{.PageTitle}}</a>
+        <a href="{{.PageFilename}}">{{.PageTitle}}</a>
         {{Endif}}
     </div>
 </header>
@@ -183,7 +195,10 @@ td p {
 {{If.PostTitle}}
     <div class="post-container">
     <div class="post-title-container"><h2 class="post-title">{{.PostDate}} - {{.PostTitle}}</h2>
-    <span class="post-cat" title="Category">{{.PostCategory}}</span>
+    <span class="post-cat" title="Category">
+            <span class="post-cat-label">Category</span>
+            <span class="post-cat-text">{{.PostCategory}}</span>
+    </span>
     </div>
 {{Endif}}
 
