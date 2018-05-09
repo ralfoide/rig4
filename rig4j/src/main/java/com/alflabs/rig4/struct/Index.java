@@ -7,10 +7,10 @@ import java.util.List;
 
 @AutoValue
 public abstract class Index {
-    public static Index create(@NonNull List<ArticleEntry> articleEntries, @NonNull List<String> blogIds) {
-        return new AutoValue_Index(articleEntries, blogIds);
+    public static Index create(@NonNull List<ArticleEntry> articleEntries, @NonNull List<BlogEntry> blogEntries) {
+        return new AutoValue_Index(articleEntries, blogEntries);
     }
 
     public abstract List<ArticleEntry> getArticleEntries();
-    public abstract List<String> getBlogIds();
+    public abstract List<BlogEntry> getBlogEntries();
 }

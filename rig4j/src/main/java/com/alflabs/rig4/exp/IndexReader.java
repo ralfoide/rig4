@@ -3,6 +3,7 @@ package com.alflabs.rig4.exp;
 import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.gdoc.GDocHelper;
 import com.alflabs.rig4.struct.ArticleEntry;
+import com.alflabs.rig4.struct.BlogEntry;
 import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.rig4.struct.Index;
 import com.alflabs.utils.ILogger;
@@ -29,8 +30,10 @@ public class IndexReader {
         mGDocHelper = gDocHelper;
     }
 
-    private static final Pattern sArticleLineRe = Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
-    private static final Pattern sBlogLineRe    = Pattern.compile("^blog\\s+([a-zA-Z0-9_-]+)\\s*");
+    private static final Pattern sArticleLineRe =
+            Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
+    private static final Pattern sBlogLineRe    =
+            Pattern.compile("^[bB]log\\s*([1-9]+)?\\s*(\\([^)]*\\))?\\s+([a-zA-Z0-9_-]+)\\s*");
 
     @NonNull
     public Index readIndex(String indexId) throws IOException {
@@ -38,22 +41,27 @@ public class IndexReader {
         GDocEntity entity = mGDocHelper.getGDocSync(indexId, "text/plain");
         String content = new String(entity.getContent(), Charsets.UTF_8);
 
-        List<ArticleEntry> entries = new ArrayList<>();
-        List<String> blogIds = new ArrayList<>();
+        List<ArticleEntry> articleEntries = new ArrayList<>();
+        List<BlogEntry> blogEntries = new ArrayList<>();
 
         for (String line : content.split("\n")) {
             line = line.trim();
             Matcher matcher = sArticleLineRe.matcher(line);
             if (matcher.find()) {
-                entries.add(ArticleEntry.create(matcher.group(2), matcher.group(1)));
+                articleEntries.add(ArticleEntry.create(matcher.group(2), matcher.group(1)));
                 continue;
             }
             matcher = sBlogLineRe.matcher(line);
             if (matcher.find()) {
-                blogIds.add(matcher.group(1));
+                int section = 0;
+                try {
+                    section = Integer.parseInt(matcher.group(1));
+                } catch (NumberFormatException ignore) {}
+
+                blogEntries.add(BlogEntry.create(matcher.group(3), section));
             }
         }
 
-        return Index.create(entries, blogIds);
+        return Index.create(articleEntries, blogEntries);
     }
 }

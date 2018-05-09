@@ -7,6 +7,7 @@ import com.alflabs.rig4.exp.HtmlTransformer;
 import com.alflabs.rig4.exp.Templater;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.rig4.gdoc.GDocHelper;
+import com.alflabs.rig4.struct.BlogEntry;
 import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
@@ -65,7 +66,7 @@ public class BlogGenerator {
         mHtmlTransformer = htmlTransformer;
     }
 
-    public void processEntries(@NonNull List<String> blogIds, boolean allChanged)
+    public void processEntries(@NonNull List<BlogEntry> blogEntries, boolean allChanged)
             throws Exception {
         mCatAcceptFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_ACCEPT_CAT));
         mCatRejectFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_REJECT_CAT));
@@ -73,7 +74,7 @@ public class BlogGenerator {
         mGenSingleFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_GEN_SINGLE));
         mGenMixedFilter  = new CatFilter(mFlags.getString(BlogFlags.BLOG_GEN_MIXED));
 
-        SourceTree sourceTree = parseSources(blogIds);
+        SourceTree sourceTree = parseSources(blogEntries);
         sourceTree.setChanged(allChanged);
         PostTree postTree = computePostTree(sourceTree);
         generatePostTree(postTree);
@@ -82,21 +83,21 @@ public class BlogGenerator {
     }
 
     @NonNull
-    private SourceTree parseSources(@NonNull List<String> blogIds)
+    private SourceTree parseSources(@NonNull List<BlogEntry> blogEntries)
             throws IOException, URISyntaxException {
         SourceTree sourceTree = new SourceTree();
 
-        for (String blogId : blogIds) {
-            parseSource(sourceTree, blogId);
+        for (BlogEntry blogEntry : blogEntries) {
+            parseSource(sourceTree, blogEntry);
         }
 
         return sourceTree;
     }
 
-    private void parseSource(@NonNull SourceTree sourceTree, @NonNull String blogId)
+    private void parseSource(@NonNull SourceTree sourceTree, @NonNull BlogEntry blogEntry)
             throws IOException, URISyntaxException {
-        mLogger.d(TAG, "Parse source: " + blogId);
-        GDocEntity entity = mGDocHelper.getGDocAsync(blogId, "text/html");
+        mLogger.d(TAG, "Parse source: " + blogEntry);
+        GDocEntity entity = mGDocHelper.getGDocAsync(blogEntry.getFileId(), "text/html");
         boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
 

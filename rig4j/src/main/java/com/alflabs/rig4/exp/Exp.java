@@ -57,7 +57,7 @@ public class Exp {
         boolean allChanged = checkVersionChanged();
         Index index = mIndexReader.readIndex(mFlags.getString(EXP_DOC_ID));
         mArticleGenerator.processEntries(index.getArticleEntries(), allChanged);
-        mBlogGenerator.processEntries(index.getBlogIds(), allChanged);
+        mBlogGenerator.processEntries(index.getBlogEntries(), allChanged);
         timing.end();
         mTiming.printToLog();
     }
