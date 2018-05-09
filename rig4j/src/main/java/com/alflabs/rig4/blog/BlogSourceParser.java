@@ -58,6 +58,7 @@ public class BlogSourceParser {
         // - Parse ends when [izu:blog:end] is found.
         // - Allow overrides using the [[s:] or [[izu:] syntax.
         boolean foundIzuBlogTag = false;
+        boolean inHeaderTags = true;
         String blogCategory = null;
         List<String> headerTags = null;
         Element izuHeaderStart = null;
@@ -86,6 +87,16 @@ public class BlogSourceParser {
                 }
                 continue;
             }
+
+            if (inHeaderTags) {
+                if (izuTags == null || izuTags.isEmpty()) {
+                    inHeaderTags = false;
+                } else {
+                    headerTags.addAll(izuTags);
+                    continue;
+                }
+            }
+
             if (izuHeaderEnd == null && izuTags != null && izuTags.contains(IzuTags.IZU_HEADER_END)) {
                 izuHeaderEnd = element;
             }

@@ -14,6 +14,14 @@ public class BlogFlags {
     public static final String BLOG_GEN_MIXED = "blog-gen-mixed";
     public static final String BLOG_MIXED_CAT = "blog-mixed-cat";
 
+    public static final String[] FILTER_FLAGS = new String[] {
+            BlogFlags.BLOG_ACCEPT_CAT,
+            BlogFlags.BLOG_REJECT_CAT,
+            BlogFlags.BLOG_GEN_SINGLE,
+            BlogFlags.BLOG_GEN_MIXED,
+            BlogFlags.BLOG_BANNER_EXCLUDE,
+    };
+
     private final Flags mFlags;
 
     @Inject

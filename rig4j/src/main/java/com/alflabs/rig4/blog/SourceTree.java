@@ -101,6 +101,10 @@ class SourceTree extends TreeChange {
         }
 
         for (Blog blog : mBlogs.values()) {
+            if (blog.getCategory().equals(mixedCategory)) {
+                continue;
+            }
+
             // Note: right now all posts from a source blog have the same category.
             // LATER each post will be able to override its own category.
             if (!mixedCatFilter.matches(blog.getCategory())) {

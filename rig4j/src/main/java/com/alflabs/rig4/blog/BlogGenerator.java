@@ -12,6 +12,7 @@ import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.alflabs.utils.StringUtils;
+import com.google.common.base.Preconditions;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -19,8 +20,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static com.alflabs.rig4.exp.ExpFlags.EXP_DEST_DIR;
 import static com.alflabs.rig4.exp.ExpFlags.EXP_GA_UID;
@@ -31,7 +36,6 @@ import static com.alflabs.rig4.exp.ExpFlags.EXP_SITE_TITLE;
 public class BlogGenerator {
     private final static String TAG = BlogGenerator.class.getSimpleName();
     private final static int ITEM_PER_PAGE = 10;
-    private static final String MIXED_CATEGORY = "all";
 
     private final Flags mFlags;
     private final ILogger mLogger;
@@ -40,13 +44,6 @@ public class BlogGenerator {
     private final HashStore mHashStore;
     private final Templater mTemplater;
     private final HtmlTransformer mHtmlTransformer;
-
-    private CatFilter mCatAcceptFilter;
-    private CatFilter mCatRejectFilter;
-    private CatFilter mCatBannerFilter;
-    private CatFilter mGenSingleFilter;
-    private CatFilter mGenMixedFilter;
-    private PostTree mPostTree;
 
     @Inject
     public BlogGenerator(
@@ -68,68 +65,82 @@ public class BlogGenerator {
 
     public void processEntries(@NonNull List<BlogEntry> blogEntries, boolean allChanged)
             throws Exception {
-        mCatAcceptFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_ACCEPT_CAT));
-        mCatRejectFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_REJECT_CAT));
-        mCatBannerFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_BANNER_EXCLUDE));
-        mGenSingleFilter = new CatFilter(mFlags.getString(BlogFlags.BLOG_GEN_SINGLE));
-        mGenMixedFilter  = new CatFilter(mFlags.getString(BlogFlags.BLOG_GEN_MIXED));
-
-        SourceTree sourceTree = parseSources(blogEntries);
+        BlogSections sections = parseSections(blogEntries);
+        SourceTree sourceTree = parseSources(sections, blogEntries);
         sourceTree.setChanged(allChanged);
-        PostTree postTree = computePostTree(sourceTree);
-        generatePostTree(postTree);
-        postTree.saveMetadata();
+        for (BlogSection blogSection : sections.iter()) {
+            PostTree postTree = computePostTree(blogSection, sourceTree);
+            generatePostTree(postTree);
+            postTree.saveMetadata();
+        }
         sourceTree.saveMetadata();
     }
 
+    private BlogSections parseSections(List<BlogEntry> blogEntries) {
+        BlogSections sections = new BlogSections();
+        for (BlogEntry blogEntry : blogEntries) {
+            sections.add(blogEntry.getSection());
+        }
+        return sections;
+    }
+
     @NonNull
-    private SourceTree parseSources(@NonNull List<BlogEntry> blogEntries)
+    private SourceTree parseSources(BlogSections sections, @NonNull List<BlogEntry> blogEntries)
             throws IOException, URISyntaxException {
         SourceTree sourceTree = new SourceTree();
 
         for (BlogEntry blogEntry : blogEntries) {
-            parseSource(sourceTree, blogEntry);
+            parseSource(sourceTree, blogEntry, sections.get(blogEntry));
         }
 
         return sourceTree;
     }
 
-    private void parseSource(@NonNull SourceTree sourceTree, @NonNull BlogEntry blogEntry)
+    private void parseSource(@NonNull SourceTree sourceTree,
+                             @NonNull BlogEntry blogEntry,
+                             @NonNull BlogSection blogSection)
             throws IOException, URISyntaxException {
-        mLogger.d(TAG, "Parse source: " + blogEntry);
+        mLogger.d(TAG, "Parse section: " + blogEntry.getSection() + ", source: " + blogEntry.getFileId());
         GDocEntity entity = mGDocHelper.getGDocAsync(blogEntry.getFileId(), "text/html");
         boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
 
         BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);
         BlogSourceParser.ParsedResult result = blogSourceParser.parse(content);
-        sourceTree.merge(result, fileChanged, mCatAcceptFilter, mCatRejectFilter);
+        blogSection.updateFrom(result.getTags());
+        sourceTree.merge(result,
+                fileChanged,
+                blogSection.getCatAcceptFilter(),
+                blogSection.getCatRejectFilter());
     }
 
     @NonNull
-    private PostTree computePostTree(@NonNull SourceTree sourceTree)
+    private PostTree computePostTree(@NonNull BlogSection blogSection,
+                                     @NonNull SourceTree sourceTree)
             throws BlogSourceParser.ParseException {
         mLogger.d(TAG, "computePostTree");
-        mPostTree = new PostTree();
+        PostTree postTree = new PostTree();
 
         // Generate per-category blogs
-        if (!mGenSingleFilter.isEmpty()) {
+        if (!blogSection.getGenSingleFilter().isEmpty()) {
             for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
-                if (mGenSingleFilter.matches(sourceBlog.getCategory())) {
+                if (blogSection.getGenSingleFilter().matches(sourceBlog.getCategory())) {
                     PostTree.Blog blog = createPostBlogFrom(sourceBlog);
-                    mPostTree.add(blog);
+                    postTree.add(blog);
                 }
             }
         }
 
         // Generate mixed-categories blog
-        if (!mGenMixedFilter.isEmpty()) {
-            SourceTree.Blog mixedSource = sourceTree.createMixedBlog(MIXED_CATEGORY, mGenMixedFilter);
+        if (!blogSection.getGenMixedFilter().isEmpty()) {
+            SourceTree.Blog mixedSource = sourceTree.createMixedBlog(
+                    blogSection.getMixedCat(),
+                    blogSection.getGenMixedFilter());
             PostTree.Blog mixed = createPostBlogFrom(mixedSource);
-            mPostTree.add(mixed);
+            postTree.add(mixed);
         }
 
-        return mPostTree;
+        return postTree;
     }
 
     @NonNull
@@ -194,7 +205,7 @@ public class BlogGenerator {
 
     private void generatePostTree(PostTree postTree) throws Exception {
         mLogger.d(TAG, "generatePostTree");
-        postTree.generate(new Generator());
+        postTree.generate(new Generator(postTree));
     }
 
     /**
@@ -206,6 +217,12 @@ public class BlogGenerator {
      * depending on the page where it is used.
      */
     public class Generator {
+        private final PostTree mPostTree;
+
+        public Generator(PostTree postTree) {
+            mPostTree = postTree;
+        }
+
         public HtmlTransformer.LazyTransformer getLazyHtmlTransformer(File destFile) {
             HtmlTransformer.Callback callback = new HtmlTransformer.Callback() {
                 @Override
@@ -277,6 +294,86 @@ public class BlogGenerator {
                 return  null;
             }
             return blog.getBlogIndex().getFileItem().getLeafDir();
+        }
+    }
+
+    public class BlogSections {
+        private final Map<Integer, BlogSection> mBlogSections = new TreeMap<>();
+
+        public void add(int section) {
+            mBlogSections.computeIfAbsent(section, (i) -> new BlogSection());
+        }
+
+        @NonNull
+        public BlogSection get(@NonNull BlogEntry entry) {
+            return Preconditions.checkNotNull(mBlogSections.get(entry.getSection()));
+        }
+
+        public Collection<BlogSection> iter() {
+            return mBlogSections.values();
+        }
+    }
+
+    public class BlogSection {
+        private String mMixedCat;
+        private final Map<String, CatFilter> mFilters = new HashMap<>();
+
+        public BlogSection() {
+            mMixedCat = mFlags.getString(BlogFlags.BLOG_MIXED_CAT);
+            for (String flag : BlogFlags.FILTER_FLAGS) {
+                mFilters.put(flag, new CatFilter(mFlags.getString(flag)));
+            }
+        }
+
+        @SuppressWarnings("UnnecessaryLabelOnContinueStatement")
+        public void updateFrom(@NonNull List<String> tags) {
+            String izuMixedCatTag = IzuTags.PREFIX + BlogFlags.BLOG_MIXED_CAT + IzuTags.PARAM_SEP;
+
+            nextTag: for (String tag : tags) {
+                if (tag.startsWith(izuMixedCatTag)) {
+                    String value = tag.substring(izuMixedCatTag.length()).trim();
+                    if (!value.isEmpty()) {
+                        mMixedCat = value;
+                    }
+                    continue nextTag;
+                }
+
+                for (String flag : BlogFlags.FILTER_FLAGS) {
+                    String izuTag = IzuTags.PREFIX + flag + IzuTags.PARAM_SEP;
+
+                    if (tag.startsWith(izuTag)) {
+                        String value = tag.substring(izuTag.length()).trim();
+                        if (!value.isEmpty()) {
+                            mFilters.put(flag, new CatFilter(value));
+                        }
+                        continue nextTag;
+                    }
+                }
+            }
+        }
+
+        public CatFilter getCatAcceptFilter() {
+            return mFilters.get(BlogFlags.BLOG_ACCEPT_CAT);
+        }
+
+        public CatFilter getCatRejectFilter() {
+            return mFilters.get(BlogFlags.BLOG_REJECT_CAT);
+        }
+
+        public CatFilter getCatBannerFilter() {
+            return mFilters.get(BlogFlags.BLOG_BANNER_EXCLUDE);
+        }
+
+        public CatFilter getGenSingleFilter() {
+            return mFilters.get(BlogFlags.BLOG_GEN_SINGLE);
+        }
+
+        public CatFilter getGenMixedFilter() {
+            return mFilters.get(BlogFlags.BLOG_GEN_MIXED);
+        }
+
+        public String getMixedCat() {
+            return mMixedCat;
         }
     }
 }

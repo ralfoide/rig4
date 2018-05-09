@@ -3,6 +3,9 @@ package com.alflabs.rig4.blog;
 public final class IzuTags {
     private IzuTags() {}
 
+    public static final String PREFIX = "izu:";
+    public static final String PARAM_SEP = ":";
+
     public static final String IZU_BLOG = "izu:blog";
     public static final String IZU_BLOG_TITLE = "izu:blog-title:";
     public static final String IZU_BLOG_END = "izu:blog:end";
