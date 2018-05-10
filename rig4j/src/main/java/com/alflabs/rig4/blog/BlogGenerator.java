@@ -66,14 +66,30 @@ public class BlogGenerator {
     public void processEntries(@NonNull List<BlogEntry> blogEntries, boolean allChanged)
             throws Exception {
         BlogSections sections = parseSections(blogEntries);
-        SourceTree sourceTree = parseSources(sections, blogEntries);
-        sourceTree.setChanged(allChanged);
+        List<BlogSourceParser.ParsedResult> parsedResults = parseSources(sections, blogEntries);
         for (BlogSection blogSection : sections.iter()) {
+            SourceTree sourceTree = computeSourceTree(blogSection, parsedResults);
+            sourceTree.setChanged(allChanged);
             PostTree postTree = computePostTree(blogSection, sourceTree);
             generatePostTree(postTree);
             postTree.saveMetadata();
+            sourceTree.saveMetadata();
         }
-        sourceTree.saveMetadata();
+    }
+
+    private SourceTree computeSourceTree(@NonNull BlogSection blogSection,
+                                         @NonNull List<BlogSourceParser.ParsedResult> parsedResults)
+            throws BlogSourceParser.ParseException {
+        SourceTree sourceTree = new SourceTree();
+
+        for (BlogSourceParser.ParsedResult parsedResult : parsedResults) {
+            sourceTree.merge(parsedResult,
+                parsedResult.isFileChanged(),
+                blogSection.getCatAcceptFilter(),
+                blogSection.getCatRejectFilter());
+        }
+
+        return sourceTree;
     }
 
     private BlogSections parseSections(List<BlogEntry> blogEntries) {
@@ -85,20 +101,23 @@ public class BlogGenerator {
     }
 
     @NonNull
-    private SourceTree parseSources(BlogSections sections, @NonNull List<BlogEntry> blogEntries)
+    private List<BlogSourceParser.ParsedResult> parseSources(@NonNull BlogSections sections,
+                                                             @NonNull List<BlogEntry> blogEntries)
             throws IOException, URISyntaxException {
-        SourceTree sourceTree = new SourceTree();
+        List<BlogSourceParser.ParsedResult> parsedResults = new ArrayList<>();
 
         for (BlogEntry blogEntry : blogEntries) {
-            parseSource(sourceTree, blogEntry, sections.get(blogEntry));
+            BlogSourceParser.ParsedResult result = parseSource(blogEntry);
+            parsedResults.add(result);
+
+            BlogSection blogSection = sections.get(blogEntry);
+            blogSection.updateFrom(result.getTags());
         }
 
-        return sourceTree;
+        return parsedResults;
     }
 
-    private void parseSource(@NonNull SourceTree sourceTree,
-                             @NonNull BlogEntry blogEntry,
-                             @NonNull BlogSection blogSection)
+    private BlogSourceParser.ParsedResult parseSource(@NonNull BlogEntry blogEntry)
             throws IOException, URISyntaxException {
         mLogger.d(TAG, "Parse section: " + blogEntry.getSection() + ", source: " + blogEntry.getFileId());
         GDocEntity entity = mGDocHelper.getGDocAsync(blogEntry.getFileId(), "text/html");
@@ -106,12 +125,7 @@ public class BlogGenerator {
         byte[] content = entity.getContent();
 
         BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);
-        BlogSourceParser.ParsedResult result = blogSourceParser.parse(content);
-        blogSection.updateFrom(result.getTags());
-        sourceTree.merge(result,
-                fileChanged,
-                blogSection.getCatAcceptFilter(),
-                blogSection.getCatRejectFilter());
+        return blogSourceParser.parse(content).setFileChanged(fileChanged);
     }
 
     @NonNull

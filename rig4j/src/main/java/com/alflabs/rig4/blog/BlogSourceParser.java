@@ -257,6 +257,7 @@ public class BlogSourceParser {
         private final List<String> mTags;
         private final Element mIntermediaryHeader;
         private final List<ParsedSection> mParsedSections;
+        private boolean fileChanged;
 
         public ParsedResult(
                 @NonNull String blogCategory,
@@ -269,6 +270,15 @@ public class BlogSourceParser {
             mParsedSections = parsedSections == null
                     ? Collections.EMPTY_LIST
                     : Collections.unmodifiableList(parsedSections);
+        }
+
+        public boolean isFileChanged() {
+            return fileChanged;
+        }
+
+        public ParsedResult setFileChanged(boolean fileChanged) {
+            this.fileChanged = fileChanged;
+            return this;
         }
 
         @NonNull
