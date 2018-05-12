@@ -167,11 +167,11 @@ class PostTree {
                              @NonNull List<BlogPage> blogPages,
                              @NonNull BlogGenerator.Generator generator) throws Exception {
             // Write one file with all the short entries.
-            generateMainPage(index, blogPages, generator);
+            File mainFile = generateMainPage(index, blogPages, generator);
 
-            // Write one file per extra entry.
+            // Write one file per full entry.
             for (PostFull postFull : mPostFulls) {
-                generateFullPage(generator, postFull);
+                generateFullPage(generator, postFull, mainFile);
             }
         }
 
@@ -192,7 +192,7 @@ class PostTree {
             return lastFull;
         }
 
-        private void generateMainPage(int index,
+        private File generateMainPage(int index,
                                       @NonNull List<BlogPage> blogPages,
                                       @NonNull BlogGenerator.Generator generator) throws Exception {
             File destFile = new File(generator.getDestDir(), mFileItem.getLeafFile());
@@ -219,8 +219,9 @@ class PostTree {
 
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
-                    generator.getSiteBaseUrl(),
-                    generator.getSiteBanner(),
+                    generator.getAbsSiteLink(),
+                    generator.getRelSiteLink(),
+                    generator.getRelBannerLink(),
                     generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
@@ -237,6 +238,8 @@ class PostTree {
 
             String generated = generator.getTemplater().generate(templateData);
             generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
+
+            return destFile;
         }
 
         private String generateShort(
@@ -252,7 +255,8 @@ class PostTree {
             String fullLink = postData.mPostFull.mFileItem.getName();
 
             Templater.BlogPostData templateData = new Templater.BlogPostData(
-                    generator.getSiteBaseUrl(),
+                    generator.getAbsSiteLink(),
+                    generator.getRelSiteLink(),
                     postData.mTitle,
                     postData.mDate.toString(),
                     generator.categoryToHtml(postData.mCategory),
@@ -267,7 +271,8 @@ class PostTree {
 
         private void generateFullPage(
                 @NonNull BlogGenerator.Generator generator,
-                @NonNull PostFull postData)
+                @NonNull PostFull postData,
+                @NonNull File mainFile)
                 throws Exception {
             File destFile = new File(generator.getDestDir(), postData.mFileItem.getLeafFile());
             generator.getFileOps().createParentDirs(destFile);
@@ -287,12 +292,13 @@ class PostTree {
 
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
-                    generator.getSiteBaseUrl(),
-                    generator.getSiteBanner(),
+                    generator.getAbsSiteLink(),
+                    generator.getRelSiteLink(),
+                    generator.getRelBannerLink(),
                     generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
-                    destFile.getName(),  // page filename (for base-url/page-filename.html)
+                    mainFile.getName(),  // main page links to the index containing this full page
                     prevPageLink,
                     nextPageLink,
                     mBlog.getBlogHeader().getFormatted(),

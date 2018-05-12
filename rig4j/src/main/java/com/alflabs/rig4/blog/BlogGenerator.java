@@ -282,11 +282,16 @@ public class BlogGenerator {
             return mFlags.getString(EXP_SITE_TITLE);
         }
 
-        public String getSiteBaseUrl() {
+        public String getAbsSiteLink() {
             return mFlags.getString(EXP_SITE_BASE_URL);
         }
 
-        public String getSiteBanner() {
+        public String getRelSiteLink() {
+            // There are always two levels in the generated pages: <site>/blog/cat/<content>.
+            return "../../";
+        }
+
+        public String getRelBannerLink() {
             return mFlags.getString(EXP_SITE_BANNER);
         }
 

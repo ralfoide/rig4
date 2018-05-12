@@ -1,19 +1,19 @@
 <div class="post-container">
 <div class="post-title-container">
-{{If.PostFullLink}}<a class="post-title-link" href="{{.PostFullLink}}">{{Endif}}
+{{If.RelPostFullLink}}<a class="post-title-link" href="{{.RelPostFullLink}}">{{Endif}}
     <h2 class="post-title">{{.PostDate}} - {{.PostTitle}}</h2>
-{{If.PostFullLink}}</a>{{Endif}}
+{{If.RelPostFullLink}}</a>{{Endif}}
 <span class="post-cat" title="Category">
     <span class="post-cat-label">Category</span>
     <span class="post-cat-text">
-    {{If!.PostCategoryLink}}{{.PostCategory}}{{Endif}}
-    {{If.PostCategoryLink}}<a class="post-cat-link" href="{{.SiteBaseUrl}}{{.PostCategoryLink}}" title="View All Category Posts">{{.PostCategory}}</a>{{Endif}}
+    {{If!.RelPostCatLink}}{{.PostCategory}}{{Endif}}
+    {{If.RelPostCatLink}}<a class="post-cat-link" href="{{.RelSiteLink}}{{.RelPostCatLink}}" title="View All Category Posts">{{.PostCategory}}</a>{{Endif}}
     </span>
 </span></div>
 
 {{.Content}}
 
-{{If.PostExtraLink}}<a href="{{.PostExtraLink}}">Click here to continue reading...</a>
+{{If.RelPostExtraLink}}<a href="{{.RelPostExtraLink}}">Click here to continue reading...</a>
 <p/>
 <hr/>{{Endif}}
 </div>

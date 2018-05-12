@@ -111,7 +111,7 @@ public class TemplaterTest {
                 "<!doctype html>\n" +
                 "<html lang=\"en\">\n" +
                 "<head>\n" +
-                "<meta property=\"og:url\"         content=\"{{.SiteBaseUrl}}{{.PageFilename}}\" />\n" +
+                "<meta property=\"og:url\"         content=\"{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelPageLink}}\" />\n" +
                 "<meta property=\"og:type\"        content=\"article\" />\n" +
                 "<meta property=\"og:title\"       content=\"{{.PageTitle}}\" />\n" +
                 "<meta property=\"og:description\" content=\"{{.Description}}\" />\n" +
@@ -119,7 +119,7 @@ public class TemplaterTest {
                 "<title>{{.PageTitle}}</title>\n" +
                 "{{.Css}}\n" +
                 "</head>\n" +
-                "        <a href=\"{{.SiteBaseUrl}}\">{{.SiteTitle}}</a>\n" +
+                "        <a href=\"{{.AbsSiteLink}}\">{{.SiteTitle}}</a>\n" +
                 "{{.Content}}\n" +
                 "    ga('create', '{{.GAUid}}', 'auto');\n";
 
@@ -128,11 +128,12 @@ public class TemplaterTest {
         String generated = templater.generate(new Templater.ArticleData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
-                "Banner replacement",
+                "../../",
+                "banner_image.jpg",
                 "CSS replacement",
                 "GA UID replacement",
                 "Page Title replacement",
-                "Page Filename replacement",
+                "page_file.html",
                 "Content replacement\n" +
                 "Multiple content."));
 
@@ -140,7 +141,7 @@ public class TemplaterTest {
                 "<!doctype html>\n" +
                 "<html lang=\"en\">\n" +
                 "<head>\n" +
-                "<meta property=\"og:url\"         content=\"http://Site URL/replacement/Page Filename replacement\" />\n" +
+                "<meta property=\"og:url\"         content=\"http://Site URL/replacement/../../page_file.html\" />\n" +
                 "<meta property=\"og:type\"        content=\"article\" />\n" +
                 "<meta property=\"og:title\"       content=\"Page Title replacement\" />\n" +
                 "<meta property=\"og:description\" content=\"\" />\n" +
@@ -160,7 +161,7 @@ public class TemplaterTest {
         String template = "" +
                 "{{If.NonExistent}}<!doctype html>\n" +
                 "<html lang=\"en\">\n" +
-                "<meta property=\"og:url\"         content=\"{{.SiteBaseUrl}}{{.PageFilename}}\" />\n" +
+                "<meta property=\"og:url\"         content=\"{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelPageLink}}\" />\n" +
                 "<meta property=\"og:type\"        content=\"article\" />\n" +
                 "<head>{{EndIf}}\n" +
                 "<meta property=\"og:title\"       content=\"{{.PageTitle}}\" />\n" +
@@ -173,11 +174,12 @@ public class TemplaterTest {
         String generated = templater.generate(new Templater.ArticleData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
-                "Banner replacement",
+                "../../",
+                "banner_image.jpg",
                 "CSS replacement",
                 null,           // If.Var accepts both null and empty strings
                 "Page Title replacement",
-                "Page Filename replacement",
+                "page_file.html",
                 "Content replacement\n" +
                         "Multiple content."));
 
@@ -196,16 +198,17 @@ public class TemplaterTest {
         Templater.ArticleData data = new Templater.ArticleData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
-                "Banner replacement",
+                "./",
+                "banner_image.jpg",
                 "CSS replacement",
                 "GA UID replacement",
                 "Page Title replacement",
-                "Page Filename replacement",
+                "page_file.html",
                 "Content replacement first line\n" +
                         "Content replacement second line.");
         String generated = mTemplater.generate(data);
 
-        assertThat(generated).containsMatch("property=\"og:url\"\\s+content=\"http://Site URL/replacement/Page Filename replacement\"");
+        assertThat(generated).containsMatch("property=\"og:url\"\\s+content=\"http://Site URL/replacement/./page_file.html\"");
         assertThat(generated).containsMatch("property=\"og:title\"\\s+content=\"Page Title replacement\"");
         // We don't generate FB OG meta-data for these yet
         assertThat(generated).doesNotContain("property=\"og:description\"");
@@ -217,7 +220,7 @@ public class TemplaterTest {
         assertThat(generated).doesNotContain("name=\"twitter:image\"");
 
         assertThat(generated).contains("<title>Page Title replacement</title>");
-        assertThat(generated).contains("background-image: url(\"Banner replacement\");");
+        assertThat(generated).contains("background-image: url(\"./banner_image.jpg\");");
         assertThat(generated).containsMatch("<style type=\"text/css\">[^<]+CSS replacement\\s*</style>");
         assertThat(generated).contains("<a href=\"http://Site URL/replacement/\">Site Title replacement</a>");
         assertThat(generated).contains("ga('create', 'GA UID replacement', 'auto');");
@@ -229,24 +232,25 @@ public class TemplaterTest {
         Templater.ArticleData data = new Templater.BlogPageData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
-                "Banner replacement",
+                "../../",
+                "banner_image.jpg",
                 "CSS replacement",
                 "GA UID replacement",
                 "Page Title replacement",
-                "Page Filename replacement",
-                "prev/page/link/",
-                "next/page/link/",
+                "page_file.html",
+                "prev/page",
+                "next/page",
                 "<div>Blog Header as HTML</div>",
                 "Post Title replacement",
                 "2001-02-03",
                 "A Category",
-                "category/link/",
+                "category/link",
                 "Content replacement"
         );
         String generated = mTemplater.generate(data);
 
         // --- This part is common with an article page
-        assertThat(generated).containsMatch("property=\"og:url\"\\s+content=\"http://Site URL/replacement/Page Filename replacement\"");
+        assertThat(generated).containsMatch("property=\"og:url\"\\s+content=\"http://Site URL/replacement/../../page_file.html\"");
         assertThat(generated).containsMatch("property=\"og:title\"\\s+content=\"Page Title replacement\"");
         // We don't generate FB OG meta-data for these yet
         assertThat(generated).doesNotContain("property=\"og:description\"");
@@ -258,7 +262,7 @@ public class TemplaterTest {
         assertThat(generated).doesNotContain("name=\"twitter:image\"");
 
         assertThat(generated).contains("<title>Page Title replacement</title>");
-        assertThat(generated).contains("background-image: url(\"Banner replacement\");");
+        assertThat(generated).contains("background-image: url(\"../../banner_image.jpg\");");
         assertThat(generated).containsMatch("<style type=\"text/css\">[^<]+CSS replacement\\s*</style>");
         assertThat(generated).contains("<a href=\"http://Site URL/replacement/\">Site Title replacement</a>");
         assertThat(generated).contains("ga('create', 'GA UID replacement', 'auto');");
@@ -266,8 +270,8 @@ public class TemplaterTest {
         // --- This part is specific to a blog page
         assertThat(generated).contains("<div>Blog Header as HTML</div>");
         assertThat(generated).containsMatch("<span class=\"post-cat-text\">A Category</span>");
-        assertThat(generated).containsMatch("<a href=\"prev/page/link/\">[^<]*Previous Page</a>");
-        assertThat(generated).containsMatch("<a href=\"next/page/link/\">[^<]*Next Page[^<]*</a>");
+        assertThat(generated).containsMatch("<a href=\"prev/page\">[^<]*Previous Page</a>");
+        assertThat(generated).containsMatch("<a href=\"next/page\">[^<]*Next Page[^<]*</a>");
         assertThat(generated).containsMatch("<h2[^>]*>2001-02-03 - Post Title replacement</h2>");
         assertThat(generated).containsMatch(">\\s+Content replacement\\s+<");
     }
@@ -276,20 +280,21 @@ public class TemplaterTest {
     public void testBlogPostTemplate() throws Exception {
         Templater.ArticleData data = new Templater.BlogPostData(
                 "http://Site URL/replacement/",
+                "../../",
                 "Post Title replacement",
                 "2001-02-03",
                 "A Category",
-                "category/link/",
-                "full/link/",
-                "extra/link/",
+                "category/link",
+                "full/link",
+                "extra/link",
                 "Post Content data"
         );
         String generated = mTemplater.generate(data);
 
         assertThat(generated).containsMatch("<h2[^>]+>2001-02-03 - Post Title replacement</h2>");
-        assertThat(generated).containsMatch("<a[^>]+href=\"full/link/\">");
-        assertThat(generated).containsMatch("<a[^>]+href=\"extra/link/\">Click here[^<]+</a>");
-        assertThat(generated).containsMatch("<a[^>]+href=\"http://Site URL/replacement/category/link/\"[^>]+>A Category</a>");
+        assertThat(generated).containsMatch("<a[^>]+href=\"full/link\">");
+        assertThat(generated).containsMatch("<a[^>]+href=\"extra/link\">Click here[^<]+</a>");
+        assertThat(generated).containsMatch("<a[^>]+href=\"../../category/link\"[^>]+>A Category</a>");
         assertThat(generated).containsMatch(">\\s+Post Content data\\s+<");
 
     }
@@ -297,13 +302,14 @@ public class TemplaterTest {
     public static class TestTemplateData extends Templater.BaseData {
 
         private TestTemplateData(String siteTitle, String pageTitle) {
-            super(  "css",
+            super(siteTitle,
+                    "absSiteLink/",
+                    "relSiteLink/",
+                    "css",
                     "GAUid",
                     pageTitle,
                     "pageFilename",
-                    siteTitle,
-                    "siteBaseUrl",
-                    "bannerFilename");
+                    "relBannerLink");
         }
 
         @Override

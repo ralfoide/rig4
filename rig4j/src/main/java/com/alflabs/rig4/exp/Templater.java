@@ -11,6 +11,7 @@ import com.google.common.io.Resources;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -179,14 +180,22 @@ public class Templater {
             @NonNull BaseData data,
             @NonNull String name,
             @NonNull Map<String, String> vars) throws InvocationTargetException, IllegalAccessException {
+        name = name.trim();
+        if (name.isEmpty()) {
+            return null;
+        }
+
         String value = vars.get(name);
         if (value != null) {
             return value;
         }
 
-        for (Method method : data.getClass().getMethods()) {
+        // Find the value using a getter method, if any is available
+        String target = "get" + name;
+        Class<?> clazz = data.getClass();
+        for (Method method : clazz.getMethods()) {
             String mname = method.getName();
-            if (!mname.toLowerCase(Locale.US).equals("get" + name)) {
+            if (!mname.toLowerCase(Locale.US).equals(target)) {
                 continue;
             }
             if ((method.getModifiers() & Modifier.PUBLIC) == 0
@@ -195,6 +204,24 @@ public class Templater {
             }
             value = (String) method.invoke(data);
             break;
+        }
+
+        // Otherwise look for the value using an internal public field
+        target = "m" + name;
+        clazzLoop: while (clazz != null) {
+            for (Field field : clazz.getFields()) {
+                String fname = field.getName();
+                if (!fname.toLowerCase(Locale.US).equals(target)) {
+                    continue;
+                }
+                if ((field.getModifiers() & Modifier.PUBLIC) == 0
+                        || !String.class.isAssignableFrom(field.getType())) {
+                    continue;
+                }
+                value = (String) field.get(data);
+                break clazzLoop;
+            }
+            clazz = clazz.getSuperclass();
         }
 
         if (value == null) {
@@ -209,83 +236,61 @@ public class Templater {
         @NonNull String getTemplate(Flags flags) throws IOException;
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static abstract class BaseData implements TemplateProvider {
-        private final String mCss;
-        private final String mGAUid;
-        private final String mPageTitle;
-        private final String mPageFilename;
-        private final String mSiteTitle;
-        private final String mSiteBaseUrl;
-        private final String mBannerFilename;
+        public final String mCss;
+        public final String mGAUid;
+        public final String mPageTitle;
+        public final String mRelPageLink;
+        public final String mSiteTitle;
+        public final String mAbsSiteLink;
+        public final String mRelSiteLink;
+        public final String mRelBannerLink;
 
         // Callers should use derived classes: ArticleData.create(), etc.
         @VisibleForTesting
         BaseData(
+                String siteTitle,
+                String absSiteLink,
+                String relSiteLink,
                 String css,
                 String GAUid,
                 String pageTitle,
-                String pageFilename,
-                String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename) {
+                String relPageLink,
+                String relBannerLink) {
             mCss = css;
             mGAUid = GAUid;
             mPageTitle = pageTitle;
-            mPageFilename = pageFilename;
+            mRelPageLink = relPageLink;
             mSiteTitle = siteTitle;
-            mSiteBaseUrl = siteBaseUrl;
-            mBannerFilename = bannerFilename;
-        }
-
-        public String getCss() {
-            return mCss;
-        }
-
-        public String getGAUid() {
-            return mGAUid;
-        }
-
-        public String getPageTitle() {
-            return mPageTitle;
-        }
-
-        public String getPageFilename() {
-            return mPageFilename;
-        }
-
-        public String getSiteTitle() {
-            return mSiteTitle;
-        }
-
-        public String getSiteBaseUrl() {
-            return mSiteBaseUrl;
-        }
-
-        public String getBannerFilename() {
-            return mBannerFilename;
+            mAbsSiteLink = absSiteLink;
+            mRelSiteLink = relSiteLink;
+            mRelBannerLink = relBannerLink;
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class ArticleData extends BaseData {
-        private final String mContent;
+        public final String mContent;
 
         public ArticleData(
                 String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
+                String absSiteLink,
+                String relSiteLink,
+                String relBannerLink,
                 String css,
                 String GAUid,
                 String pageTitle,
-                String pageFilename,
+                String relPageLink,
                 String content) {
-            super(  css,
+            super(siteTitle,
+                    absSiteLink,
+                    relSiteLink,
+                    css,
                     GAUid,
                     pageTitle,
-                    pageFilename,
-                    siteTitle,
-                    siteBaseUrl,
-                    bannerFilename);
+                    relPageLink,
+                    relBannerLink);
             mContent = content;
         }
 
@@ -296,53 +301,51 @@ public class Templater {
                     Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_ARTICLE)),
                     Charsets.UTF_8);
         }
-
-        public String getContent() {
-            return mContent;
-        }
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class BlogPageData extends ArticleData {
-        private final String mPrevPageLink;
-        private final String mNextPageLink;
-        private final String mBlogHeader;
-        private final String mPostDate;
-        private final String mPostTitle;
-        private final String mPostCategory;
-        private final String mPostCategoryLink;
+        public final String mRelPrevPageLink;
+        public final String mRelNextPageLink;
+        public final String mBlogHeader;
+        public final String mPostDate;
+        public final String mPostTitle;
+        public final String mPostCategory;
+        public final String mRelPostCatLink;
 
         public BlogPageData(
                 String siteTitle,
-                String siteBaseUrl,
-                String bannerFilename,
+                String absSiteLink,
+                String relSiteLink,
+                String relBannerLink,
                 String css,
                 String GAUid,
                 String pageTitle,
-                String pageFilename,
-                String prevPageLink,
-                String nextPageLink,
+                String relPageLink,
+                String relPrevPageLink,
+                String relNextPageLink,
                 String blogHeader,
                 String postTitle,
                 String postDate,
                 String postCategory,
-                String postCategoryLink,
+                String relPostCatLink,
                 String content) {
             super(siteTitle,
-                    siteBaseUrl,
-                    bannerFilename,
+                    absSiteLink,
+                    relSiteLink,
+                    relBannerLink,
                     css,
                     GAUid,
                     pageTitle,
-                    pageFilename,
+                    relPageLink,
                     content);
-            mPrevPageLink = prevPageLink;
-            mNextPageLink = nextPageLink;
+            mRelPrevPageLink = relPrevPageLink;
+            mRelNextPageLink = relNextPageLink;
             mBlogHeader = blogHeader;
             mPostDate = postDate;
             mPostTitle = postTitle;
             mPostCategory = postCategory;
-            mPostCategoryLink = postCategoryLink;
+            mRelPostCatLink = relPostCatLink;
         }
 
         @NonNull
@@ -352,52 +355,26 @@ public class Templater {
                     Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_PAGE)),
                     Charsets.UTF_8);
         }
-
-        public String getBlogHeader() {
-            return mBlogHeader;
-        }
-
-        public String getPostDate() {
-            return mPostDate;
-        }
-
-        public String getPostTitle() {
-            return mPostTitle;
-        }
-
-        public String getPrevPageLink() {
-            return mPrevPageLink;
-        }
-
-        public String getNextPageLink() {
-            return mNextPageLink;
-        }
-
-        public String getPostCategory() {
-            return mPostCategory;
-        }
-
-        public String getPostCategoryLink() {
-            return mPostCategoryLink;
-        }
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class BlogPostData extends BlogPageData {
-        private final String mPostFullLink;
-        private final String mPostExtraLink;
+        public final String mRelPostFullLink;
+        public final String mRelPostExtraLink;
 
         public BlogPostData(
-                String siteBaseUrl,
+                String absSiteLink,
+                String relSiteLink,
                 String postTitle,
                 String postDate,
                 String postCategory,
-                String postCategoryLink,
-                String postFullLink,
-                String postExtraLink,
+                String relPostCatLink,
+                String relPostFullLink,
+                String relPostExtraLink,
                 String content) {
             super(  "",
-                    siteBaseUrl,
+                    absSiteLink,
+                    relSiteLink,
                     "",
                     "",
                     "",
@@ -409,11 +386,11 @@ public class Templater {
                     postTitle,
                     postDate,
                     postCategory,
-                    postCategoryLink,
+                    relPostCatLink,
                     content
             );
-            mPostFullLink = postFullLink;
-            mPostExtraLink = postExtraLink;
+            mRelPostFullLink = relPostFullLink;
+            mRelPostExtraLink = relPostExtraLink;
         }
 
         @NonNull
@@ -422,14 +399,6 @@ public class Templater {
             return Resources.toString(
                     Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_POST)),
                     Charsets.UTF_8);
-        }
-
-        public String getPostExtraLink() {
-            return mPostExtraLink;
-        }
-
-        public String getPostFullLink() {
-            return mPostFullLink;
         }
     }
 }

@@ -6,17 +6,18 @@
 <meta name="description" content="">
 <meta name="author"      content="">
 
-<meta property="og:url"         content="{{.SiteBaseUrl}}{{.PageFilename}}" />
+
+<meta property="og:url"         content="{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelPageLink}}" />
 <meta property="og:type"        content="article" />
 <meta property="og:title"       content="{{.PageTitle}}" />
-{{If.Description}}<meta property="og:description" content="{{.Description}}" />{{Endif}}
-{{If.ImageFilename}}<meta property="og:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}
+{{If.Description }}<meta property="og:description" content="{{.Description}}" />{{Endif}}
+{{If.RelImageLink}}<meta property="og:image"       content="{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelImageLink}}" />{{Endif}}
 
 <meta name="twitter:card"        content="summary" />
 <!-- meta name="twitter:site"    content="@flickr" / -->
 <meta name="twitter:title"       content="{{.PageTitle}}" />
-{{If.Description}}<meta name="twitter:description" content="{{.Description}}" />{{Endif}}
-{{If.ImageFilename}}<meta name="twitter:image"       content="{{.SiteBaseUrl}}{{.ImageFilename}}" />{{Endif}}
+{{If.Description }}<meta name="twitter:description" content="{{.Description}}" />{{Endif}}
+{{If.RelImageLink}}<meta name="twitter:image"       content="{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelImageLink}}" />{{Endif}}
 
 <title>{{.PageTitle}}</title>
 
@@ -61,7 +62,7 @@ p.console {
 
 .banner-bg-image {
     height: 200px;
-    background-image: url("{{.BannerFilename}}");
+    background-image: url("{{.RelSiteLink}}{{.RelBannerLink}}");
     background-position: center;
     background-size: 100% auto;
 }
@@ -173,10 +174,10 @@ td p {
         Site Banner Image
     </div>
     <div class="title-container">
-        <a href="{{.SiteBaseUrl}}">{{.SiteTitle}}</a>
+        <a href="{{.AbsSiteLink}}">{{.SiteTitle}}</a>
         {{If.PageTitle != .SiteTitle}}
         /
-        <a href="{{.PageFilename}}">{{.PageTitle}}</a>
+        <a href="{{.RelPageLink}}">{{.PageTitle}}</a>
         {{Endif}}
     </div>
 </header>
@@ -188,8 +189,8 @@ td p {
 {{.BlogHeader}}
 
 <div class="prev-next-container">
-    <span class="prev-page">{{If.PrevPageLink}}<a href="{{.PrevPageLink}}">⇐ Previous Page</a><br/>{{Endif}}</span>
-    <span class="next-page">{{If.NextPageLink}}<a href="{{.NextPageLink}}">Next Page ⇒</a><br/>{{Endif}}</span>
+    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Previous Page</a><br/>{{Endif}}</span>
+    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Next Page ⇒</a><br/>{{Endif}}</span>
 </div>
 
 {{If.PostTitle}}
@@ -210,8 +211,8 @@ td p {
 
 
 <div class="prev-next-container">
-    <span class="prev-page">{{If.PrevPageLink}}<a href="{{.PrevPageLink}}">⇐ Previous Page</a>{{Endif}}</span>
-    <span class="next-page">{{If.NextPageLink}}<a href="{{.NextPageLink}}">Next Page ⇒</a>{{Endif}}</span>
+    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Previous Page</a>{{Endif}}</span>
+    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Next Page ⇒</a>{{Endif}}</span>
 </div>
 
 </div> <!-- container -->
