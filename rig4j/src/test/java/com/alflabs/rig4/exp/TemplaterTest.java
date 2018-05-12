@@ -245,7 +245,8 @@ public class TemplaterTest {
                 "2001-02-03",
                 "A Category",
                 "category/link",
-                "Content replacement"
+                "Content replacement",
+                "Gen info"
         );
         String generated = mTemplater.generate(data);
 

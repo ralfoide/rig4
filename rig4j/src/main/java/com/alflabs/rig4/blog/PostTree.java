@@ -233,7 +233,8 @@ class PostTree {
                     "",                 // no post date  for an index
                     "",                 // no post category for an index
                     "",                 // no post cat link for an index
-                    content.toString()
+                    content.toString(),
+                    generator.getGenInfo()
             );
 
             String generated = generator.getTemplater().generate(templateData);
@@ -306,7 +307,8 @@ class PostTree {
                     postData.mDate.toString(),
                     generator.categoryToHtml(postData.mCategory),
                     generator.linkForCategory(postData.mCategory),
-                    postData.mContent.getFormatted()
+                    postData.mContent.getFormatted(),
+                    generator.getGenInfo()
             );
 
             String generated = generator.getTemplater().generate(templateData);

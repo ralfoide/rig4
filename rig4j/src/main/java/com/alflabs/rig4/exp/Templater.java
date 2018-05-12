@@ -312,6 +312,7 @@ public class Templater {
         public final String mPostTitle;
         public final String mPostCategory;
         public final String mRelPostCatLink;
+        public final String mGenInfo;
 
         public BlogPageData(
                 String siteTitle,
@@ -329,7 +330,8 @@ public class Templater {
                 String postDate,
                 String postCategory,
                 String relPostCatLink,
-                String content) {
+                String content,
+                String genInfo) {
             super(siteTitle,
                     absSiteLink,
                     relSiteLink,
@@ -346,6 +348,7 @@ public class Templater {
             mPostTitle = postTitle;
             mPostCategory = postCategory;
             mRelPostCatLink = relPostCatLink;
+            mGenInfo = genInfo;
         }
 
         @NonNull
@@ -387,7 +390,8 @@ public class Templater {
                     postDate,
                     postCategory,
                     relPostCatLink,
-                    content
+                    content,
+                    ""
             );
             mRelPostFullLink = relPostFullLink;
             mRelPostExtraLink = relPostExtraLink;

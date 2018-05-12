@@ -2,6 +2,7 @@ package com.alflabs.rig4.blog;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.EntryPoint;
 import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.exp.HtmlTransformer;
 import com.alflabs.rig4.exp.Templater;
@@ -19,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -293,6 +296,11 @@ public class BlogGenerator {
 
         public String getRelBannerLink() {
             return mFlags.getString(EXP_SITE_BANNER);
+        }
+
+        public String getGenInfo() throws IOException {
+            return "Generated on " + LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    + " by Rig4j " + EntryPoint.getVersion();
         }
 
         /** Transforms the category into what we want for the template, mainly capitalize it. */
