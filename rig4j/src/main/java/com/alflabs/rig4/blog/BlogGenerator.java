@@ -201,6 +201,7 @@ public class BlogGenerator {
                 PostTree.BlogPage page = new PostTree.BlogPage(blog, blog.getBlogIndex(), pageCount++);
                 page.fillFrom(pendingPosts);
                 pendingPosts.clear();
+                // TODO delay this till next post is added, to avoid the case where index==page1.
                 pages.add(page);
             }
         }

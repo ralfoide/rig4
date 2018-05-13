@@ -6,6 +6,7 @@ import com.alflabs.rig4.exp.Templater;
 import com.google.common.base.Charsets;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +23,7 @@ class PostTree {
     private final static String TAG = PostTree.class.getSimpleName();
     private final static String ROOT = "blog";
     private static final String HTML = ".html";
+    private static final String ATOM_XML = "atom.xml";
     private static final String INDEX_HTML = "index.html";
 
     private final Map<String, Blog> mBlogs = new TreeMap<>();
@@ -87,6 +89,9 @@ class PostTree {
 
         public void generate(@NonNull BlogGenerator.Generator generator) throws Exception {
 
+            AtomWriter atomWriter = new AtomWriter();
+            atomWriter.write(this, generator, new FileItem(mBlogIndex.getFileItem().getDir(), ATOM_XML));
+
             PostFull nextFull = null;
             for (int i = mBlogPages.size() - 1; i >= 0; i--) {
                 nextFull = mBlogPages.get(i).computeNextFullPage(nextFull);
@@ -121,6 +126,10 @@ class PostTree {
         @NonNull
         public FileItem getFileItem() {
             return mFileItem;
+        }
+
+        public List<PostFull> getPostFulls() {
+            return mPostFulls;
         }
 
         /**
@@ -275,11 +284,7 @@ class PostTree {
                 @NonNull PostFull postData,
                 @NonNull File mainFile)
                 throws Exception {
-            File destFile = new File(generator.getDestDir(), postData.mFileItem.getLeafFile());
-            generator.getFileOps().createParentDirs(destFile);
-
-            postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
-            mBlog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
+            File destFile = postData.prepareHtmlDestFile(mBlog, generator);
 
             generator.getLogger().d(TAG, "Generate extra: " + postData.mKey + " (" + postData.mTitle + ")"
                     + ", file: " + destFile);
@@ -349,12 +354,12 @@ class PostTree {
     }
 
     public static class PostFull implements Comparable<PostFull> {
-        private final FileItem mFileItem;
-        private final SourceTree.Content mContent;
-        private final String mCategory;
-        private final String mKey;
-        private final LocalDate mDate;
-        private final String mTitle;
+        public final FileItem mFileItem;
+        public final SourceTree.Content mContent;
+        public final String mCategory;
+        public final String mKey;
+        public final LocalDate mDate;
+        public final String mTitle;
         private PostFull mPrevFull;
         private PostFull mNextFull;
 
@@ -376,6 +381,15 @@ class PostTree {
         @Override
         public int compareTo(PostFull other) {
             return mKey.compareTo(other.mKey);
+        }
+
+        public File prepareHtmlDestFile(Blog blog, BlogGenerator.Generator generator) throws IOException {
+            File destFile = new File(generator.getDestDir(), this.mFileItem.getLeafFile());
+            generator.getFileOps().createParentDirs(destFile);
+
+            this.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
+            blog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
+            return destFile;
         }
     }
 
