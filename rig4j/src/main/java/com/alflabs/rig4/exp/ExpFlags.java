@@ -14,6 +14,9 @@ public final class ExpFlags {
     public static final String EXP_SITE_BANNER = "exp-site-banner";
     /** Base URL is expected to be in the format http(s)://some.host(/folder)/ with trailing slash. */
     public static final String EXP_SITE_BASE_URL = "exp-site-base-url";
+    /** Base URL that gets rewritten to exp-site-base-url. This is useful for staging & dev/testing
+     * as gdoc does not allow to embed relative URLs, only absolute ones. */
+    public static final String EXP_REWRITTEN_URL = "exp-rewritten-url";
 
     private final Flags mFlags;
 
@@ -29,5 +32,6 @@ public final class ExpFlags {
         mFlags.addString(EXP_SITE_TITLE,    "Site Title", "Web site title");
         mFlags.addString(EXP_SITE_BANNER,   "header.jpg", "Web site banner filename");
         mFlags.addString(EXP_SITE_BASE_URL, "http://localhost/folder/", "Web site base URL");
+        mFlags.addString(EXP_REWRITTEN_URL, "",           "Root URL rewritten to site URL for staging");
     }
 }

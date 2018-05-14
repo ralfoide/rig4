@@ -1,9 +1,9 @@
 package com.alflabs.rig4.exp;
 
 import com.alflabs.annotations.NonNull;
-import com.alflabs.annotations.Null;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.blog.BlogSourceParser;
+import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.RPair;
 import com.alflabs.utils.RSparseArray;
 import com.google.common.base.Charsets;
@@ -63,10 +63,12 @@ public class HtmlTransformer {
     private static final String CLASS_CONSOLE = "console";
 
     private static final String HTML_NBSP = Entities.getByName("nbsp");
+    private final Flags mFlags;
     private final Timing.TimeAccumulator mTiming;
 
     @Inject
-    public HtmlTransformer(Timing timing) {
+    public HtmlTransformer(Flags flags, Timing timing) {
+        mFlags = flags;
         mTiming = timing.get("HtmlTransformer");
     }
 
@@ -491,7 +493,17 @@ public class HtmlTransformer {
      * - Handle drawing exported PNGs links by downloading them and rewriting them locally.
      * - Any untreated google.com link is an error that should be loooked into.
      */
-    private void rewriteUrls(Element root, String attrName, Callback callback) throws IOException, URISyntaxException {
+    private void rewriteUrls(Element root, String attrName, Callback callback)
+            throws IOException, URISyntaxException {
+
+        String siteBase = null;
+        String rewrittenBase = mFlags.getString(ExpFlags.EXP_REWRITTEN_URL);
+        if (rewrittenBase.isEmpty()) {
+            rewrittenBase = null;
+        } else {
+            siteBase = mFlags.getString(ExpFlags.EXP_SITE_BASE_URL);
+        }
+
         for (Element element : root.getElementsByAttribute(attrName)) {
             String value = element.attr(attrName);
             String newValue = null;
@@ -512,6 +524,10 @@ public class HtmlTransformer {
                 String q = queries.get(QUERY_Q);
                 if (q != null && !q.isEmpty()) {
                     newValue = q;
+
+                    if (rewrittenBase != null && newValue.startsWith(rewrittenBase)) {
+                        newValue = siteBase + newValue.substring(rewrittenBase.length());
+                    }
                 }
             } else if (host.equals("docs.google.com") && path.equals("/drawings/image")) {
                 // Old style of drawing URLs.
