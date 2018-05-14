@@ -109,7 +109,10 @@ public class AtomWriter {
         generated.append("</entry>\n");
     }
 
-
+    /**
+     * Generates one {@code <tag>content</tag>} line.
+     * Content is XML escaped.
+     */
     public static void tag(@NonNull StringBuilder generated,
                            @NonNull String tag,
                            @NonNull String content) {
@@ -117,8 +120,8 @@ public class AtomWriter {
     }
 
     /**
-     * Generate one {@code <tag attr1="value1" attr2="value2"... />} line.
-     * Values are HTML escaped.
+     * Generates one {@code <tag attr1="value1" attr2="value2"... />} line, with no content.
+     * Values are XML escaped.
      */
     public static void attr(@NonNull StringBuilder generated,
                             @NonNull String tag,
@@ -127,8 +130,9 @@ public class AtomWriter {
     }
 
     /**
-     * Generate one {@code <tag attr1="value1" attr2="value2"... />} line.
-     * Values are HTML escaped.
+     * Generates one {@code <tag attr1="value1" attr2="value2">content</tag>} line.
+     * Content is optional if null. Attributes are optional if null.
+     * Values & content are XML escaped.
      */
     public static void tag(@NonNull StringBuilder generated,
                             @NonNull String tag,
@@ -147,7 +151,7 @@ public class AtomWriter {
         }
         if (content != null && !content.isEmpty()) {
             generated.append('>');
-            generated.append(StringEscapeUtils.escapeHtml(content));
+            generated.append(StringEscapeUtils.escapeXml(content));
             generated.append("</").append(tag).append(">\n");
         } else {
             generated.append("/>\n");
