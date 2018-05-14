@@ -11,9 +11,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * ATOM reference: https://tools.ietf.org/html/rfc4287
@@ -31,7 +34,7 @@ public class AtomWriter {
         generated.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         generated.append("<feed xmlns=\"http://www.w3.org/2005/Atom\">\n");
 
-        String dateGen = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String dateGen = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
         tag(generated, "title", blog.getTitle(), "type", "html");
         tag(generated, "updated", dateGen);
@@ -47,6 +50,8 @@ public class AtomWriter {
                 "type", "application/atom+xml",
                 "hreflang", "en",
                 "href", generator.getAbsSiteLink() + fileItem.getLeafFile());
+
+        tag(generated, "id", generator.getAbsSiteLink() + fileItem.getLeafFile());
 
         tag(generated, "generator", "Rig4j",
                 "uri", "https://bitbucket.org/ralfoide/rig4",
@@ -82,7 +87,9 @@ public class AtomWriter {
                 "rel", "alternate",
                 "type", "text/html",
                 "href", generator.getAbsSiteLink() + postFull.mFileItem.getLeafFile());
-        tag(generated, "id", postFull.mKey);
+
+        tag(generated, "id", generator.getAbsSiteLink() + postFull.mFileItem.getLeafFile());
+
         attr(generated, "category",
                 "term", postFull.mCategory,
                 "label", generator.categoryToHtml(postFull.mCategory));
@@ -103,7 +110,10 @@ public class AtomWriter {
         byte[] bytes = DigestUtils.sha(content);
         int seconds = bytes[0] & 0x00FF; // To avoid "negative byte" values due to lack of unsigned types
         seconds = seconds % 60;
-        String updated = postFull.mDate.atTime(0, 0, seconds).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String updated = postFull.mDate
+                .atTime(0, 0, seconds)
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         tag(generated, "updated", updated);
 
         generated.append("</entry>\n");
