@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -307,6 +308,11 @@ public class BlogGenerator {
         /** Transforms the category into what we want for the template, mainly capitalize it. */
         @NonNull
         public String categoryToHtml(@NonNull String category) {
+            // Most of the time a 3-letter category is going to be an acronym.
+            if (category.length() == 3) {
+                return category.toUpperCase(Locale.US);
+            }
+            // Otherwise use a simple capitalization.
             return StringUtils.capitalize(category);
         }
 

@@ -10,13 +10,11 @@ import org.apache.commons.codec.digest.DigestUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TimeZone;
 
 /**
  * ATOM reference: https://tools.ietf.org/html/rfc4287

@@ -207,7 +207,7 @@ class PostTree {
             File destFile = new File(generator.getDestDir(), mFileItem.getLeafFile());
 
             generator.getFileOps().createParentDirs(destFile);
-            generator.getLogger().d(TAG, "Generate page for blog: " + mBlog.getCategory()
+            generator.getLogger().d(TAG, "--- Generate  Page: " + generator.categoryToHtml(mBlog.getCategory())
                     + ", file: " + destFile);
 
             StringBuilder content = new StringBuilder();
@@ -257,8 +257,7 @@ class PostTree {
                 @NonNull File destFile,
                 @NonNull PostShort postData)
                 throws Exception {
-            generator.getLogger().d(TAG, "Generate short: " + postData.mKey
-                    + ", title: '" + postData.mTitle + "'");
+            generator.getLogger().d(TAG, "    Generate Short: " + postData.mKey);
 
             postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
 
@@ -286,8 +285,7 @@ class PostTree {
                 throws Exception {
             File destFile = postData.prepareHtmlDestFile(mBlog, generator);
 
-            generator.getLogger().d(TAG, "Generate extra: " + postData.mKey + " (" + postData.mTitle + ")"
-                    + ", file: " + destFile);
+            generator.getLogger().d(TAG, "    Generate  Full: " + postData.mKey);
 
             String prevPageLink = postData.mPrevFull == null
                     ? null

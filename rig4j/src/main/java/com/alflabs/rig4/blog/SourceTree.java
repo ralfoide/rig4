@@ -51,7 +51,7 @@ class SourceTree extends TreeChange {
             blog = new Blog(category);
             mBlogs.put(category, blog);
         }
-        // LATER for now invalidate the whole blog.
+        // TODO LATER for now invalidate the whole blog if the file has changed.
         blog.setChanged(blog.isChanged() || fileChanged);
 
         if (blog.getTitle() == null) {
@@ -69,7 +69,8 @@ class SourceTree extends TreeChange {
             if (blog.getHeaderContent() != null) {
                 throw new BlogSourceParser.ParseException("Duplicate blog headers defined for category "
                     + category + ". Only one can be defined. Please adjust the " + IzuTags.IZU_HEADER_END
-                    + "accordingly. Tip: " + IzuTags.IZU_BLOG + " doesn't have to be on the first line.");
+                    + "accordingly. Tip: " + IzuTags.IZU_BLOG + " doesn't have to be on the first line "
+                    + "and everything before this tag in the file is ignored.");
             }
 
             blog.setHeaderContent(Content.from(parsedResult.getIntermediaryHeader()));
@@ -77,8 +78,15 @@ class SourceTree extends TreeChange {
 
         for (BlogSourceParser.ParsedSection section : parsedResult.getParsedSections()) {
             BlogPost post = BlogPost.from(category, section);
-            // LATER post.getCategory... and match against accept/reject filters.
-            // LATER post.setChanged(...)
+
+            if (!catAcceptFilter.matches(post.getCategory())) {
+                continue;
+            }
+            if (catRejectFilter.matches(post.getCategory())) {
+                continue;
+            }
+
+            // TODO LATER post.setChanged(...) on a per-post basis
             blog.addPost(post);
         }
     }
@@ -274,8 +282,23 @@ class SourceTree extends TreeChange {
 
         @NonNull
         public static BlogPost from(@NonNull String blogCategory,
-                                    @NonNull BlogSourceParser.ParsedSection section) {
-            // LATER: override blogCategory with a per-post category if defined.
+                                    @NonNull BlogSourceParser.ParsedSection section)
+                throws BlogSourceParser.ParseException {
+
+            for (String izuTag : section.getIzuTags()) {
+                if (izuTag.startsWith(IzuTags.IZU_CATEGORY)) {
+                    blogCategory = izuTag.substring(IzuTags.IZU_CATEGORY.length()).trim();
+
+                    if (blogCategory.isEmpty()) {
+                        throw new BlogSourceParser.ParseException(
+                                String.format("Invalid category in '%s' line in section [%s:%s]",
+                                        izuTag, section.getDate(),
+                                        section.getTextTitle()));
+                    }
+                    break;
+                }
+            }
+
             return new BlogPost(
                     blogCategory,
                     section.getDate(),

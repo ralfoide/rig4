@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Takes a blog page and returns:
+ * Takes a blog page (from GDoc's HTML export) and returns:
  * - The header tags from the first line.
  * - The izu:blog tag must be present and indicates the start of the blog content.
  * - Ensures the blog has an izu:cat(egory) defined.
@@ -32,7 +32,7 @@ public class BlogSourceParser {
     /**
      * Matches an Izu tag.
      * - Group 1 is the opening tag ([ or [[).
-     * - Group 2 is the izu tag without the [izu:...] part.
+     * - Group 2 is the izu tag with the "izu:" part, without the brackets.
      */
     public final static Pattern RE_IZU_TAG = Pattern.compile("(\\[\\[?)(izu[:-][^\\[\\]]+)]");
     /**
@@ -77,10 +77,10 @@ public class BlogSourceParser {
 
                     for (String izuTag : izuTags) {
                         if (izuTag.startsWith(IzuTags.IZU_CATEGORY)) {
-                            blogCategory = izuTag.substring(IzuTags.IZU_CATEGORY.length());
+                            blogCategory = izuTag.substring(IzuTags.IZU_CATEGORY.length()).trim();
                         }
                     }
-                    if (blogCategory == null) {
+                    if (blogCategory == null || blogCategory.isEmpty()) {
                         throw new ParseException(
                                 "Missing " + IzuTags.IZU_CATEGORY + "...] on the " + IzuTags.IZU_BLOG + " line");
                     }
@@ -121,6 +121,10 @@ public class BlogSourceParser {
 
             if (currentSection != null) {
                 currentSection.end = element;
+
+                if (izuTags != null) {
+                    currentSection.addTags(izuTags);
+                }
             }
 
             if (izuTags != null && izuTags.contains(IzuTags.IZU_BLOG_END)) {
@@ -207,7 +211,7 @@ public class BlogSourceParser {
             intermediaryShort = combineElements(null, null);
         }
 
-        return new ParsedSection(date, textTitle, intermediaryShort, intermediaryfull);
+        return new ParsedSection(date, textTitle, intermediaryShort, intermediaryfull, section.izuTags);
     }
 
     @Null
@@ -228,14 +232,22 @@ public class BlogSourceParser {
         return div;
     }
 
-    /** Internal temporary structure. */
+    /** Internal temporary structure accumulated as the source HTML gets parsed. */
     private static class ElementSection {
         String tagS;
         String afterTagS;
+        List<String> izuTags;
         Element title;
         Element start;
         Element break_;
         Element end;
+
+        public void addTags(List<String> izuTags) {
+            if (this.izuTags == null) {
+                this.izuTags = new ArrayList<>();
+            }
+            this.izuTags.addAll(izuTags);
+        }
     }
 
     /** A {@link BlogSourceParser} exception. */
@@ -308,6 +320,7 @@ public class BlogSourceParser {
      * Represents one section from the a parsed blog with its date/title and formatted content.
      */
     public static class ParsedSection {
+        private final List<String> mIzuTags;
         private final LocalDate mDate;
         private final String mTextTitle;
         private final Element mIntermediaryShort;
@@ -317,11 +330,13 @@ public class BlogSourceParser {
                 @NonNull LocalDate date,
                 @NonNull String textTitle,
                 @NonNull Element intermediaryShort,
-                @NonNull Element intermediaryfull) {
+                @NonNull Element intermediaryfull,
+                @Null List<String> izuTags) {
             mDate = date;
             mTextTitle = textTitle;
             mIntermediaryShort = intermediaryShort;
             mIntermediaryfull = intermediaryfull;
+            mIzuTags = izuTags == null ? Collections.emptyList() : izuTags;
         }
 
         /** Date extracted from the title. */
@@ -363,6 +378,12 @@ public class BlogSourceParser {
         @NonNull
         public Element getIntermediaryfull() {
             return mIntermediaryfull;
+        }
+
+        /** Optional tags defined while parsing this section. */
+        @NonNull
+        public List<String> getIzuTags() {
+            return mIzuTags;
         }
     }
 }
