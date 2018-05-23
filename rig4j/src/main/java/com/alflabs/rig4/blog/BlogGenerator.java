@@ -69,19 +69,19 @@ public class BlogGenerator {
 
     public void processEntries(@NonNull List<BlogEntry> blogEntries, boolean allChanged)
             throws Exception {
-        BlogSections sections = parseSections(blogEntries);
-        List<BlogSourceParser.ParsedResult> parsedResults = parseSources(sections, blogEntries);
-        for (BlogSection blogSection : sections.iter()) {
-            SourceTree sourceTree = computeSourceTree(blogSection, parsedResults);
+        BlogSites sites = parseSites(blogEntries);
+        List<BlogSourceParser.ParsedResult> parsedResults = parseSources(sites, blogEntries);
+        for (BlogSite blogSite : sites.iter()) {
+            SourceTree sourceTree = computeSourceTree(blogSite, parsedResults);
             sourceTree.setChanged(allChanged);
-            PostTree postTree = computePostTree(blogSection, sourceTree);
+            PostTree postTree = computePostTree(blogSite, sourceTree);
             generatePostTree(postTree);
             postTree.saveMetadata();
             sourceTree.saveMetadata();
         }
     }
 
-    private SourceTree computeSourceTree(@NonNull BlogSection blogSection,
+    private SourceTree computeSourceTree(@NonNull BlogSite blogSite,
                                          @NonNull List<BlogSourceParser.ParsedResult> parsedResults)
             throws BlogSourceParser.ParseException {
         SourceTree sourceTree = new SourceTree();
@@ -89,23 +89,23 @@ public class BlogGenerator {
         for (BlogSourceParser.ParsedResult parsedResult : parsedResults) {
             sourceTree.merge(parsedResult,
                 parsedResult.isFileChanged(),
-                blogSection.getCatAcceptFilter(),
-                blogSection.getCatRejectFilter());
+                blogSite.getCatAcceptFilter(),
+                blogSite.getCatRejectFilter());
         }
 
         return sourceTree;
     }
 
-    private BlogSections parseSections(List<BlogEntry> blogEntries) {
-        BlogSections sections = new BlogSections();
+    private BlogSites parseSites(List<BlogEntry> blogEntries) {
+        BlogSites sites = new BlogSites();
         for (BlogEntry blogEntry : blogEntries) {
-            sections.add(blogEntry.getSection());
+            sites.add(blogEntry.getSiteNumber());
         }
-        return sections;
+        return sites;
     }
 
     @NonNull
-    private List<BlogSourceParser.ParsedResult> parseSources(@NonNull BlogSections sections,
+    private List<BlogSourceParser.ParsedResult> parseSources(@NonNull BlogSites sites,
                                                              @NonNull List<BlogEntry> blogEntries)
             throws IOException, URISyntaxException {
         List<BlogSourceParser.ParsedResult> parsedResults = new ArrayList<>();
@@ -114,8 +114,8 @@ public class BlogGenerator {
             BlogSourceParser.ParsedResult result = parseSource(blogEntry);
             parsedResults.add(result);
 
-            BlogSection blogSection = sections.get(blogEntry);
-            blogSection.updateFrom(result.getTags());
+            BlogSite blogSite = sites.get(blogEntry);
+            blogSite.updateFrom(result.getTags());
         }
 
         return parsedResults;
@@ -123,7 +123,7 @@ public class BlogGenerator {
 
     private BlogSourceParser.ParsedResult parseSource(@NonNull BlogEntry blogEntry)
             throws IOException, URISyntaxException {
-        mLogger.d(TAG, "Parse section: " + blogEntry.getSection() + ", source: " + blogEntry.getFileId());
+        mLogger.d(TAG, "Parse section: " + blogEntry.getSiteNumber() + ", source: " + blogEntry.getFileId());
         GDocEntity entity = mGDocHelper.getGDocAsync(blogEntry.getFileId(), "text/html");
         boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
@@ -133,16 +133,16 @@ public class BlogGenerator {
     }
 
     @NonNull
-    private PostTree computePostTree(@NonNull BlogSection blogSection,
+    private PostTree computePostTree(@NonNull BlogSite blogSite,
                                      @NonNull SourceTree sourceTree)
             throws BlogSourceParser.ParseException {
         mLogger.d(TAG, "computePostTree");
         PostTree postTree = new PostTree();
 
         // Generate per-category blogs
-        if (!blogSection.getGenSingleFilter().isEmpty()) {
+        if (!blogSite.getGenSingleFilter().isEmpty()) {
             for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
-                if (blogSection.getGenSingleFilter().matches(sourceBlog.getCategory())) {
+                if (blogSite.getGenSingleFilter().matches(sourceBlog.getCategory())) {
                     PostTree.Blog blog = createPostBlogFrom(sourceBlog);
                     postTree.add(blog);
                 }
@@ -150,10 +150,10 @@ public class BlogGenerator {
         }
 
         // Generate mixed-categories blog
-        if (!blogSection.getGenMixedFilter().isEmpty()) {
+        if (!blogSite.getGenMixedFilter().isEmpty()) {
             SourceTree.Blog mixedSource = sourceTree.createMixedBlog(
-                    blogSection.getMixedCat(),
-                    blogSection.getGenMixedFilter());
+                    blogSite.getMixedCat(),
+                    blogSite.getGenMixedFilter());
             PostTree.Blog mixed = createPostBlogFrom(mixedSource);
             postTree.add(mixed);
         }
@@ -331,28 +331,34 @@ public class BlogGenerator {
         }
     }
 
-    public class BlogSections {
-        private final Map<Integer, BlogSection> mBlogSections = new TreeMap<>();
+    public class BlogSites {
+        private final Map<Integer, BlogSite> mBlogSites = new TreeMap<>();
 
         public void add(int section) {
-            mBlogSections.computeIfAbsent(section, (i) -> new BlogSection());
+            mBlogSites.computeIfAbsent(section, (i) -> new BlogSite());
         }
 
         @NonNull
-        public BlogSection get(@NonNull BlogEntry entry) {
-            return Preconditions.checkNotNull(mBlogSections.get(entry.getSection()));
+        public BlogSite get(@NonNull BlogEntry entry) {
+            return Preconditions.checkNotNull(mBlogSites.get(entry.getSiteNumber()));
         }
 
-        public Collection<BlogSection> iter() {
-            return mBlogSections.values();
+        public Collection<BlogSite> iter() {
+            return mBlogSites.values();
         }
     }
 
-    public class BlogSection {
+    /**
+     * A "blog site" represents a full independent blog site. "Site" here means a configuration
+     * section, with its own configuration variables: categories accept/reject, banner name,
+     * and whether to generate single vs mixed pages. Various blogs can be generated from the
+     * same site and they all use the same configuration variables.
+     */
+    public class BlogSite {
         private String mMixedCat;
         private final Map<String, CatFilter> mFilters = new HashMap<>();
 
-        public BlogSection() {
+        public BlogSite() {
             mMixedCat = mFlags.getString(BlogFlags.BLOG_MIXED_CAT);
             for (String flag : BlogFlags.FILTER_FLAGS) {
                 mFilters.put(flag, new CatFilter(mFlags.getString(flag)));

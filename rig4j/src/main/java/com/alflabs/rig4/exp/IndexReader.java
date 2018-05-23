@@ -53,12 +53,12 @@ public class IndexReader {
             }
             matcher = sBlogLineRe.matcher(line);
             if (matcher.find()) {
-                int section = 0;
+                int siteNumber = 0;
                 try {
-                    section = Integer.parseInt(matcher.group(1));
+                    siteNumber = Integer.parseInt(matcher.group(1));
                 } catch (NumberFormatException ignore) {}
 
-                blogEntries.add(BlogEntry.create(matcher.group(3), section));
+                blogEntries.add(BlogEntry.create(matcher.group(3), siteNumber));
             }
         }
 

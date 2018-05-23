@@ -5,10 +5,10 @@ import com.google.auto.value.AutoValue;
 
 @AutoValue
 public abstract class BlogEntry {
-    public static BlogEntry create(@NonNull String fileId, int section) {
-        return new AutoValue_BlogEntry(fileId, section);
+    public static BlogEntry create(@NonNull String fileId, int siteNumber) {
+        return new AutoValue_BlogEntry(fileId, siteNumber);
     }
 
     public abstract String getFileId();
-    public abstract int getSection();
+    public abstract int getSiteNumber();
 }
