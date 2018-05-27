@@ -20,7 +20,7 @@ import java.util.TreeMap;
  * The source tree contains a model of the blog input: category & header for each blog
  * and its posts content list.
  */
-class SourceTree extends TreeChange {
+class SourceTree {
     private final static String TAG = SourceTree.class.getSimpleName();
     private Map<String, Blog> mBlogs = new TreeMap<>();
 
@@ -51,8 +51,9 @@ class SourceTree extends TreeChange {
             blog = new Blog(category);
             mBlogs.put(category, blog);
         }
-        // LATER for now invalidate the whole blog.
-        blog.setChanged(blog.isChanged() || fileChanged);
+
+        // TODO LATER for now invalidate the whole blog.
+        // blog.setChanged(blog.isChanged() || fileChanged);
 
         if (blog.getTitle() == null) {
             for (String izuTag : parsedResult.getTags()) {
@@ -115,20 +116,7 @@ class SourceTree extends TreeChange {
         return mixed;
     }
 
-    @Override
-    public boolean isTreeChanged() {
-        if (isChanged()) {
-            return true;
-        }
-        for (Blog blog : mBlogs.values()) {
-            if (blog.isChanged()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static class Blog extends TreeChange {
+    public static class Blog {
         private final String mCategory;
         private String mTitle;
         private Content mHeaderContent;
@@ -188,22 +176,9 @@ class SourceTree extends TreeChange {
             }
             mPosts.put(key, post);
         }
-
-        @Override
-        public boolean isTreeChanged() {
-            if (isChanged()) {
-                return true;
-            }
-            for (BlogPost post : mPosts.values()) {
-                if (post.isChanged()) {
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 
-    public static class BlogPost extends TreeChange implements Comparable<BlogPost> {
+    public static class BlogPost implements Comparable<BlogPost> {
         private final String mCategory;
         private final LocalDate mDate;
         private final String mTitle;
@@ -283,11 +258,6 @@ class SourceTree extends TreeChange {
         @Override
         public int compareTo(BlogPost other) {
             return this.mKey.compareTo(other.mKey);
-        }
-
-        @Override
-        public boolean isTreeChanged() {
-            return isChanged();
         }
     }
 

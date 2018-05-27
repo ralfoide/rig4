@@ -74,7 +74,7 @@ public class BlogGenerator {
         mGenMixedFilter  = new CatFilter(mFlags.getString(BlogFlags.BLOG_GEN_MIXED));
 
         SourceTree sourceTree = parseSources(blogIds);
-        sourceTree.setChanged(allChanged);
+        // TODO sourceTree.setChanged(allChanged);
         PostTree postTree = computePostTree(sourceTree);
         generatePostTree(postTree);
         postTree.saveMetadata();
