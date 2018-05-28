@@ -73,7 +73,7 @@ public class BlogGenerator {
         List<BlogSourceParser.ParsedResult> parsedResults = parseSources(sites, blogEntries);
         for (BlogSite blogSite : sites.iter()) {
             SourceTree sourceTree = computeSourceTree(blogSite, parsedResults);
-            sourceTree.setChanged(allChanged);
+            // TODO sourceTree.setChanged(allChanged);
             PostTree postTree = computePostTree(blogSite, sourceTree);
             generatePostTree(postTree);
             postTree.saveMetadata();
