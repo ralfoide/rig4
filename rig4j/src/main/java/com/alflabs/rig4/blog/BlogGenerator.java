@@ -73,11 +73,12 @@ public class BlogGenerator {
         List<BlogSourceParser.ParsedResult> parsedResults = parseSources(sites, blogEntries);
         for (BlogSite blogSite : sites.iter()) {
             SourceTree sourceTree = computeSourceTree(blogSite, parsedResults);
-            // TODO sourceTree.setChanged(allChanged);
-            PostTree postTree = computePostTree(blogSite, sourceTree);
-            generatePostTree(postTree);
-            postTree.saveMetadata();
-            sourceTree.saveMetadata();
+            if (allChanged || sourceTree.isModified()) {
+                PostTree postTree = computePostTree(blogSite, sourceTree);
+                generatePostTree(postTree);
+                postTree.saveMetadata();
+                sourceTree.saveMetadata();
+            }
         }
     }
 
@@ -123,13 +124,14 @@ public class BlogGenerator {
 
     private BlogSourceParser.ParsedResult parseSource(@NonNull BlogEntry blogEntry)
             throws IOException, URISyntaxException {
-        mLogger.d(TAG, "Parse section: " + blogEntry.getSiteNumber() + ", source: " + blogEntry.getFileId());
+        mLogger.d(TAG, "Parse site " + blogEntry.getSiteNumber() + ", source: " + blogEntry.getFileId());
         GDocEntity entity = mGDocHelper.getGDocAsync(blogEntry.getFileId(), "text/html");
         boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
+        entity.syncToStore();
 
         BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);
-        return blogSourceParser.parse(content).setFileChanged(fileChanged);
+        return blogSourceParser.parse(content).setFileChanged(blogEntry.getFileId(), fileChanged);
     }
 
     @NonNull

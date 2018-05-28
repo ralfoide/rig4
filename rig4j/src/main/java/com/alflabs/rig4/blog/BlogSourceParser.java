@@ -269,7 +269,8 @@ public class BlogSourceParser {
         private final List<String> mTags;
         private final Element mIntermediaryHeader;
         private final List<ParsedSection> mParsedSections;
-        private boolean fileChanged;
+        private String mSourceReference;
+        private boolean mFileChanged;
 
         public ParsedResult(
                 @NonNull String blogCategory,
@@ -285,11 +286,16 @@ public class BlogSourceParser {
         }
 
         public boolean isFileChanged() {
-            return fileChanged;
+            return mFileChanged;
         }
 
-        public ParsedResult setFileChanged(boolean fileChanged) {
-            this.fileChanged = fileChanged;
+        public String getSourceReference() {
+            return mSourceReference;
+        }
+
+        public ParsedResult setFileChanged(String sourceReference, boolean fileChanged) {
+            mSourceReference = sourceReference;
+            mFileChanged = fileChanged;
             return this;
         }
 

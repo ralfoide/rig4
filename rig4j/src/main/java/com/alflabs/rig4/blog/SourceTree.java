@@ -23,6 +23,11 @@ import java.util.TreeMap;
 class SourceTree {
     private final static String TAG = SourceTree.class.getSimpleName();
     private Map<String, Blog> mBlogs = new TreeMap<>();
+    private boolean mModified;
+
+    public boolean isModified() {
+        return mModified;
+    }
 
     @NonNull
     public Map<String, Blog> getBlogs() {
@@ -37,6 +42,7 @@ class SourceTree {
                       @NonNull CatFilter catAcceptFilter,
                       @NonNull CatFilter catRejectFilter)
             throws BlogSourceParser.ParseException {
+        mModified |= fileChanged;
         String category = parsedResult.getBlogCategory();
 
         if (!catAcceptFilter.matches(category)) {
