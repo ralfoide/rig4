@@ -13,7 +13,6 @@ import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.alflabs.utils.StringUtils;
-import com.google.common.base.Preconditions;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -23,13 +22,9 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static com.alflabs.rig4.exp.ExpFlags.EXP_DEST_DIR;
 import static com.alflabs.rig4.exp.ExpFlags.EXP_GA_UID;
@@ -69,12 +64,12 @@ public class BlogGenerator {
 
     public void processEntries(@NonNull List<BlogEntry> blogEntries, boolean allChanged)
             throws Exception {
-        BlogSites sites = parseSites(blogEntries);
-        List<BlogSourceParser.ParsedResult> parsedResults = parseSources(sites, blogEntries);
-        for (BlogSite blogSite : sites.iter()) {
-            SourceTree sourceTree = computeSourceTree(blogSite, parsedResults);
+        BlogConfigs configs = parseConfigs(blogEntries);
+        List<BlogSourceParser.ParsedResult> parsedResults = parseSources(configs, blogEntries);
+        for (BlogConfig blogConfig : configs.iter()) {
+            SourceTree sourceTree = computeSourceTree(blogConfig, parsedResults);
             if (allChanged || sourceTree.isModified()) {
-                PostTree postTree = computePostTree(blogSite, sourceTree);
+                PostTree postTree = computePostTree(blogConfig, sourceTree);
                 generatePostTree(postTree);
                 postTree.saveMetadata();
                 sourceTree.saveMetadata();
@@ -82,7 +77,7 @@ public class BlogGenerator {
         }
     }
 
-    private SourceTree computeSourceTree(@NonNull BlogSite blogSite,
+    private SourceTree computeSourceTree(@NonNull BlogConfig blogConfig,
                                          @NonNull List<BlogSourceParser.ParsedResult> parsedResults)
             throws BlogSourceParser.ParseException {
         SourceTree sourceTree = new SourceTree();
@@ -90,23 +85,27 @@ public class BlogGenerator {
         for (BlogSourceParser.ParsedResult parsedResult : parsedResults) {
             sourceTree.merge(parsedResult,
                 parsedResult.isFileChanged(),
-                blogSite.getCatAcceptFilter(),
-                blogSite.getCatRejectFilter());
+                blogConfig.getCatAcceptFilter(),
+                blogConfig.getCatRejectFilter());
         }
 
         return sourceTree;
     }
 
-    private BlogSites parseSites(List<BlogEntry> blogEntries) {
-        BlogSites sites = new BlogSites();
+    /**
+     * Initializes the config map in {@link BlogConfigs} based on the {@link BlogEntry}s
+     * defined in the index file.
+     */
+    private BlogConfigs parseConfigs(List<BlogEntry> blogEntries) {
+        BlogConfigs configs = new BlogConfigs();
         for (BlogEntry blogEntry : blogEntries) {
-            sites.add(blogEntry.getSiteNumber());
+            configs.add(mFlags, blogEntry.getConfigNumber());
         }
-        return sites;
+        return configs;
     }
 
     @NonNull
-    private List<BlogSourceParser.ParsedResult> parseSources(@NonNull BlogSites sites,
+    private List<BlogSourceParser.ParsedResult> parseSources(@NonNull BlogConfigs configs,
                                                              @NonNull List<BlogEntry> blogEntries)
             throws IOException, URISyntaxException {
         List<BlogSourceParser.ParsedResult> parsedResults = new ArrayList<>();
@@ -115,8 +114,8 @@ public class BlogGenerator {
             BlogSourceParser.ParsedResult result = parseSource(blogEntry);
             parsedResults.add(result);
 
-            BlogSite blogSite = sites.get(blogEntry);
-            blogSite.updateFrom(result.getTags());
+            BlogConfig blogConfig = configs.get(blogEntry);
+            blogConfig.updateFrom(result.getTags());
         }
 
         return parsedResults;
@@ -124,7 +123,7 @@ public class BlogGenerator {
 
     private BlogSourceParser.ParsedResult parseSource(@NonNull BlogEntry blogEntry)
             throws IOException, URISyntaxException {
-        mLogger.d(TAG, "Parse site " + blogEntry.getSiteNumber() + ", source: " + blogEntry.getFileId());
+        mLogger.d(TAG, "Parse config " + blogEntry.getConfigNumber() + ", source: " + blogEntry.getFileId());
         GDocEntity entity = mGDocHelper.getGDocAsync(blogEntry.getFileId(), "text/html");
         boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
@@ -135,16 +134,16 @@ public class BlogGenerator {
     }
 
     @NonNull
-    private PostTree computePostTree(@NonNull BlogSite blogSite,
+    private PostTree computePostTree(@NonNull BlogConfig blogConfig,
                                      @NonNull SourceTree sourceTree)
             throws BlogSourceParser.ParseException {
         mLogger.d(TAG, "computePostTree");
         PostTree postTree = new PostTree();
 
         // Generate per-category blogs
-        if (!blogSite.getGenSingleFilter().isEmpty()) {
+        if (!blogConfig.getGenSingleFilter().isEmpty()) {
             for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
-                if (blogSite.getGenSingleFilter().matches(sourceBlog.getCategory())) {
+                if (blogConfig.getGenSingleFilter().matches(sourceBlog.getCategory())) {
                     PostTree.Blog blog = createPostBlogFrom(sourceBlog);
                     postTree.add(blog);
                 }
@@ -152,10 +151,10 @@ public class BlogGenerator {
         }
 
         // Generate mixed-categories blog
-        if (!blogSite.getGenMixedFilter().isEmpty()) {
+        if (!blogConfig.getGenMixedFilter().isEmpty()) {
             SourceTree.Blog mixedSource = sourceTree.createMixedBlog(
-                    blogSite.getMixedCat(),
-                    blogSite.getGenMixedFilter());
+                    blogConfig.getMixedCat(),
+                    blogConfig.getGenMixedFilter());
             PostTree.Blog mixed = createPostBlogFrom(mixedSource);
             postTree.add(mixed);
         }
@@ -333,89 +332,4 @@ public class BlogGenerator {
         }
     }
 
-    public class BlogSites {
-        private final Map<Integer, BlogSite> mBlogSites = new TreeMap<>();
-
-        public void add(int section) {
-            mBlogSites.computeIfAbsent(section, (i) -> new BlogSite());
-        }
-
-        @NonNull
-        public BlogSite get(@NonNull BlogEntry entry) {
-            return Preconditions.checkNotNull(mBlogSites.get(entry.getSiteNumber()));
-        }
-
-        public Collection<BlogSite> iter() {
-            return mBlogSites.values();
-        }
-    }
-
-    /**
-     * A "blog site" represents a full independent blog site. "Site" here means a configuration
-     * section, with its own configuration variables: categories accept/reject, banner name,
-     * and whether to generate single vs mixed pages. Various blogs can be generated from the
-     * same site and they all use the same configuration variables.
-     */
-    public class BlogSite {
-        private String mMixedCat;
-        private final Map<String, CatFilter> mFilters = new HashMap<>();
-
-        public BlogSite() {
-            mMixedCat = mFlags.getString(BlogFlags.BLOG_MIXED_CAT);
-            for (String flag : BlogFlags.FILTER_FLAGS) {
-                mFilters.put(flag, new CatFilter(mFlags.getString(flag)));
-            }
-        }
-
-        @SuppressWarnings("UnnecessaryLabelOnContinueStatement")
-        public void updateFrom(@NonNull List<String> tags) {
-            String izuMixedCatTag = IzuTags.PREFIX + BlogFlags.BLOG_MIXED_CAT + IzuTags.PARAM_SEP;
-
-            nextTag: for (String tag : tags) {
-                if (tag.startsWith(izuMixedCatTag)) {
-                    String value = tag.substring(izuMixedCatTag.length()).trim();
-                    if (!value.isEmpty()) {
-                        mMixedCat = value;
-                    }
-                    continue nextTag;
-                }
-
-                for (String flag : BlogFlags.FILTER_FLAGS) {
-                    String izuTag = IzuTags.PREFIX + flag + IzuTags.PARAM_SEP;
-
-                    if (tag.startsWith(izuTag)) {
-                        String value = tag.substring(izuTag.length()).trim();
-                        if (!value.isEmpty()) {
-                            mFilters.put(flag, new CatFilter(value));
-                        }
-                        continue nextTag;
-                    }
-                }
-            }
-        }
-
-        public CatFilter getCatAcceptFilter() {
-            return mFilters.get(BlogFlags.BLOG_ACCEPT_CAT);
-        }
-
-        public CatFilter getCatRejectFilter() {
-            return mFilters.get(BlogFlags.BLOG_REJECT_CAT);
-        }
-
-        public CatFilter getCatBannerFilter() {
-            return mFilters.get(BlogFlags.BLOG_BANNER_EXCLUDE);
-        }
-
-        public CatFilter getGenSingleFilter() {
-            return mFilters.get(BlogFlags.BLOG_GEN_SINGLE);
-        }
-
-        public CatFilter getGenMixedFilter() {
-            return mFilters.get(BlogFlags.BLOG_GEN_MIXED);
-        }
-
-        public String getMixedCat() {
-            return mMixedCat;
-        }
-    }
 }
