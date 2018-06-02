@@ -310,7 +310,7 @@ public class BlogGenerator {
         @NonNull
         public String categoryToHtml(@NonNull String category) {
             // Most of the time a 3-letter category is going to be an acronym.
-            if (category.length() == 3) {
+            if (category.length() == 3 || "cmrs".equals(category)) {
                 return category.toUpperCase(Locale.US);
             }
             // Otherwise use a simple capitalization.
