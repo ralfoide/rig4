@@ -31,7 +31,7 @@ public class IndexReader {
     }
 
     private static final Pattern sArticleLineRe =
-            Pattern.compile("^([a-z0-9_-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
+            Pattern.compile("^([a-z0-9_/-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*");
     private static final Pattern sBlogLineRe    =
             Pattern.compile("^[bB]log\\s*([1-9]+)?\\s*(\\([^)]*\\))?\\s+([a-zA-Z0-9_-]+)\\s*");
 

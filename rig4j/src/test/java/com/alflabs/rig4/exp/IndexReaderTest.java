@@ -49,9 +49,10 @@ public class IndexReaderTest {
         String content =
                 "file1.html   01234567_file1\n" +
                 "file2.html   23456789_file2\n" +
+                "subdir/file3.html   34567890_file3\n" +
                 "blog         id_cat_1\n" +
                 "blog         id_cat_2\n" +
-                "blog.html    34567890_file3\n";
+                "blog.html    45678901_file4\n";
         GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash");
         GDocEntity entity = new GDocEntity(gDocMetadata, false /* updateToDate */,
                 content.getBytes(Charsets.UTF_8));
@@ -62,7 +63,8 @@ public class IndexReaderTest {
         assertThat(index.getArticleEntries()).containsAllOf(
                 ArticleEntry.create("01234567_file1", "file1.html"),
                 ArticleEntry.create("23456789_file2", "file2.html"),
-                ArticleEntry.create("34567890_file3", "blog.html")
+                ArticleEntry.create("34567890_file3", "subdir/file3.html"),
+                ArticleEntry.create("45678901_file4", "blog.html")
         );
         assertThat(index.getBlogEntries()).containsAllOf(
                 BlogEntry.create("id_cat_1", 0),
