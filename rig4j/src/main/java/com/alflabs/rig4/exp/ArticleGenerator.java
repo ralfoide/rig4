@@ -61,7 +61,7 @@ public class ArticleGenerator {
         mLogger.d(TAG, "     Destination: " + destDir);
 
         for (ArticleEntry entry : entries) {
-            String destName = entry.getDestName();
+            String destName = entry.getDestName().replace('/', File.separatorChar);
             File destFile = new File(destDir, destName);
 
             mLogger.d(TAG, "Process document: " + destName);
