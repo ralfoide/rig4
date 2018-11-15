@@ -1,8 +1,10 @@
 package com.alflabs.rig4.exp;
 
 import com.alflabs.annotations.NonNull;
+import com.alflabs.annotations.Null;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.blog.BlogSourceParser;
+import com.alflabs.rig4.blog.IzuTags;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.RPair;
 import com.alflabs.utils.RSparseArray;
@@ -17,8 +19,10 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Whitelist;
+import org.jsoup.select.Elements;
 
 import javax.inject.Inject;
+import javax.xml.transform.TransformerException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -35,22 +39,24 @@ import java.util.regex.Matcher;
 public class HtmlTransformer {
 
     private static final String ELEM_A = "a";
-    private static final String ELEM_P = "p";
+    public  static final String ELEM_DIV = "div";
     private static final String ELEM_HR = "hr";
-    private static final String ELEM_TD = "td";
-    private static final String ELEM_UL = "ul";
-    private static final String ELEM_LI = "li";
-    public static final String ELEM_DIV = "div";
+    private static final String ELEM_IFRAME = "iframe";
     private static final String ELEM_IMG = "img";
+    private static final String ELEM_LI = "li";
+    private static final String ELEM_P = "p";
+    private static final String ELEM_TD = "td";
     private static final String ELEM_SPAN = "span";
     private static final String ELEM_STYLE = "style";
-    private static final String ELEM_IFRAME = "iframe";
+    private static final String ELEM_UL = "ul";
 
+    private static final String ATTR_ALT= "alt";
     private static final String ATTR_CLASS = "class";
     private static final String ATTR_HREF = "href";
     private static final String ATTR_ID = "id";
     private static final String ATTR_SRC = "src";
     private static final String ATTR_STYLE = "style";
+    private static final String ATTR_TITLE = "title";
     private static final String ATTR_WIDTH = "width";
     private static final String ATTR_HEIGHT = "height";
 
@@ -93,6 +99,7 @@ public class HtmlTransformer {
             rewriteUrls(doc, ATTR_HREF, callback);
             rewriteUrls(doc, ATTR_SRC, callback);
             rewriteYoutubeEmbed(doc);
+            linkifyImages(doc);
             removeIzuTags(doc);
 
             doc.outputSettings().prettyPrint(true);
@@ -168,6 +175,7 @@ public class HtmlTransformer {
                 rewriteUrls(element, ATTR_HREF, callback);
                 rewriteUrls(element, ATTR_SRC, callback);
                 rewriteYoutubeEmbed(element);
+                linkifyImages(element);
                 removeIzuTags(element);
                 return element.html();
             }
@@ -213,7 +221,7 @@ public class HtmlTransformer {
      * current gdocs and not show them by mistake in the final output.
      */
     private void removeIzuTags(Element root) {
-        for (Element element : root.getElementsContainingOwnText("[izu")) {
+        for (Element element : root.getElementsContainingOwnText("[" + IzuTags.PREFIX)) {
             for (int i = 0, n = element.childNodeSize(); i < n; i++) {
                 Node node = element.childNode(i);
                 if (node instanceof TextNode) {
@@ -222,6 +230,90 @@ public class HtmlTransformer {
                     text = matcher.replaceAll("");
                     ((TextNode) node).text(text);
                 }
+            }
+        }
+    }
+
+    /** Same as previousElementSibling() but with a deep search in children. */
+    @Null
+    private Element findPreviousElementSibling(@NonNull Element element) {
+        Element sibling = element.previousElementSibling();
+        if (sibling == null) {
+            return element.parent();
+        }
+        while (true) {
+            Elements children = sibling.children();
+            if (children.isEmpty()) {
+                break;
+            }
+            sibling = children.last();
+        }
+        return sibling;
+    }
+
+    @SuppressWarnings("UnnecessaryLabelOnContinueStatement")
+    private void linkifyImages(Element root) {
+        Set<Element> visited = new HashSet<>();
+        nextIzu: for (Element element : root.getElementsContainingOwnText("[" + IzuTags.IZU_LINK_IMG)) {
+            visited.add(element);
+
+            String text = "";
+            String href = "";
+            Matcher matcher = BlogSourceParser.RE_IZU_TAG.matcher(element.text());
+            if (matcher.matches()) {
+                String tag = matcher.group(2);
+                if (tag.length() > IzuTags.IZU_LINK_IMG.length()) {
+                    href = tag.substring(IzuTags.IZU_LINK_IMG.length()).trim();
+                }
+            }
+
+            // Find previous <img>
+            Element img = findPreviousElementSibling(element);
+            while (img != null) {
+                if (visited.contains(img)) {
+                    continue nextIzu;
+                }
+                if (img.tagName().equals(ELEM_IMG)) {
+                    break;
+                }
+                img = findPreviousElementSibling(img);
+            }
+
+            if (img == null) {
+                continue nextIzu;
+            }
+
+            if (href.isEmpty()) {
+                // Find previous <a href> link
+                Element link = findPreviousElementSibling(img);
+                while (link != null && !link.tagName().equals(ELEM_A)) {
+                    link = findPreviousElementSibling(link);
+                }
+
+                if (link == null) {
+                    continue nextIzu;
+                }
+
+                text = link.text();
+                href = link.attr(ATTR_HREF);
+
+                if (href.isEmpty() || text.isEmpty()) {
+                    continue nextIzu;
+                }
+
+                visited.add(link);
+            }
+
+            visited.add(img);
+
+            Element newLink = new Element(ELEM_A);
+            newLink.attr(ATTR_HREF, href);
+            img.before(newLink);
+            newLink.insertChildren(0, img);
+
+            if (!text.isEmpty()) {
+                img.attr(ATTR_ALT, text);
+                img.attr(ATTR_TITLE, text);
             }
         }
     }
@@ -300,7 +392,7 @@ public class HtmlTransformer {
      * convention to include source code in these documents: They use a Consolas font,
      * size 10, and are always inserted into a single cell table (one row, one column).
      *
-     * The generated code does not use PRE (understandbly). Instead one P + SPAN is generated
+     * The generated code does not use PRE (understandably). Instead one P + SPAN is generated
      * for each line with text. Empty lines use a P only with a fixed height.
      *
      * The cleanup works as follows:
@@ -312,7 +404,7 @@ public class HtmlTransformer {
      * - For all the TR > TD > P > SPAN structures, find the TD, and in there make sure there
      *   is at least one SPAN with a Consolas style. If we find that, capture that style.
      *   For all the P elements, remove any height style attribute and instead add a SPAN
-     *   with an nbsp if the P has no child (otherwise they show up at zero size). And also
+     *   with an nbsp if the P has no child (otherwise they show up as zero size). And also
      *   make sure they are tagged with the console CSS class.
      */
     private void cleanupConsolasLineStyle(Element root) {
