@@ -221,7 +221,8 @@ public class HtmlTransformer {
      * current gdocs and not show them by mistake in the final output.
      */
     private void removeIzuTags(Element root) {
-        for (Element element : root.getElementsContainingOwnText("[" + IzuTags.PREFIX)) {
+        // Not: "[izu" is _not_ the IzuTags.Prefix as it doesn't use the trailing colon (':').
+        for (Element element : root.getElementsContainingOwnText("[izu")) {
             for (int i = 0, n = element.childNodeSize(); i < n; i++) {
                 Node node = element.childNode(i);
                 if (node instanceof TextNode) {
