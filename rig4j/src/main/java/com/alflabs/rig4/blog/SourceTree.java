@@ -301,16 +301,26 @@ class SourceTree {
      */
     public static class Content {
         private final Element mIntermediary;
-        private String mFormatted;
+        private Element mFormatted;
         private String mTransformerKey;
         private HtmlTransformer.LazyTransformer mTransformer;
+
+        /**
+         * Creates an empty content.
+         * <p/>
+         * Use {@link #from(Element)} to create content from an existing {@link Element} node.
+         */
+        public Content() {
+            mFormatted = null;
+            mIntermediary = null;
+        }
 
         /**
          * Creates content with either fully formatted content or intermediary content yet to be formatted.
          * One or the other should be provided.
          */
-        public Content(@Null String formatted, @Null Element intermediary) {
-            mFormatted = formatted;
+        private Content(/*@Null String formatted,*/ @Null Element intermediary) {
+            mFormatted = null;
             mIntermediary = intermediary;
         }
 
@@ -338,7 +348,15 @@ class SourceTree {
                 Preconditions.checkNotNull(mTransformer);
                 mFormatted = mTransformer.lazyTransform(mIntermediary);
             }
-            return mFormatted;
+            return mFormatted == null ? null : mFormatted.html();
+        }
+
+        public String getFirstFormattedImageSrc() {
+            if (mFormatted != null && mIntermediary != null) {
+                Preconditions.checkNotNull(mTransformer);
+                return mTransformer.findFirstFormattedImageSrc(mFormatted);
+            }
+            return null;
         }
 
         @Null
@@ -348,8 +366,9 @@ class SourceTree {
 
         @Null
         public static Content from(@Null Element intermediary) {
-            return intermediary == null ? null : new Content(null, intermediary);
+            return intermediary == null ? null : new Content(intermediary);
         }
+
     }
 
 }

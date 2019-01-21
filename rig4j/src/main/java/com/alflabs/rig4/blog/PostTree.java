@@ -21,7 +21,7 @@ import java.util.TreeMap;
  */
 class PostTree {
     private final static String TAG = PostTree.class.getSimpleName();
-    private final static String ROOT = "blog";
+    private final static String BLOG_ROOT = "blog";
     private static final String HTML = ".html";
     private static final String ATOM_XML = "atom.xml";
     private static final String INDEX_HTML = "index.html";
@@ -57,8 +57,8 @@ class PostTree {
         public Blog(@NonNull String category, @Null String title, @Null SourceTree.Content blogHeader) {
             mCategory = category;
             mTitle = title == null ? "" : title;
-            mBlogHeader = blogHeader != null ? blogHeader : new SourceTree.Content("", null);
-            mBlogIndex = new BlogPage(this, new File(ROOT, category));
+            mBlogHeader = blogHeader != null ? blogHeader : new SourceTree.Content();
+            mBlogIndex = new BlogPage(this, new File(BLOG_ROOT, category));
             mBlogPages.add(mBlogIndex);
         }
 
@@ -229,7 +229,7 @@ class PostTree {
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
                     generator.getAbsSiteLink(),
-                    generator.getRelSiteLink(),
+                    mFileItem.getLeafDirWeb(),
                     generator.getRelBannerLink(),
                     generator.getSiteCss(),
                     generator.getGAUid(),
@@ -243,8 +243,8 @@ class PostTree {
                     "",                 // no post category for an index
                     "",                 // no post cat link for an index
                     content.toString(),
-                    generator.getGenInfo()
-            );
+                    generator.getGenInfo(),
+                    "" /*relImageLink*/);
 
             String generated = generator.getTemplater().generate(templateData);
             generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
@@ -265,7 +265,7 @@ class PostTree {
 
             Templater.BlogPostData templateData = new Templater.BlogPostData(
                     generator.getAbsSiteLink(),
-                    generator.getRelSiteLink(),
+                    mFileItem.getLeafDirWeb(),
                     postData.mTitle,
                     postData.mDate.toString(),
                     generator.categoryToHtml(postData.mCategory),
@@ -294,10 +294,13 @@ class PostTree {
                     ? null
                     : postData.mNextFull.mFileItem.getName();
 
+            String content = postData.mContent.getFormatted();
+            String relImageLink = postData.mContent.getFirstFormattedImageSrc();
+
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
                     generator.getAbsSiteLink(),
-                    generator.getRelSiteLink(),
+                    mFileItem.getLeafDirWeb(),
                     generator.getRelBannerLink(),
                     generator.getSiteCss(),
                     generator.getGAUid(),
@@ -310,8 +313,9 @@ class PostTree {
                     postData.mDate.toString(),
                     generator.categoryToHtml(postData.mCategory),
                     generator.linkForCategory(postData.mCategory),
-                    postData.mContent.getFormatted(),
-                    generator.getGenInfo()
+                    content,
+                    generator.getGenInfo(),
+                    relImageLink
             );
 
             String generated = generator.getTemplater().generate(templateData);
@@ -414,6 +418,15 @@ class PostTree {
         public String getLeafDir() {
             String path = mDir.getPath();
             path = path.replace("..", "");
+            return path;
+        }
+
+        @NonNull
+        public String getLeafDirWeb() {
+            String path = getLeafDir().replace(File.separatorChar, '/');
+            if (!path.endsWith("/")) {
+                path += "/";
+            }
             return path;
         }
 

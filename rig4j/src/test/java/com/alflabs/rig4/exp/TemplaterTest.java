@@ -135,7 +135,8 @@ public class TemplaterTest {
                 "Page Title replacement",
                 "page_file.html",
                 "Content replacement\n" +
-                "Multiple content."));
+                "Multiple content.",
+                "" /* relImageLink */));
 
         assertThat(generated).isEqualTo("" +
                 "<!doctype html>\n" +
@@ -181,7 +182,8 @@ public class TemplaterTest {
                 "Page Title replacement",
                 "page_file.html",
                 "Content replacement\n" +
-                        "Multiple content."));
+                "Multiple content.",
+                "" /* relImageLink */));
 
         assertThat(generated).isEqualTo("" +
                 "\n" +
@@ -205,7 +207,9 @@ public class TemplaterTest {
                 "Page Title replacement",
                 "page_file.html",
                 "Content replacement first line\n" +
-                        "Content replacement second line.");
+                "Content replacement second line.",
+                "" /* relImageLink */);
+
         String generated = mTemplater.generate(data);
 
         assertThat(generated).containsMatch("property=\"og:url\"\\s+content=\"http://Site URL/replacement/./page_file.html\"");
@@ -229,7 +233,7 @@ public class TemplaterTest {
 
     @Test
     public void testBlogPageTemplate() throws Exception {
-        Templater.ArticleData data = new Templater.BlogPageData(
+        Templater.BlogPageData data = new Templater.BlogPageData(
                 "Site Title replacement",
                 "http://Site URL/replacement/",
                 "../../",
@@ -246,8 +250,8 @@ public class TemplaterTest {
                 "A Category",
                 "category/link",
                 "Content replacement",
-                "Gen info"
-        );
+                "Gen info",
+                "main_image.jpg");
         String generated = mTemplater.generate(data);
 
         // --- This part is common with an article page
@@ -255,12 +259,12 @@ public class TemplaterTest {
         assertThat(generated).containsMatch("property=\"og:title\"\\s+content=\"Page Title replacement\"");
         // We don't generate FB OG meta-data for these yet
         assertThat(generated).doesNotContain("property=\"og:description\"");
-        assertThat(generated).doesNotContain("property=\"og:image\"");
+        assertThat(generated).containsMatch("property=\"og:image\"\\s+content=\"http://Site URL/replacement/../../main_image.jpg\"");
 
         assertThat(generated).containsMatch("name=\"twitter:title\"\\s+content=\"Page Title replacement\"");
         // We don't generate Twitter meta-data for these yet
         assertThat(generated).doesNotContain("name=\"twitter:description\"");
-        assertThat(generated).doesNotContain("name=\"twitter:image\"");
+        assertThat(generated).containsMatch("name=\"twitter:image\"\\s+content=\"http://Site URL/replacement/../../main_image.jpg\"");
 
         assertThat(generated).contains("<title>Page Title replacement</title>");
         assertThat(generated).contains("background-image: url(\"../../banner_image.jpg\");");

@@ -272,6 +272,7 @@ public class Templater {
     @SuppressWarnings("WeakerAccess")
     public static class ArticleData extends BaseData {
         public final String mContent;
+        public final String mRelImageLink;
 
         public ArticleData(
                 String siteTitle,
@@ -282,7 +283,8 @@ public class Templater {
                 String GAUid,
                 String pageTitle,
                 String relPageLink,
-                String content) {
+                String content,
+                String relImageLink) {
             super(siteTitle,
                     absSiteLink,
                     relSiteLink,
@@ -292,6 +294,7 @@ public class Templater {
                     relPageLink,
                     relBannerLink);
             mContent = content;
+            mRelImageLink = relImageLink;
         }
 
         @NonNull
@@ -331,7 +334,8 @@ public class Templater {
                 String postCategory,
                 String relPostCatLink,
                 String content,
-                String genInfo) {
+                String genInfo,
+                String relImageLink) {
             super(siteTitle,
                     absSiteLink,
                     relSiteLink,
@@ -340,7 +344,8 @@ public class Templater {
                     GAUid,
                     pageTitle,
                     relPageLink,
-                    content);
+                    content,
+                    relImageLink);
             mRelPrevPageLink = relPrevPageLink;
             mRelNextPageLink = relNextPageLink;
             mBlogHeader = blogHeader;
@@ -391,8 +396,8 @@ public class Templater {
                     postCategory,
                     relPostCatLink,
                     content,
-                    ""
-            );
+                    "",
+                    "");
             mRelPostFullLink = relPostFullLink;
             mRelPostExtraLink = relPostExtraLink;
         }
