@@ -234,15 +234,15 @@ public class HtmlTransformer {
                     return null;
                 }
 
-                // Find the first p>span with a content that is not empty once cleaned up.
-                for (Element span : element.select("p > span")) {
-                    if (span.childNodeSize() == 0) {
+                // Find the first paragraph with a content that is not empty once cleaned up.
+                for (Element p : element.getElementsByTag(ELEM_P)) {
+                    if (p.childNodeSize() == 0) {
                         continue;
                     }
 
                     Document dirtyDoc = Document.createShell("");
                     Element body = dirtyDoc.body();
-                    body.appendChild(span.clone());
+                    body.appendChild(p.clone());
 
                     Cleaner cleaner = new Cleaner(Whitelist.none());
                     Document cleanDoc = cleaner.clean(dirtyDoc);
@@ -404,7 +404,7 @@ public class HtmlTransformer {
      * and the style from the css can be respected.
      */
     private void cleanupInlineStyle(Element root) {
-        Element p = root.getElementsByTag("p").first();
+        Element p = root.getElementsByTag(ELEM_P).first();
         CssStyles eraseStyles = new CssStyles(p == null ? null : p.attr(ATTR_STYLE));
         // mark these as part of the baseline to get rid of
         eraseStyles.add("height:11pt");
@@ -447,7 +447,7 @@ public class HtmlTransformer {
      * Cleanup a lot of padding style attributes that don't seem that useful.
      */
     private void cleanupLineStyle(Element root) {
-        for (Element element : root.getElementsByTag("p")) {
+        for (Element element : root.getElementsByTag(ELEM_P)) {
             CssStyles styles = new CssStyles(element.attr(ATTR_STYLE));
             styles.remove("padding-bottom");
             styles.remove("padding-left");

@@ -275,7 +275,7 @@ public class TemplaterTest {
         assertThat(generated).containsMatch("name=\"twitter:image\"\\s+content=\"http://Site URL/replacement/blog/cat/main_image.jpg\"");
 
         assertThat(generated).contains("<title>Page Title replacement</title>");
-        assertThat(generated).contains("background-image: url(\"../../banner_image.jpg\");");
+        assertThat(generated).contains("background-image: url(\"banner_image.jpg\");");
         assertThat(generated).containsMatch("<style type=\"text/css\">[^<]+CSS replacement\\s*</style>");
         assertThat(generated).contains("<a href=\"http://Site URL/replacement/\">Site Title replacement</a>");
         assertThat(generated).contains("ga('create', 'GA UID replacement', 'auto');");
