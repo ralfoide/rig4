@@ -75,12 +75,8 @@ public class BlogSourceParser {
                     headerTags = izuTags;
                     izuHeaderStart = element;
 
-                    for (String izuTag : izuTags) {
-                        if (izuTag.startsWith(IzuTags.IZU_CATEGORY)) {
-                            blogCategory = izuTag.substring(IzuTags.IZU_CATEGORY.length()).trim();
-                        }
-                    }
-                    if (blogCategory == null || blogCategory.isEmpty()) {
+                    blogCategory = IzuTags.getTagValue(IzuTags.IZU_CATEGORY, izuTags);
+                    if (blogCategory.isEmpty()) {
                         throw new ParseException(
                                 "Missing " + IzuTags.IZU_CATEGORY + "...] on the " + IzuTags.IZU_BLOG + " line");
                     }

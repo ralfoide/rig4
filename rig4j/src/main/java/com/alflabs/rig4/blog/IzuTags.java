@@ -1,5 +1,10 @@
 package com.alflabs.rig4.blog;
 
+import com.alflabs.annotations.NonNull;
+import com.alflabs.annotations.Null;
+
+import java.util.Collection;
+
 public final class IzuTags {
     private IzuTags() {}
 
@@ -45,4 +50,48 @@ public final class IzuTags {
     /** Tag: [izu:link-img:{link}] -- Indicates that the preceding image should use the specified "A HREF" link.
      * If the link is omitted, the previous A HREF found in the document *before* the image will be used. */
     public static final String IZU_LINK_IMG = "izu:link-img:";
+
+    /** Tag: [izu:desc:{long description}] -- In the blog header, post, or page, indicates the
+     * summary description to place in the generated page metadata.
+     * Inferred from content when not available. */
+    public static final String IZU_DESC = "izu:desc:";
+
+
+    /**
+     * Indiciate if there's a tag starting with that prefix in that tag list/collection.
+     *
+     * @param izuTagPrefix A tag prefix ending with ":" such as {@link #IZU_BLOG_TITLE} or {@link #IZU_DESC}.
+     * @param tags A list of tags, possibly empty.
+     * @return True if there's at least one tag starting with that prefix, whether it has a value or not.
+     */
+    public static boolean hasPrefixTag(@NonNull String izuTagPrefix, @NonNull Collection<String> tags) {
+        for (String izuTag : tags) {
+            if (izuTag.startsWith(izuTagPrefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Extracts the value of an izu tag in a tag list/collection.
+     * If multiple occurrences of the tag are in the list, returns the first non-empty one.
+     *
+     * @param izuTagPrefix A tag prefix ending with ":" such as {@link #IZU_BLOG_TITLE} or {@link #IZU_DESC}.
+     * @param tags A list of tags, possibly empty.
+     * @return A non-null value. The empty string is returned if nothing is found for easier chaining.
+     *  If non empty, the string is already trimmed.
+     */
+    @NonNull
+    public static String getTagValue(@NonNull String izuTagPrefix, @NonNull Collection<String> tags) {
+        for (String izuTag : tags) {
+            if (izuTag.startsWith(izuTagPrefix)) {
+                String title = izuTag.substring(izuTagPrefix.length()).trim();
+                if (!title.isEmpty()) {
+                    return title;
+                }
+            }
+        }
+        return "";
+    }
 }
