@@ -6,17 +6,17 @@
 <meta name="description" content="">
 <meta name="author"      content="">
 
-<meta property="og:url"         content="{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelPageLink}}" />
+<meta property="og:url"         content="{{.AbsSiteLink}}{{.FwdPageLink}}{{.RelPageLink}}" />
 <meta property="og:type"        content="article" />
 <meta property="og:title"       content="{{.PageTitle}}" />
 {{If.Description }}<meta property="og:description" content="{{.Description}}" />{{Endif}}
-{{If.RelImageLink}}<meta property="og:image"       content="{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelImageLink}}" />{{Endif}}
+{{If.RelImageLink}}<meta property="og:image"       content="{{.AbsSiteLink}}{{.FwdPageLink}}{{.RelImageLink}}" />{{Endif}}
 
 <meta name="twitter:card"        content="summary" />
 <!-- meta name="twitter:site"    content="@flickr" / -->
 <meta name="twitter:title"       content="{{.PageTitle}}" />
 {{If.Description }}<meta name="twitter:description" content="{{.Description}}" />{{Endif}}
-{{If.RelImageLink}}<meta name="twitter:image"       content="{{.AbsSiteLink}}{{.RelSiteLink}}{{.RelImageLink}}" />{{Endif}}
+{{If.RelImageLink}}<meta name="twitter:image"       content="{{.AbsSiteLink}}{{.FwdPageLink}}{{.RelImageLink}}" />{{Endif}}
 
 <title>{{.PageTitle}}</title>
 
@@ -61,7 +61,7 @@ p.console {
 
 .banner-bg-image {
     height: 200px;
-    background-image: url("{{.RelSiteLink}}{{.RelBannerLink}}");
+    background-image: url("{{.RevSiteLink}}{{.RelBannerLink}}");
     background-position: center;
     background-size: 100% auto;
 }

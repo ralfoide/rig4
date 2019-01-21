@@ -229,6 +229,7 @@ class PostTree {
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
                     generator.getAbsSiteLink(),
+                    generator.getRevSiteLink(),
                     mFileItem.getLeafDirWeb(),
                     generator.getRelBannerLink(),
                     generator.getSiteCss(),
@@ -242,9 +243,11 @@ class PostTree {
                     "",                 // no post date  for an index
                     "",                 // no post category for an index
                     "",                 // no post cat link for an index
+                    destFile.getName(),
                     content.toString(),
                     generator.getGenInfo(),
-                    "" /*relImageLink*/);
+                    "" /* relImageLink */,
+                    "" /* headDescription */);
 
             String generated = generator.getTemplater().generate(templateData);
             generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
@@ -265,6 +268,7 @@ class PostTree {
 
             Templater.BlogPostData templateData = new Templater.BlogPostData(
                     generator.getAbsSiteLink(),
+                    generator.getRevSiteLink(),
                     mFileItem.getLeafDirWeb(),
                     postData.mTitle,
                     postData.mDate.toString(),
@@ -295,17 +299,19 @@ class PostTree {
                     : postData.mNextFull.mFileItem.getName();
 
             String content = postData.mContent.getFormatted();
-            String relImageLink = postData.mContent.getFirstFormattedImageSrc();
+            String relImageLink = postData.mContent.getFormattedFirstImageSrc();
+            String headDescription = postData.mContent.getFormattedDescription();
 
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
                     generator.getAbsSiteLink(),
+                    generator.getRevSiteLink(),
                     mFileItem.getLeafDirWeb(),
                     generator.getRelBannerLink(),
                     generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
-                    destFile.getName(),  // post full page should link to its own url
+                    mainFile.getName(),  // main page links to the index containing this full page
                     prevPageLink,
                     nextPageLink,
                     mBlog.getBlogHeader().getFormatted(),
@@ -313,9 +319,11 @@ class PostTree {
                     postData.mDate.toString(),
                     generator.categoryToHtml(postData.mCategory),
                     generator.linkForCategory(postData.mCategory),
+                    destFile.getName(),  // post full page should link to its own url
                     content,
                     generator.getGenInfo(),
-                    relImageLink
+                    relImageLink,
+                    headDescription
             );
 
             String generated = generator.getTemplater().generate(templateData);

@@ -351,10 +351,28 @@ class SourceTree {
             return mFormatted == null ? null : mFormatted.html();
         }
 
-        public String getFirstFormattedImageSrc() {
-            if (mFormatted != null && mIntermediary != null) {
+        /**
+         * Extracts the first "img src" attribute found in the formatted content.
+         * {@link #getFormatted()} must have been called first to generate the formatted content.
+         */
+        @Null
+        public String getFormattedFirstImageSrc() {
+            if (mFormatted != null) {
                 Preconditions.checkNotNull(mTransformer);
-                return mTransformer.findFirstFormattedImageSrc(mFormatted);
+                return mTransformer.getFormattedFirstImageSrc(mFormatted);
+            }
+            return null;
+        }
+
+        /**
+         * Extracts the first paragraph description found in the formatted content.
+         * {@link #getFormatted()} must have been called first to generate the formatted content.
+         */
+        @Null
+        public String getFormattedDescription() {
+            if (mFormatted != null) {
+                Preconditions.checkNotNull(mTransformer);
+                return mTransformer.getFormattedDescription(mFormatted);
             }
             return null;
         }
@@ -368,7 +386,6 @@ class SourceTree {
         public static Content from(@Null Element intermediary) {
             return intermediary == null ? null : new Content(intermediary);
         }
-
     }
 
 }

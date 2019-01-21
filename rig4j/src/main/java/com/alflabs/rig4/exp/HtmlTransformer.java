@@ -162,11 +162,24 @@ public class HtmlTransformer {
         Element lazyTransform(@Null Element element) throws IOException, URISyntaxException;
 
         /**
-         * Extracts the source of the first img tag of the content. This only works with elements
-         * that have already been processed by {@link #lazyTransform(Element)}.
+         * Extracts the source of the first img tag of the content.
+         * <p/>
+         * The src attribute will only be correct with elements that have already been processed by
+         * {@link #lazyTransform(Element)} since it needs to rewrite the URLs first.
          */
         @Null
-        String findFirstFormattedImageSrc(@Null Element formatted);
+        String getFormattedFirstImageSrc(@Null Element formatted);
+
+        /**
+         * Extracts the source of the first paragraph of the content. When content is returned,
+         * it is stripped of any html and is "pure text".
+         * <p/>
+         * This only works with elements that have already been processed by
+         * {@link #lazyTransform(Element)} so that all content has been properly rewritten
+         * and cleaned.
+         */
+        @Null
+        String getFormattedDescription(@Null Element formatted);
     }
 
     /**
@@ -182,7 +195,7 @@ public class HtmlTransformer {
 
             @Override
             @Null
-            public Element lazyTransform(Element element) throws IOException, URISyntaxException {
+            public Element lazyTransform(@Null Element element) throws IOException, URISyntaxException {
                 if (element == null) {
                     return null;
                 }
@@ -198,15 +211,45 @@ public class HtmlTransformer {
 
             @Override
             @Null
-            public String findFirstFormattedImageSrc(Element element) {
+            public String getFormattedFirstImageSrc(@Null Element element) {
                 if (element == null) {
                     return null;
                 }
 
+                // Find the first <img> with a src attribute that is not empty.
                 for (Element img : element.getElementsByTag(ELEM_IMG)) {
                     String src = img.attr(ATTR_SRC);
                     if (!src.isEmpty()) {
                         return src;
+                    }
+                }
+
+                return null;
+            }
+
+            @Override
+            @Null
+            public String getFormattedDescription(@Null Element element) {
+                if (element == null) {
+                    return null;
+                }
+
+                // Find the first p>span with a content that is not empty once cleaned up.
+                for (Element span : element.select("p > span")) {
+                    if (span.childNodeSize() == 0) {
+                        continue;
+                    }
+
+                    Document dirtyDoc = Document.createShell("");
+                    Element body = dirtyDoc.body();
+                    body.appendChild(span.clone());
+
+                    Cleaner cleaner = new Cleaner(Whitelist.none());
+                    Document cleanDoc = cleaner.clean(dirtyDoc);
+                    String cleaned = cleanDoc.body().html().trim();
+
+                    if (!cleaned.isEmpty()) {
+                        return cleaned;
                     }
                 }
 
