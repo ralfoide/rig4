@@ -305,7 +305,7 @@ class PostTree {
                     generator.getSiteCss(),
                     generator.getGAUid(),
                     mBlog.getTitle(),
-                    mainFile.getName(),  // main page links to the index containing this full page
+                    destFile.getName(),  // post full page should link to its own url
                     prevPageLink,
                     nextPageLink,
                     mBlog.getBlogHeader().getFormatted(),
