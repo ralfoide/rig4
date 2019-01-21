@@ -91,7 +91,8 @@ public class ArticleGenerator {
                         mFlags.getString(EXP_GA_UID),
                         title,
                         destName,
-                        htmlBody);
+                        htmlBody,
+                        ""); // relImageLink
                 String html = mTemplater.generate(data);
                 byte[] htmlContent = html.getBytes(Charsets.UTF_8);
 

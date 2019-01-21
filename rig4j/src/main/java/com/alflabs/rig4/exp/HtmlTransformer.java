@@ -154,10 +154,19 @@ public class HtmlTransformer {
          * a post's content is used in multiple blogs. All intermediary asset files typically
          * need to be generated for each one.
          */
+        @NonNull
         String getTransformKey();
 
         /** Transforms the HTML element into the desired HTML text. */
-        String lazyTransform(Element element) throws IOException, URISyntaxException;
+        @Null
+        Element lazyTransform(@Null Element element) throws IOException, URISyntaxException;
+
+        /**
+         * Extracts the source of the first img tag of the content. This only works with elements
+         * that have already been processed by {@link #lazyTransform(Element)}.
+         */
+        @Null
+        String findFirstFormattedImageSrc(@Null Element formatted);
     }
 
     /**
@@ -166,7 +175,14 @@ public class HtmlTransformer {
     public LazyTransformer createLazyTransformer(@NonNull String transformKey, @NonNull Callback callback) {
         return new LazyTransformer() {
             @Override
-            public String lazyTransform(Element element) throws IOException, URISyntaxException {
+            @NonNull
+            public String getTransformKey() {
+                return transformKey;
+            }
+
+            @Override
+            @Null
+            public Element lazyTransform(Element element) throws IOException, URISyntaxException {
                 if (element == null) {
                     return null;
                 }
@@ -177,12 +193,24 @@ public class HtmlTransformer {
                 rewriteYoutubeEmbed(element);
                 linkifyImages(element);
                 removeIzuTags(element);
-                return element.html();
+                return element;
             }
 
             @Override
-            public String getTransformKey() {
-                return transformKey;
+            @Null
+            public String findFirstFormattedImageSrc(Element element) {
+                if (element == null) {
+                    return null;
+                }
+
+                for (Element img : element.getElementsByTag(ELEM_IMG)) {
+                    String src = img.attr(ATTR_SRC);
+                    if (!src.isEmpty()) {
+                        return src;
+                    }
+                }
+
+                return null;
             }
         };
     }
