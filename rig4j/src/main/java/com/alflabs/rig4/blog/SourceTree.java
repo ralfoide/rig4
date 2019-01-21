@@ -62,13 +62,9 @@ class SourceTree {
         // blog.setChanged(blog.isChanged() || fileChanged);
 
         if (blog.getTitle() == null) {
-            for (String izuTag : parsedResult.getTags()) {
-                if (izuTag.startsWith(IzuTags.IZU_BLOG_TITLE)) {
-                    String title = izuTag.substring(IzuTags.IZU_BLOG_TITLE.length()).trim();
-                    if (!title.isEmpty()) {
-                        blog.setTitle(title);
-                    }
-                }
+            String title = IzuTags.getTagValue(IzuTags.IZU_BLOG_TITLE, parsedResult.getTags());
+            if (!title.isEmpty()) {
+                blog.setTitle(title);
             }
         }
 
@@ -262,26 +258,21 @@ class SourceTree {
         }
 
         @NonNull
-        public static BlogPost from(@NonNull String blogCategory,
+        public static BlogPost from(@NonNull String mainBlogCategory,
                                     @NonNull BlogSourceParser.ParsedSection section)
                 throws BlogSourceParser.ParseException {
 
-            for (String izuTag : section.getIzuTags()) {
-                if (izuTag.startsWith(IzuTags.IZU_CATEGORY)) {
-                    blogCategory = izuTag.substring(IzuTags.IZU_CATEGORY.length()).trim();
-
-                    if (blogCategory.isEmpty()) {
-                        throw new BlogSourceParser.ParseException(
-                                String.format("Invalid category in '%s' line in section [%s:%s]",
-                                        izuTag, section.getDate(),
-                                        section.getTextTitle()));
-                    }
-                    break;
-                }
+            String postCategory = IzuTags.getTagValue(IzuTags.IZU_CATEGORY, section.getIzuTags());
+            if (postCategory.isEmpty() && IzuTags.hasPrefixTag(IzuTags.IZU_CATEGORY, section.getIzuTags())) {
+                throw new BlogSourceParser.ParseException(
+                        String.format("Invalid tag '%s' in section [%s:%s]",
+                                IzuTags.IZU_CATEGORY,
+                                section.getDate(),
+                                section.getTextTitle()));
             }
 
             return new BlogPost(
-                    blogCategory,
+                    postCategory.isEmpty() ? mainBlogCategory : postCategory,
                     section.getDate(),
                     section.getTextTitle(),
                     Content.from(section.getIntermediaryShort()),

@@ -22,7 +22,6 @@ import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 
 import javax.inject.Inject;
-import javax.xml.transform.TransformerException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -184,6 +183,11 @@ public class HtmlTransformer {
 
     /**
      * Finish processing content extracted using {@link #simplifyForProcessing(byte[])}.
+     *
+     * @param transformKey Transformer key is the directory of the file generated.
+     *                     If a post is reused in a different directory, its assets should be
+     *                     regenerated for that directory.
+     * @param callback Callbacks to transform images and drawings.
      */
     public LazyTransformer createLazyTransformer(@NonNull String transformKey, @NonNull Callback callback) {
         return new LazyTransformer() {

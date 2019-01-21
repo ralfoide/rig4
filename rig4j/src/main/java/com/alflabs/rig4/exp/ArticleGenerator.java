@@ -8,7 +8,9 @@ import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.rig4.struct.ArticleEntry;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
+import com.alflabs.utils.RPair;
 import com.google.common.base.Charsets;
+import org.jsoup.nodes.Element;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -79,8 +81,16 @@ public class ArticleGenerator {
             if (keepExisting) {
                 mLogger.d(TAG, "   Keep existing: " + destName);
             } else {
-                String htmlBody = processHtml(entity.getContent(), title, destFile);
+                RPair<Element, HtmlTransformer.LazyTransformer> intermediary = processHtml(entity.getContent(), title, destFile);
                 entity.syncToStore();
+
+                HtmlTransformer.LazyTransformer transformer = intermediary.second;
+                Element transformed = transformer.lazyTransform(intermediary.first);
+                String content = transformed.html();
+                String relImageLink = transformer.getFormattedFirstImageSrc(transformed);
+                // TODO for now there isn't a good way to generate *good* descriptions or get them from an article izu tag.
+                // (The way I write my articles, the first extracted paragraph is the same as the title).
+                String headDescription = null;
 
                 Templater.ArticleData data = new Templater.ArticleData(
                         mFlags.getString(EXP_SITE_TITLE),
@@ -92,9 +102,9 @@ public class ArticleGenerator {
                         mFlags.getString(EXP_GA_UID),
                         title,
                         destName,
-                        htmlBody,
-                        "" /* relImageLink */,
-                        "" /* headDescription */);
+                        content,
+                        relImageLink,
+                        headDescription);
                 String html = mTemplater.generate(data);
                 byte[] htmlContent = html.getBytes(Charsets.UTF_8);
 
@@ -106,9 +116,9 @@ public class ArticleGenerator {
     }
 
     @NonNull
-    private String processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
-        String htmlBody = mHtmlTransformer.simplifyForHtml(
-                content,
+    private RPair<Element, HtmlTransformer.LazyTransformer> processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
+        HtmlTransformer.LazyTransformer transformer = mHtmlTransformer.createLazyTransformer(
+                title,
                 new HtmlTransformer.Callback() {
                     @Override
                     public String processDrawing(String id, int width, int height) throws IOException {
@@ -120,6 +130,8 @@ public class ArticleGenerator {
                         return mGDocHelper.downloadImage(uri, destFile, width, height);
                     }
                 });
-        return htmlBody;
+
+        Element intermediary = mHtmlTransformer.simplifyForProcessing(content);
+        return RPair.create(intermediary, transformer);
     }
 }

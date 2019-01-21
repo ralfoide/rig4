@@ -210,12 +210,27 @@ class PostTree {
             generator.getLogger().d(TAG, "--- Generate  Page: " + generator.categoryToHtml(mBlog.getCategory())
                     + ", file: " + destFile);
 
-            StringBuilder content = new StringBuilder();
-            for (PostShort postShort : mPostShorts) {
-                content.append(generateShort(generator, destFile, postShort));
-            }
+            SourceTree.Content blogHeader = mBlog.getBlogHeader();
+            blogHeader.setTransformer(generator.getLazyHtmlTransformer(destFile));
+            // This is an index page so we get the description & images from the blog header if any
+            // and as a fall-back get them from the posts content.
+            String formattedHeader = blogHeader.getFormatted();
+            String relImageLink = blogHeader.getFormattedFirstImageSrc();
+            // TODO for now there isn't a good way to generate *good* descriptions or get them from a blog-level izu tag.
+            // (The way I write the blog, the first extracted paragraph isn't a good match).
+            String headDescription = null;
 
-            mBlog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
+            StringBuilder allPostsContent = new StringBuilder();
+            for (PostShort postShort : mPostShorts) {
+                allPostsContent.append(generateShort(generator, destFile, postShort));
+
+                if (relImageLink == null) {
+                    relImageLink = postShort.mContent.getFormattedFirstImageSrc();
+                }
+                if (headDescription == null) {
+                    headDescription = postShort.mContent.getFormattedDescription();
+                }
+            }
 
             String prevPageLink = null;
             String nextPageLink = null;
@@ -225,6 +240,7 @@ class PostTree {
             if (index < blogPages.size() - 1) {
                 nextPageLink = blogPages.get(index + 1).mFileItem.getName();
             }
+
 
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     generator.getSiteTitle(),
@@ -238,16 +254,16 @@ class PostTree {
                     destFile.getName(), // page filename (for base-url/page-filename.html)
                     prevPageLink,
                     nextPageLink,
-                    mBlog.getBlogHeader().getFormatted(),
+                    formattedHeader,
                     "",                 // no post title for an index
                     "",                 // no post date  for an index
                     "",                 // no post category for an index
                     "",                 // no post cat link for an index
                     destFile.getName(),
-                    content.toString(),
+                    allPostsContent.toString(),
                     generator.getGenInfo(),
-                    "" /* relImageLink */,
-                    "" /* headDescription */);
+                    relImageLink,
+                    headDescription);
 
             String generated = generator.getTemplater().generate(templateData);
             generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
