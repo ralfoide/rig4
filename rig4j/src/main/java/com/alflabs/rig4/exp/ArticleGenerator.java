@@ -85,14 +85,16 @@ public class ArticleGenerator {
                 Templater.ArticleData data = new Templater.ArticleData(
                         mFlags.getString(EXP_SITE_TITLE),
                         mFlags.getString(EXP_SITE_BASE_URL),
-                        "", // relative link is empty: articles are always at root of site URL.
+                        "", // relative rev link is empty: articles are always at root of site URL.
+                        "", // relative fwd link is empty: articles are always at root of site URL.
                         mFlags.getString(EXP_SITE_BANNER),
                         "", // css
                         mFlags.getString(EXP_GA_UID),
                         title,
                         destName,
                         htmlBody,
-                        ""); // relImageLink
+                        "" /* relImageLink */,
+                        "" /* headDescription */);
                 String html = mTemplater.generate(data);
                 byte[] htmlContent = html.getBytes(Charsets.UTF_8);
 

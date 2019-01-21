@@ -244,7 +244,8 @@ public class Templater {
         public final String mRelPageLink;
         public final String mSiteTitle;
         public final String mAbsSiteLink;
-        public final String mRelSiteLink;
+        public final String mRevSiteLink;
+        public final String mFwdPageLink;
         public final String mRelBannerLink;
 
         // Callers should use derived classes: ArticleData.create(), etc.
@@ -252,19 +253,21 @@ public class Templater {
         BaseData(
                 String siteTitle,
                 String absSiteLink,
-                String relSiteLink,
+                String revSiteLink,
+                String fwdPageLink,
                 String css,
                 String GAUid,
                 String pageTitle,
                 String relPageLink,
                 String relBannerLink) {
+            mFwdPageLink = fwdPageLink;
             mCss = css;
             mGAUid = GAUid;
             mPageTitle = pageTitle;
             mRelPageLink = relPageLink;
             mSiteTitle = siteTitle;
             mAbsSiteLink = absSiteLink;
-            mRelSiteLink = relSiteLink;
+            mRevSiteLink = revSiteLink;
             mRelBannerLink = relBannerLink;
         }
     }
@@ -273,21 +276,25 @@ public class Templater {
     public static class ArticleData extends BaseData {
         public final String mContent;
         public final String mRelImageLink;
+        public final String mDescription;
 
         public ArticleData(
                 String siteTitle,
                 String absSiteLink,
-                String relSiteLink,
+                String revSiteLink,
+                String fwdPageLink,
                 String relBannerLink,
                 String css,
                 String GAUid,
                 String pageTitle,
                 String relPageLink,
                 String content,
-                String relImageLink) {
+                String relImageLink,
+                String headDescription) {
             super(siteTitle,
                     absSiteLink,
-                    relSiteLink,
+                    revSiteLink,
+                    fwdPageLink,
                     css,
                     GAUid,
                     pageTitle,
@@ -295,6 +302,7 @@ public class Templater {
                     relBannerLink);
             mContent = content;
             mRelImageLink = relImageLink;
+            mDescription = headDescription;
         }
 
         @NonNull
@@ -315,12 +323,14 @@ public class Templater {
         public final String mPostTitle;
         public final String mPostCategory;
         public final String mRelPostCatLink;
+        public final String mRelPostFullLink;
         public final String mGenInfo;
 
         public BlogPageData(
                 String siteTitle,
                 String absSiteLink,
-                String relSiteLink,
+                String revSiteLink,
+                String fwdPageLink,
                 String relBannerLink,
                 String css,
                 String GAUid,
@@ -333,19 +343,23 @@ public class Templater {
                 String postDate,
                 String postCategory,
                 String relPostCatLink,
+                String relPostFullLink,
                 String content,
                 String genInfo,
-                String relImageLink) {
+                String relImageLink,
+                String headDescription) {
             super(siteTitle,
                     absSiteLink,
-                    relSiteLink,
+                    revSiteLink,
+                    fwdPageLink,
                     relBannerLink,
                     css,
                     GAUid,
                     pageTitle,
                     relPageLink,
                     content,
-                    relImageLink);
+                    relImageLink,
+                    headDescription);
             mRelPrevPageLink = relPrevPageLink;
             mRelNextPageLink = relNextPageLink;
             mBlogHeader = blogHeader;
@@ -353,6 +367,7 @@ public class Templater {
             mPostTitle = postTitle;
             mPostCategory = postCategory;
             mRelPostCatLink = relPostCatLink;
+            mRelPostFullLink = relPostFullLink;
             mGenInfo = genInfo;
         }
 
@@ -367,12 +382,12 @@ public class Templater {
 
     @SuppressWarnings({"unused", "WeakerAccess"})
     public static class BlogPostData extends BlogPageData {
-        public final String mRelPostFullLink;
         public final String mRelPostExtraLink;
 
         public BlogPostData(
                 String absSiteLink,
                 String relSiteLink,
+                String fwdPageLink,
                 String postTitle,
                 String postDate,
                 String postCategory,
@@ -383,6 +398,7 @@ public class Templater {
             super(  "",
                     absSiteLink,
                     relSiteLink,
+                    fwdPageLink,
                     "",
                     "",
                     "",
@@ -395,10 +411,11 @@ public class Templater {
                     postDate,
                     postCategory,
                     relPostCatLink,
+                    relPostFullLink,
                     content,
                     "",
-                    "");
-            mRelPostFullLink = relPostFullLink;
+                    "" /* relImageLink */,
+                    "" /* headDescription */);
             mRelPostExtraLink = relPostExtraLink;
         }
 

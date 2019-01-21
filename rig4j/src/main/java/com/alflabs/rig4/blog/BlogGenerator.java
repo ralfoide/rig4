@@ -292,6 +292,12 @@ public class BlogGenerator {
             return mFlags.getString(EXP_SITE_BASE_URL);
         }
 
+        /** A reverse web link to go from a generated blog page to the site's root. */
+        public String getRevSiteLink() {
+            // There are always two levels in the generated pages: <site>/blog/cat/<content>.
+            return "../../";
+        }
+
         public String getRelBannerLink() {
             return mFlags.getString(EXP_SITE_BANNER);
         }
