@@ -277,6 +277,7 @@ public class Templater {
         public final String mContent;
         public final String mRelImageLink;
         public final String mDescription;
+        public final String mGenInfo;
 
         public ArticleData(
                 String siteTitle,
@@ -290,7 +291,8 @@ public class Templater {
                 String relPageLink,
                 String content,
                 String relImageLink,
-                String headDescription) {
+                String headDescription,
+                String genInfo) {
             super(siteTitle,
                     absSiteLink,
                     revSiteLink,
@@ -303,6 +305,7 @@ public class Templater {
             mContent = content;
             mRelImageLink = relImageLink;
             mDescription = headDescription;
+            mGenInfo = genInfo;
         }
 
         @NonNull
@@ -324,7 +327,6 @@ public class Templater {
         public final String mPostCategory;
         public final String mRelPostCatLink;
         public final String mRelPostFullLink;
-        public final String mGenInfo;
 
         public BlogPageData(
                 String siteTitle,
@@ -359,7 +361,8 @@ public class Templater {
                     relPageLink,
                     content,
                     relImageLink,
-                    headDescription);
+                    headDescription,
+                    genInfo);
             mRelPrevPageLink = relPrevPageLink;
             mRelNextPageLink = relNextPageLink;
             mBlogHeader = blogHeader;
@@ -368,7 +371,6 @@ public class Templater {
             mPostCategory = postCategory;
             mRelPostCatLink = relPostCatLink;
             mRelPostFullLink = relPostFullLink;
-            mGenInfo = genInfo;
         }
 
         @NonNull

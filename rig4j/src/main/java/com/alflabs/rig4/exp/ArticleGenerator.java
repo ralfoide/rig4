@@ -1,6 +1,7 @@
 package com.alflabs.rig4.exp;
 
 import com.alflabs.annotations.NonNull;
+import com.alflabs.rig4.EntryPoint;
 import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.flags.Flags;
 import com.alflabs.rig4.gdoc.GDocHelper;
@@ -19,6 +20,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static com.alflabs.rig4.exp.ExpFlags.EXP_DEST_DIR;
@@ -92,6 +95,9 @@ public class ArticleGenerator {
                 // (The way I write my articles, the first extracted paragraph is the same as the title).
                 String headDescription = null;
 
+                String genInfo = "Generated on " + LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                        + " by Rig4j " + EntryPoint.getVersion();
+
                 Templater.ArticleData data = new Templater.ArticleData(
                         mFlags.getString(EXP_SITE_TITLE),
                         mFlags.getString(EXP_SITE_BASE_URL),
@@ -104,7 +110,8 @@ public class ArticleGenerator {
                         destName,
                         content,
                         relImageLink,
-                        headDescription);
+                        headDescription,
+                        genInfo);
                 String html = mTemplater.generate(data);
                 byte[] htmlContent = html.getBytes(Charsets.UTF_8);
 
