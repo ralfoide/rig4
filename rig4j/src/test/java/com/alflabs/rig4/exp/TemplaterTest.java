@@ -138,7 +138,8 @@ public class TemplaterTest {
                 "Content replacement\n" +
                 "Multiple content.",
                 "" /* relImageLink */,
-                "" /* headDescription */));
+                "" /* headDescription */,
+                "Rig4j Gen info"));
 
         assertThat(generated).isEqualTo("" +
                 "<!doctype html>\n" +
@@ -187,7 +188,8 @@ public class TemplaterTest {
                 "Content replacement\n" +
                 "Multiple content.",
                 "" /* relImageLink */,
-                "" /* headDescription */));
+                "" /* headDescription */,
+                "Rig4j Gen info"));
 
         assertThat(generated).isEqualTo("" +
                 "\n" +
@@ -214,7 +216,8 @@ public class TemplaterTest {
                 "Content replacement first line\n" +
                 "Content replacement second line.",
                 "" /* relImageLink */,
-                "" /* headDescription */);
+                "" /* headDescription */,
+                "Rig4j Gen info");
 
         String generated = mTemplater.generate(data);
 
@@ -258,7 +261,7 @@ public class TemplaterTest {
                 "category/link",
                 "page_file.html",
                 "Content replacement",
-                "Gen info",
+                "Rig4j Gen info",
                 "main_image.jpg",
                 "head description");
         String generated = mTemplater.generate(data);

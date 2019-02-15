@@ -22,6 +22,7 @@ import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 
 import javax.inject.Inject;
+import javax.xml.transform.TransformerException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -706,11 +707,16 @@ public class HtmlTransformer {
 
             } else if (host.equals("docs.google.com") && path.startsWith("/drawings/d/") && path.endsWith("/image")) {
                 // Current style of drawing URLs.
-                String id = path.substring("/drawings/d/".length());
-                id = id.substring(0, id.length() - "/image".length());
-                int w = Integer.parseInt(queries.get(QUERY_W));
-                int h = Integer.parseInt(queries.get(QEURY_H));
-                newValue = callback.processDrawing(id, w, h);
+                try {
+                    String id = path.substring("/drawings/d/".length());
+                    id = id.substring(0, id.length() - "/image".length());
+                    int w = Integer.parseInt(queries.get(QUERY_W));
+                    int h = Integer.parseInt(queries.get(QEURY_H));
+                    newValue = callback.processDrawing(id, w, h);
+                } catch (Throwable t) {
+                    throw new TransformerException("ERROR processing URI " + value
+                            + ", Error: " + t.toString());
+                }
 
             } else if (host.contains(".google.com")) {
                 // Whatever this is, we should probably do something with it.
