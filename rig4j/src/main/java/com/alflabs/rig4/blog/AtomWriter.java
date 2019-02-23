@@ -41,7 +41,7 @@ public class AtomWriter {
                 "rel", "alternate",
                 "type", "text/html",
                 "hreflang", "en",
-                "href", generator.getAbsSiteLink() + fileItem.getLeafDir());
+                "href", generator.getAbsSiteLink() + fileItem.getLeafDirWeb());
 
         attr(generated, "link",
                 "rel", "self",
@@ -100,7 +100,7 @@ public class AtomWriter {
                 content,
                 "type", "html",     // per https://tools.ietf.org/html/rfc4287#section-4.1.3
                 "xml:lang", "en",
-                "xml:base", generator.getAbsSiteLink() + postFull.mFileItem.getLeafDir());
+                "xml:base", generator.getAbsSiteLink() + postFull.mFileItem.getLeafDirWeb());
 
         // Right now, post's time is only a Date by design. Generate a time using 0 hour 0 minutes.
         // Set the seconds to the modulo 60 of the hash of the content -- this way an update will
