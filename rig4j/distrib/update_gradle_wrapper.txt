@@ -1,0 +1,12 @@
+To update the gradle wrapper version:
+
+1- https://gradle.org/releases/ ==> find version, e.g. "v5.3"
+
+2- From the rig4j dir, use the wrapper "self update" mechanism:
+
+   $ ./gradlew wrapper --gradle-version 5.3
+
+3- Verify wrapper version:
+
+   $ ./gradlew -v
+

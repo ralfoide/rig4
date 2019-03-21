@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
@@ -131,7 +132,8 @@ public class GDocReader {
         } catch (IOException e) {
             mLogger.d(TAG,
                     "Enter Client ID and Secret from https://code.google.com/apis/console/?api=drive"
-                            + " into " + path, e);
+                    + " (nav > API > Credentials > ID > Download) into "
+                    + path, e);
             throw e;
         }
     }
@@ -182,10 +184,27 @@ public class GDocReader {
     public InputStream getDataByUrl(URL url) throws IOException {
         mTiming.start();
         try {
-            HttpRequest request = mDrive.getRequestFactory().buildGetRequest(new GenericUrl(url));
-            request.setThrowExceptionOnExecuteError(true);
-            HttpResponse response = request.execute();
-            return response.getContent();
+            int timeoutSeconds = 10;
+            int retry = 0;
+            while (true) {
+                try {
+                    HttpRequest request = mDrive.getRequestFactory().buildGetRequest(new GenericUrl(url));
+                    request.setReadTimeout(1000 * timeoutSeconds); // read timeout in milliseconds
+                    request.setThrowExceptionOnExecuteError(true);
+                    HttpResponse response = request.execute();
+                    return response.getContent();
+                } catch (SocketTimeoutException e) {
+                    if (retry > 3) {
+                        throw e;
+                    }
+                    mLogger.d(TAG, "SocketTimeoutException retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url.toString());
+                    try {
+                        Thread.sleep(1000 * (timeoutSeconds / 2));
+                    } catch (InterruptedException ignore) {}
+                    timeoutSeconds *= 2;
+                    retry++;
+                }
+            }
         } finally {
             mTiming.end();
         }
