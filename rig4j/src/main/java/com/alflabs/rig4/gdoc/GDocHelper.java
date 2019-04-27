@@ -91,7 +91,7 @@ public class GDocHelper {
                 if (storedImageName != null) {
                     File actualFile = new File(destFile.getParentFile(), storedImageName);
                     if (mFileOps.isFile(actualFile)) {
-                        mLogger.d(TAG, "           Reuse: " + storedImageName);
+                        // TODO (if VERBOSE) { mLogger.d(TAG, "           Reuse: " + storedImageName); }
                         return storedImageName;
                     }
                 }
@@ -245,7 +245,7 @@ public class GDocHelper {
                     if (storedImageName != null) {
                         File actualFile = new File(destFile.getParentFile(), storedImageName);
                         if (mFileOps.isFile(actualFile)) {
-                            mLogger.d(TAG, "           Reuse: " + storedImageName);
+                            // TODO if (VERBOSE) { mLogger.d(TAG, "           Reuse: " + storedImageName); }
                             return storedImageName;
                         }
                     }

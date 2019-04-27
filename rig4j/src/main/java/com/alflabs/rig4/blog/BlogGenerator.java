@@ -73,6 +73,8 @@ public class BlogGenerator {
                 generatePostTree(postTree);
                 postTree.saveMetadata();
                 sourceTree.saveMetadata();
+            } else {
+                mLogger.d(TAG, "  Unchanged: " + blogConfig.getMixedCat());
             }
         }
     }
@@ -82,12 +84,15 @@ public class BlogGenerator {
             throws BlogSourceParser.ParseException {
         SourceTree sourceTree = new SourceTree();
 
+        int modified = 0;
         for (BlogSourceParser.ParsedResult parsedResult : parsedResults) {
             sourceTree.merge(parsedResult,
                 parsedResult.isFileChanged(),
                 blogConfig.getCatAcceptFilter(),
                 blogConfig.getCatRejectFilter());
+            if (parsedResult.isFileChanged()) { modified++; }
         }
+        mLogger.d(TAG, "  " + parsedResults.size() + " source entries, " + modified + " modified");
 
         return sourceTree;
     }

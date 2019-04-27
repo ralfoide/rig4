@@ -73,17 +73,32 @@ public class ArticleGenerator {
 
             GDocEntity entity = mGDocHelper.getGDocAsync(entry.getFileId(), "text/html");
             String title = entity.getMetadata().getTitle();
-            boolean keepExisting = !allChanged && entity.isUpdateToDate() && mFileOps.isFile(destFile);
+            boolean keepExisting = true;
+            String changed = "";
+            if (allChanged) {
+                keepExisting = false;
+                changed = "all changed";
+            } else if (!entity.isUpdateToDate()) {
+                keepExisting = false;
+                changed = "entity GDoc changed";
+            } else if (!mFileOps.isFile(destFile)) {
+                keepExisting = false;
+                changed = "dest file missing";
+            }
 
             String htmlHashKey = "html-hash-" + destFile.getPath();
             if (keepExisting) {
                 String htmlHash = mHashStore.getString(htmlHashKey);
                 keepExisting = htmlHash != null && htmlHash.equals(entity.getMetadata().getContentHash());
+                if (!keepExisting) {
+                    changed = "entity content changed";
+                }
             }
 
             if (keepExisting) {
                 mLogger.d(TAG, "   Keep existing: " + destName);
             } else {
+                mLogger.d(TAG, "          Reason: " + changed);
                 RPair<Element, HtmlTransformer.LazyTransformer> intermediary = processHtml(entity.getContent(), title, destFile);
                 entity.syncToStore();
 
