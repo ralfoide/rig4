@@ -48,7 +48,13 @@ p.console {
 }
 
 .container {
-    max-width: 60rem;
+    max-width: 95%;
+}
+
+@media screen and (min-width: 600px) {
+    .container {
+        max-width: 60rem;
+    }
 }
 
 .center-horiz {
@@ -66,10 +72,16 @@ p.console {
 }
 
 .banner-bg-image {
-    height: 200px;
+    height: 50px;
     background-image: url("{{.RelBannerLink}}");
     background-position: center;
     background-size: 100% auto;
+}
+
+@media screen and (min-width: 600px) {
+    .banner-bg-image {
+        height: 200px;
+    }
 }
 
 .title-container {
@@ -95,8 +107,14 @@ p.console {
     background-color: #428bca;
     font-family: sans-serif;
     text-align: center;
-    font-size: x-small;
+    font-size: small;
     line-height: 1rem;
+}
+
+@media screen and (min-width: 600px) {
+    .bottom-container {
+        font-size: x-small;
+    }
 }
 
 .post-title-container {

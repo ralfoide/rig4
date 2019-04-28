@@ -98,7 +98,7 @@ public class ArticleGenerator {
             if (keepExisting) {
                 mLogger.d(TAG, "   Keep existing: " + destName);
             } else {
-                mLogger.d(TAG, "          Reason: " + changed);
+                mLogger.d(TAG, "  Rebuild Reason: " + changed);
                 RPair<Element, HtmlTransformer.LazyTransformer> intermediary = processHtml(entity.getContent(), title, destFile);
                 entity.syncToStore();
 

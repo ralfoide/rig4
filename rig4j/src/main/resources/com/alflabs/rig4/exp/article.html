@@ -44,17 +44,13 @@ p.console {
 }
 
 .container {
-    max-width: 60rem;
+    max-width: 95%;
 }
 
-.bottom-container {
-    margin-top: 8px;
-    color: #fff;
-    background-color: #428bca;
-    font-family: sans-serif;
-    text-align: center;
-    font-size: x-small;
-    line-height: 1rem;
+@media screen and (min-width: 600px) {
+    .container {
+        max-width: 60rem;
+    }
 }
 
 .center-horiz {
@@ -72,10 +68,16 @@ p.console {
 }
 
 .banner-bg-image {
-    height: 200px;
+    height: 50px;
     background-image: url("{{.RevSiteLink}}{{.RelBannerLink}}");
     background-position: center;
     background-size: 100% auto;
+}
+
+@media screen and (min-width: 600px) {
+    .banner-bg-image {
+        height: 200px;
+    }
 }
 
 .title-container {
@@ -90,6 +92,22 @@ p.console {
 .title-container a {
     color: #fff;
     text-decoration: none;
+}
+
+.bottom-container {
+    margin-top: 8px;
+    color: #fff;
+    background-color: #428bca;
+    font-family: sans-serif;
+    text-align: center;
+    font-size: small;
+    line-height: 1rem;
+}
+
+@media screen and (min-width: 600px) {
+    .bottom-container {
+        font-size: x-small;
+    }
 }
 
 h1, h2, h3, h4, h5, h6 {
