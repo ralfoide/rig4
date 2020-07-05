@@ -20,9 +20,10 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
+import org.jsoup.select.NodeFilter;
+import org.jsoup.select.NodeTraversor;
 
 import javax.inject.Inject;
-import javax.xml.transform.TransformerException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -100,6 +101,7 @@ public class HtmlTransformer {
             rewriteUrls(doc, ATTR_SRC, callback);
             rewriteYoutubeEmbed(doc);
             linkifyImages(doc);
+            removeIzuComments(doc);
             removeIzuTags(doc);
 
             doc.outputSettings().prettyPrint(true);
@@ -210,6 +212,7 @@ public class HtmlTransformer {
                 rewriteUrls(element, ATTR_SRC, callback);
                 rewriteYoutubeEmbed(element);
                 linkifyImages(element);
+                removeIzuComments(element);
                 removeIzuTags(element);
                 return element;
             }
@@ -292,12 +295,45 @@ public class HtmlTransformer {
         }
     }
 
+    private void removeIzuComments(Element root) {
+
+        NodeFilter filter = new NodeFilter() {
+            boolean removing = false;
+
+            @Override
+            public FilterResult head(Node node, int depth) {
+                if (node instanceof Element) {
+                    String subText = ((Element) node).text();
+                    String ownText = ((Element) node).ownText();
+                    if (removing) {
+                        if (subText.contains("--]")) {
+                            removing = false;
+                            return FilterResult.REMOVE;
+                        }
+                    } else {
+                        if (ownText.contains("[!--")) {
+                            removing = !subText.contains("--]");
+                            return FilterResult.REMOVE;
+                        }
+                    }
+                }
+                return removing ? FilterResult.REMOVE : FilterResult.CONTINUE;
+            }
+
+            @Override
+            public FilterResult tail(Node node, int depth) {
+                return FilterResult.CONTINUE;
+            }
+        };
+        NodeTraversor.filter(filter, root);
+    }
+
     /**
      * Remove all [izu...] references in the text. I want to be able to add these in
      * current gdocs and not show them by mistake in the final output.
      */
     private void removeIzuTags(Element root) {
-        // Not: "[izu" is _not_ the IzuTags.Prefix as it doesn't use the trailing colon (':').
+        // Note: "[izu" is _not_ the IzuTags.Prefix as it doesn't use the trailing colon (':').
         for (Element element : root.getElementsContainingOwnText("[izu")) {
             for (int i = 0, n = element.childNodeSize(); i < n; i++) {
                 Node node = element.childNode(i);
