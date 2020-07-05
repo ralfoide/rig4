@@ -47,6 +47,7 @@ public class GDocReader {
      * https://github.com/google/google-api-java-client-samples/blob/master/drive-cmdline-sample/src/main/java/com/google/api/services/samples/drive/cmdline/DriveSample.java
      */
 
+    private static final String GDOC_ROOT_DIR = "gdoc-root-dir";
     private static final String GDOC_PATH_CLIENT_SECRET_JSON = "gdoc-path-client-secret-json";
     private static final String GDOC_PATH_DATA_STORE_DIR = "gdoc-path-data-store-dir";
     private static final String APPLICATION_NAME = "rig4";
@@ -68,11 +69,14 @@ public class GDocReader {
     }
 
     public void declareFlags() {
+        mFlags.addString(GDOC_ROOT_DIR,
+                "~/.rig42",
+                "Directory where Google Drive API stores credentials files.");
         mFlags.addString(GDOC_PATH_CLIENT_SECRET_JSON,
-                "~/.rig42/client_secret.json",
+                "$GDOC_ROOT_DIR/client_secret.json",
                 "Path to load client_secret.json from Google Drive API.");
         mFlags.addString(GDOC_PATH_DATA_STORE_DIR,
-                "~/.rig42/gdoc_store",
+                "$GDOC_ROOT_DIR/gdoc_store",
                 "Directory where the Google Drive API stores local credentials.");
     }
 
@@ -114,7 +118,9 @@ public class GDocReader {
     }
 
     private FileDataStoreFactory getFileDataStoreFactory() throws IOException {
-        String path = StringUtils.expandUserHome(mFlags.getString(GDOC_PATH_DATA_STORE_DIR));
+        String path = StringUtils.expandUserHome(
+                mFlags.getString(GDOC_PATH_DATA_STORE_DIR)
+                    .replace("$GDOC_ROOT_DIR", mFlags.getString(GDOC_ROOT_DIR)));
         try {
             return new FileDataStoreFactory(new File(path));
         } catch (IOException e) {
@@ -124,7 +130,9 @@ public class GDocReader {
     }
 
     private GoogleClientSecrets getGoogleClientSecrets() throws IOException {
-        String path = StringUtils.expandUserHome(mFlags.getString(GDOC_PATH_CLIENT_SECRET_JSON));
+        String path = StringUtils.expandUserHome(
+                mFlags.getString(GDOC_PATH_CLIENT_SECRET_JSON)
+                    .replace("$GDOC_ROOT_DIR", mFlags.getString(GDOC_ROOT_DIR)));
         try {
             GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(mJsonFactory, new FileReader(path));
             return clientSecrets;

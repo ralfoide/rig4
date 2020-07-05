@@ -83,11 +83,21 @@ compileJava {
     def versionFile = new File(versionDir, "version.txt")
     logger.info("Version file: " + versionFile.getPath())
 
-    def git = org.ajoberstar.grgit.Grgit.open(dir: "..")
+    def git
+    try {
+        git = org.ajoberstar.grgit.Grgit.open(dir: ".")
+    } catch (Exception e) {
+        git = org.ajoberstar.grgit.Grgit.open(dir: "..")
+    }
     def revision = git.head().abbreviatedId
     versionFile.write(project.version + "-" + revision)
 }
 
 clean {
     delete dagger.generatedSrcDir
+}
+
+task run(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "com.alflabs.rig4.EntryPoint"
 }
