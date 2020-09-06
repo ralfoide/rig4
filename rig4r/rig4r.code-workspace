@@ -8,15 +8,15 @@
 		}
 	],
 	"settings": {
-		"terminal.integrated.shell.windows": "C:\\dev\\cygwin64\\bin\\bash.exe",
-		"terminal.integrated.env.windows": {
+		"sample.terminal.integrated.shell.windows": "C:\\dev\\cygwin64\\bin\\bash.exe",
+		"sample.terminal.integrated.env.windows": {
 			"CHERE_INVOKING": "1"
 		},
-		"terminal.integrated.shellArgs.windows": [
+		"sample.terminal.integrated.shellArgs.windows": [
 			"--login",
 			"-i"
 		],
-		"terminal.integrated.allowChords": false,
+		"sample.terminal.integrated.allowChords": false,
 		}
 }
 
