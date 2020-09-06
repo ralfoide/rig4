@@ -12,3 +12,11 @@ impl HashStore {
         println!("hash_store.v( {} )", self.v);
     }
 }
+
+#[cfg(test)]
+mod tests_hash_store {
+    #[test]
+    fn test1() {
+        assert_eq!(2 + 2, 4);
+    }
+}

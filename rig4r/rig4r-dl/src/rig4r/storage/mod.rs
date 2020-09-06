@@ -7,3 +7,11 @@ pub fn the_store() {
     let h = HashStore::new(6);
     h.v();
 }
+
+#[cfg(test)]
+mod tests_storage {
+    #[test]
+    fn test1() {
+        assert_eq!(2 + 2, 4);
+    }
+}

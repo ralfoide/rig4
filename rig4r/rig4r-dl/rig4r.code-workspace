@@ -1,10 +1,7 @@
 {
 	"folders": [
 		{
-			"path": "rig4r-dl"
-		},
-		{
-			"path": "librig4r"
+			"path": "."
 		}
 	],
 	"settings": {
