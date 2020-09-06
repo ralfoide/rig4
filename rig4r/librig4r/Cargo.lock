@@ -3,10 +3,3 @@
 [[package]]
 name = "rig4r"
 version = "0.1.0"
-
-[[package]]
-name = "rig4r-dl"
-version = "0.1.0"
-dependencies = [
- "rig4r",
-]
