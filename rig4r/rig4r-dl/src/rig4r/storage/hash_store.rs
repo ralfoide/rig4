@@ -1,22 +1,42 @@
+
+#![allow(non_snake_case)]
+
+use std::collections::HashMap;
+
 pub struct HashStore {
-    v: i32
+    mCache: HashMap<String, String>
 }
 
 impl HashStore {
-    pub fn new(v: i32) -> HashStore {        
-        println!("new hash store");
-        HashStore{ v }
+    pub fn new() -> HashStore {
+        HashStore{
+            mCache: HashMap::new()
+        }
     }
 
-    pub fn v(&self) {
-        println!("hash_store.v( {} )", self.v);
+    pub fn putString(&mut self, description: &str, content: &str) {
+        self.mCache.insert(String::from(description), String::from(content));
+    }
+
+    pub fn getString(&self, description: &str) -> Option<&String> {
+        self.mCache.get(description)
     }
 }
 
 #[cfg(test)]
 mod tests_hash_store {
+    use super::*;
+
     #[test]
-    fn test1() {
-        assert_eq!(2 + 2, 4);
+    fn test_putString_getString() {
+        let mut hs = HashStore::new();
+        assert_eq!(hs.getString("key"), None);
+
+        hs.putString("key", "value");
+        assert_eq!(hs.getString("key").unwrap(), "value");
+        assert_eq!(hs.getString("key").unwrap(), "value");
+
+        hs.putString("key", "value2");
+        assert_eq!(hs.getString("key").unwrap(), "value2");
     }
 }
