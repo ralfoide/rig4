@@ -1,5 +1,7 @@
 
+pub mod config;
 pub mod storage;
+pub mod utils;
 
 #[cfg(test)]
 mod tests_rig4r {
