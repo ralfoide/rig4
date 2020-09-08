@@ -4,12 +4,13 @@
 use shaku::{module, HasComponent};
 
 mod rig4r;
-use rig4r::storage::*;
 use rig4r::config::*;
+use rig4r::storage::*;
+use rig4r::utils::*;
 
 module! {
     MainModule {
-        components = [Flags, HashStore],
+        components = [Flags, BlobStore, HashStore, FileOps],
         providers = []
     }
 }

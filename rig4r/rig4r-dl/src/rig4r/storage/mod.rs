@@ -1,13 +1,8 @@
 
 mod hash_store;
-pub use hash_store::HashStore;
 pub use hash_store::IHashStore;
+pub use hash_store::HashStore;
 
-
-#[cfg(test)]
-mod tests_storage {
-    #[test]
-    fn test1() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+mod blob_store;
+pub use blob_store::IBlobStore;
+pub use blob_store::BlobStore;

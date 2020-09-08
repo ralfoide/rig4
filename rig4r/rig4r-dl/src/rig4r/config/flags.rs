@@ -36,11 +36,11 @@ mod tests_file_ops {
     fn test_getBlogDir() {
         let m = TestModule::builder()
             .with_component_parameters::<Flags>(FlagsParameters {
-                mBlobDir: "/tmp".to_string()
+                mBlobDir: "/tmp/test".to_string()
             })
             .build();
 
         let f: &dyn IFlags = m.resolve_ref();
-        assert_eq!(f.getBlobDir(), "/tmp");
+        assert_eq!(f.getBlobDir(), "/tmp/test");
     }
 }
