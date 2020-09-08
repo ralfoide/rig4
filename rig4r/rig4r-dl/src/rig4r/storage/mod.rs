@@ -1,6 +1,7 @@
 
 mod hash_store;
 pub use hash_store::HashStore;
+pub use hash_store::IHashStore;
 
 
 #[cfg(test)]

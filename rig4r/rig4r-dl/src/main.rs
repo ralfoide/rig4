@@ -1,10 +1,29 @@
 
+#![allow(non_snake_case)]
+
+use shaku::{module, HasComponent};
+
 mod rig4r;
 use rig4r::storage::*;
+use rig4r::config::*;
+
+module! {
+    MainModule {
+        components = [Flags, HashStore],
+        providers = []
+    }
+}
+
+fn setupModule() -> MainModule {
+    MainModule::builder().build()
+}
 
 fn main() {
     println!("Hello, world!");
-    let mut hs = HashStore::new();
+
+    let mut mainModule = setupModule();
+    
+    let hs: &mut dyn IHashStore = mainModule.resolve_mut().unwrap();
     hs.putString("foo", "store");
     println!("Store {}", hs.getString("foo").unwrap());
 }

@@ -1,24 +1,34 @@
 
 #![allow(non_snake_case)]
 
+use shaku::{Component, Interface};
 use std::collections::HashMap;
 
+pub trait IHashStore: Interface {
+    fn putString(&mut self, description: &str, content: &str);
+    fn getString(&self, description: &str) -> Option<&String>;
+}
+
+#[derive(Component)]
+#[shaku(interface = IHashStore)]
 pub struct HashStore {
     mCache: HashMap<String, String>
 }
 
 impl HashStore {
-    pub fn new() -> HashStore {
+    fn new() -> impl IHashStore {
         HashStore{
             mCache: HashMap::new()
         }
     }
+}
 
-    pub fn putString(&mut self, description: &str, content: &str) {
+impl IHashStore for HashStore {
+    fn putString(&mut self, description: &str, content: &str) {
         self.mCache.insert(String::from(description), String::from(content));
     }
 
-    pub fn getString(&self, description: &str) -> Option<&String> {
+    fn getString(&self, description: &str) -> Option<&String> {
         self.mCache.get(description)
     }
 }
@@ -26,6 +36,14 @@ impl HashStore {
 #[cfg(test)]
 mod tests_hash_store {
     use super::*;
+    use shaku::{module, HasComponent};
+
+    module! {
+        TestModule {
+            components = [HashStore],
+            providers = []
+        }
+    }
 
     #[test]
     fn test_putString_getString() {
@@ -38,5 +56,14 @@ mod tests_hash_store {
 
         hs.putString("key", "value2");
         assert_eq!(hs.getString("key").unwrap(), "value2");
+    }
+
+    #[test]
+    fn test_as_module() {
+        let mut m = TestModule::builder().build();
+        let hs: &mut dyn IHashStore = m.resolve_mut().unwrap();
+        assert_eq!(hs.getString("key"), None);
+        hs.putString("key", "value");
+        assert_eq!(hs.getString("key").unwrap(), "value");
     }
 }

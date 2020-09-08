@@ -3,13 +3,13 @@
 
 use shaku::{Component, Interface};
 
-pub trait IFlags : Interface {
+pub trait IFlags: Interface {
     fn getBlobDir(&self) -> &String;
 }
 
 #[derive(Component)]
 #[shaku(interface = IFlags)]
-struct Flags {
+pub struct Flags {
     mBlobDir: String
 }
 
@@ -40,7 +40,7 @@ mod tests_file_ops {
             })
             .build();
 
-        let f : &dyn IFlags = m.resolve_ref();
+        let f: &dyn IFlags = m.resolve_ref();
         assert_eq!(f.getBlobDir(), "/tmp");
     }
 }
