@@ -1,7 +1,7 @@
+import org.ajoberstar.grgit.Grgit
+
 plugins {
     id "java"
-    // Add the Annotation Processor Plugin to run dagger at build-time.
-    id "net.ltgt.apt" version "0.10"
     id "org.ajoberstar.grgit" version "2.1.0"
 }
 
@@ -18,12 +18,6 @@ ext.dagger = [
         generatedSrcDir: "src/dagger/java"
 ]
 
-sourceSets {
-    main {
-        output.generatedSourcesDir = dagger.generatedSrcDir
-    }
-}
-
 dependencies {
     compile project(":LibUtilsJava")
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
@@ -36,10 +30,10 @@ dependencies {
     compile "com.google.guava:guava:20.0"   // 20.0 needed by google-api-services-drive
 
     compile "com.google.dagger:dagger:2.11"
-    apt     "com.google.dagger:dagger-compiler:2.11"
+    annotationProcessor "com.google.dagger:dagger-compiler:2.11"
 
     compile "com.google.auto.factory:auto-factory:1.0-beta5"
-    apt     "com.google.auto.factory:auto-factory:1.0-beta5"
+    annotationProcessor "com.google.auto.factory:auto-factory:1.0-beta5"
 
     testCompile "junit:junit:4.10"
     testCompile "com.google.truth:truth:0.31"
@@ -70,8 +64,13 @@ task fatJar(type: Jar) {
 }
 
 compileJava {
-    delete dagger.generatedSrcDir
-    source dagger.generatedSrcDir
+    project.mkdir(dagger.generatedSrcDir)
+    // Options are listed in https://docs.gradle.org/current/dsl/org.gradle.api.tasks.compile.CompileOptions.html
+    // Note: becomes generatedSourceOutputDirectory in/after Gradle 6.6.1
+    def f = new File(project.projectDir, dagger.generatedSrcDir)
+    logger.warn("Dagger generated src dir = " + f.absolutePath)
+    options.annotationProcessorGeneratedSourcesDirectory = f
+    outputs.dir(dagger.generatedSrcDir)
 
     // Generate a resource file with the jar version + git head hash
     // (this file should be in gitignore).
@@ -85,9 +84,9 @@ compileJava {
 
     def git
     try {
-        git = org.ajoberstar.grgit.Grgit.open(dir: ".")
+        git = Grgit.open(dir: ".")
     } catch (Exception e) {
-        git = org.ajoberstar.grgit.Grgit.open(dir: "..")
+        git = Grgit.open(dir: "..")
     }
     def revision = git.head().abbreviatedId
     versionFile.write(project.version + "-" + revision)
