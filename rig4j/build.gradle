@@ -30,7 +30,9 @@ dependencies {
     compile "com.google.guava:guava:20.0"   // 20.0 needed by google-api-services-drive
 
     compile "com.google.dagger:dagger:2.11"
+    compile "javax.annotation:javax.annotation-api:1.3.2"
     annotationProcessor "com.google.dagger:dagger-compiler:2.11"
+    annotationProcessor "javax.annotation:javax.annotation-api:1.3.2"
 
     compile "com.google.auto.factory:auto-factory:1.0-beta5"
     annotationProcessor "com.google.auto.factory:auto-factory:1.0-beta5"
@@ -82,13 +84,9 @@ compileJava {
     def versionFile = new File(versionDir, "version.txt")
     logger.info("Version file: " + versionFile.getPath())
 
-    def git
-    try {
-        git = Grgit.open(dir: ".")
-    } catch (Exception e) {
-        git = Grgit.open(dir: "..")
-    }
+    def git = Grgit.open(dir: project.rootDir.path)
     def revision = git.head().abbreviatedId
+    logger.warn("Git rev " + revision + " at " + project.rootDir.path)
     versionFile.write(project.version + "-" + revision)
 }
 

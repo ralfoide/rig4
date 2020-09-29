@@ -18,7 +18,7 @@ if [[ ! -f "$RIG4JAR" ]]; then
     BUILD="1"
 else
     GITREV=$(git rev-parse --short HEAD)
-    RIGREV=$(java -jar "$RIG4JAR" --version || echo "0")
+    RIGREV=$(java -jar "$RIG4JAR" "$@" --version || echo "0")
     if [[ ! "$RIGREV" == *"$GITREV"* ]]; then
         BUILD="1"
     fi
@@ -27,7 +27,8 @@ fi
 if [[ -n "$BUILD" ]]; then
     echo "Building $RIG4JAR ..."
     (
-        cd ..
+        cd ../..
+        pwd
         ./gradlew --no-daemon fatJar
     )
     echo
