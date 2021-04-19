@@ -386,6 +386,7 @@ public class GDocHelper {
             metadata = mGDocReader.getMetadataById(fileId);
         } catch (IOException e) {
             mLogger.d(TAG, "Get metadata failed for " + fileId);
+            mLogger.d(TAG, "If this fails, try re-issuing a new OAuth2 token (e.g. gdoc-store/credentials).");
             return null;
         }
 
