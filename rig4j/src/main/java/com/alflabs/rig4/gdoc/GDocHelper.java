@@ -10,9 +10,7 @@ import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteSink;
-import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
-import com.google.common.io.Resources;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.resizers.configurations.Antialiasing;
 import org.apache.commons.codec.binary.Hex;
@@ -20,7 +18,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
@@ -37,7 +36,6 @@ import java.security.NoSuchAlgorithmException;
 public class GDocHelper {
     private static final String TAG = GDocHelper.class.getSimpleName();
 
-    private static final boolean CONVERT_IMAGES = true;
     private static final boolean COMPOSITE_GRAPHICS_TO_WHITE = true;
 
     private final ILogger mLogger;
@@ -101,13 +99,7 @@ public class GDocHelper {
                 image = cropAndResizeDrawing(image, width, height);
             }
 
-            if (CONVERT_IMAGES) {
-                destName = writeImageJpgOrPng(destFile, destName, image, width, height);
-            } else {
-                destName += "." + extension;
-                destFile = new File(destFile.getParentFile(), destName);
-                ImageIO.write(image, extension, destFile);
-            }
+            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
 
             mHashStore.putString(keyImageHash, imageHash);
             mHashStore.putString(keyImageName, destName);
@@ -228,48 +220,32 @@ public class GDocHelper {
             destName += DigestUtils.shaHex("_image_" + path) + "i";
             mLogger.d(TAG, "         Image  : " + destName + ", " + width + "x" + height);
 
-            if (CONVERT_IMAGES) {
-                // Download the image, then compares whether a PNG or JPG would be more compact.
-                //
-                // The gdoc exported images seem to always be PNG, even when copied from photos.
-                // Drawings are fairly compact in PNG, but not photos.
+            // Download the image, then compares whether a PNG or JPG would be more compact.
+            //
+            // The gdoc exported images seem to always be PNG, even when copied from photos.
+            // Drawings are fairly compact in PNG, but not photos.
 
-                BufferedImage image = ImageIO.read(uri.toURL());
+            BufferedImage image = ImageIO.read(uri.toURL());
 
-                final String keyImageHash = destName;
-                final String keyImageName = destName + "_name";
-                String imageHash = computeImageHash(image, width, height);
-                String storedImageHash = mHashStore.getString(keyImageHash);
-                if (imageHash.equals(storedImageHash)) {
-                    String storedImageName = mHashStore.getString(keyImageName);
-                    if (storedImageName != null) {
-                        File actualFile = new File(destFile.getParentFile(), storedImageName);
-                        if (mFileOps.isFile(actualFile)) {
-                            // TODO if (VERBOSE) { mLogger.d(TAG, "           Reuse: " + storedImageName); }
-                            return storedImageName;
-                        }
+            final String keyImageHash = destName;
+            final String keyImageName = destName + "_name";
+            String imageHash = computeImageHash(image, width, height);
+            String storedImageHash = mHashStore.getString(keyImageHash);
+            if (imageHash.equals(storedImageHash)) {
+                String storedImageName = mHashStore.getString(keyImageName);
+                if (storedImageName != null) {
+                    File actualFile = new File(destFile.getParentFile(), storedImageName);
+                    if (mFileOps.isFile(actualFile)) {
+                        // TODO if (VERBOSE) { mLogger.d(TAG, "           Reuse: " + storedImageName); }
+                        return storedImageName;
                     }
                 }
-
-                destName = writeImageJpgOrPng(destFile, destName, image, width, height);
-
-                mHashStore.putString(keyImageHash, imageHash);
-                mHashStore.putString(keyImageName, destName);
-
-            } else {
-                // OBSOLETE. Can be removed now.
-
-                // The stuff from gdocs appears to be mostly (if not always) PNG but there's
-                // no way to really know before actually downloading it.
-                String extension = "png";
-                destName += "." + extension;
-                destFile = new File(destFile.getParentFile(), destName);
-
-                // Download as-is and do not convert
-                ByteSource reader = Resources.asByteSource(uri.toURL());
-                ByteSink writer = Files.asByteSink(destFile);
-                reader.copyTo(writer);
             }
+
+            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
+
+            mHashStore.putString(keyImageHash, imageHash);
+            mHashStore.putString(keyImageName, destName);
 
             return destName;
         } finally {
