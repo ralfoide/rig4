@@ -29,6 +29,9 @@ import java.io.IOException;
  */
 @Singleton
 public class BlobStore {
+    private static final String TAG = BlobStore.class.getSimpleName();
+    private final boolean DEBUG = false;
+
     private static final String BLOB_STORE_DIR = "blob-store-dir";
 
     private final Flags mFlags;
@@ -129,12 +132,15 @@ public class BlobStore {
         File file = new File(StringUtils.expandUserHome(mFlags.getString(BLOB_STORE_DIR)), key);
         mFileOps.createParentDirs(file);
         mFileOps.writeBytes(content, file);
+        if (DEBUG) mLogger.d(TAG, "BLOB >> Store " + content.length + " bytes to " + file.getPath());
     }
 
     private byte[] retrieve(@NonNull String descriptor, @NonNull String suffix) throws IOException {
         String key = DigestUtils.shaHex(descriptor) + suffix;
         File file = new File(StringUtils.expandUserHome(mFlags.getString(BLOB_STORE_DIR)), key);
         if (!mFileOps.isFile(file)) return null;
-        return mFileOps.readBytes(file);
+        byte[] content = mFileOps.readBytes(file);
+        if (DEBUG) mLogger.d(TAG, "BLOB << Read  " + content.length + " bytes from " + file.getPath());
+        return content;
     }
 }

@@ -61,9 +61,22 @@ public class GDocHelper {
         mHashStore = hashStore;
     }
 
-    public String downloadDrawing(String id, File destFile, int width, int height) throws IOException {
+    public String downloadDrawing(String id, File destFile, int width, int height, boolean useCache) throws IOException {
         Timing.TimeAccumulator timing = mTiming.get("Html.Drawing").start();
         try {
+            String cacheKey = String.format("dl_drawing_fullpath_I%s_D%s_W%d_H%d", id, destFile.getPath(), width, height);
+            if (useCache) {
+                String cachedFilePath = mHashStore.getString(cacheKey);
+                if (cachedFilePath != null) {
+                    File cachedFile = new File(cachedFilePath);
+                    if (mFileOps.isFile(cachedFile)) {
+                        String cachedName = cachedFile.getName();
+                        mLogger.d(TAG, "         Cached : " + cachedName + ", " + width + "x" + height);
+                        return cachedName;
+                    }
+                }
+            }
+
             // Note: There is no Drive API for embedded drawings.
             // Experience shows that we can't even get the metadata like for a normal gdoc.
             // Instead we just download them every time the doc is generated.
@@ -89,7 +102,7 @@ public class GDocHelper {
                 if (storedImageName != null) {
                     File actualFile = new File(destFile.getParentFile(), storedImageName);
                     if (mFileOps.isFile(actualFile)) {
-                        // TODO (if VERBOSE) { mLogger.d(TAG, "           Reuse: " + storedImageName); }
+                        mHashStore.putString(cacheKey, actualFile.getPath());
                         return storedImageName;
                     }
                 }
@@ -99,8 +112,10 @@ public class GDocHelper {
                 image = cropAndResizeDrawing(image, width, height);
             }
 
-            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
+            File imgFile = writeImageJpgOrPng(destFile, destName, image, width, height);
+            destName = imgFile.getName();
 
+            mHashStore.putString(cacheKey, imgFile.getPath());
             mHashStore.putString(keyImageHash, imageHash);
             mHashStore.putString(keyImageName, destName);
 
@@ -209,9 +224,22 @@ public class GDocHelper {
         return image;
     }
 
-    public String downloadImage(URI uri, File destFile, int width, int height) throws IOException {
+    public String downloadImage(URI uri, File destFile, int width, int height, boolean useCache) throws IOException {
         Timing.TimeAccumulator timing = mTiming.get("Html.Image").start();
         try {
+            String cacheKey = String.format("dl_image_fullpath_U%s_D%s_W%d_H%d", uri, destFile.getPath(), width, height);
+            if (useCache) {
+                String cachedFilePath = mHashStore.getString(cacheKey);
+                if (cachedFilePath != null) {
+                    File cachedFile = new File(cachedFilePath);
+                    if (mFileOps.isFile(cachedFile)) {
+                        String cachedName = cachedFile.getName();
+                        mLogger.d(TAG, "         Cached : " + cachedName + ", " + width + "x" + height);
+                        return cachedName;
+                    }
+                }
+            }
+
             String path = uri.getPath();
 
             String destName = destFile.getName();
@@ -236,14 +264,16 @@ public class GDocHelper {
                 if (storedImageName != null) {
                     File actualFile = new File(destFile.getParentFile(), storedImageName);
                     if (mFileOps.isFile(actualFile)) {
-                        // TODO if (VERBOSE) { mLogger.d(TAG, "           Reuse: " + storedImageName); }
+                        mHashStore.putString(cacheKey, actualFile.getPath());
                         return storedImageName;
                     }
                 }
             }
 
-            destName = writeImageJpgOrPng(destFile, destName, image, width, height);
+            File imgFile = writeImageJpgOrPng(destFile, destName, image, width, height);
+            destName = imgFile.getName();
 
+            mHashStore.putString(cacheKey, imgFile.getPath());
             mHashStore.putString(keyImageHash, imageHash);
             mHashStore.putString(keyImageName, destName);
 
@@ -270,10 +300,10 @@ public class GDocHelper {
      * @param image Image to write
      * @param width Desired width or 0
      * @param height Desired heith or 0
-     * @return The final destName with extension
+     * @return The generated file full path with extension
      * @throws IOException
      */
-    private String writeImageJpgOrPng(File destDir, String destName, BufferedImage image, int width, int height) throws IOException {
+    private File writeImageJpgOrPng(File destDir, String destName, BufferedImage image, int width, int height) throws IOException {
         Timing.TimeAccumulator timing = mTiming.get("Html.JpegOrPng").start();
         int w = image.getWidth();
         int h = image.getHeight();
@@ -315,7 +345,7 @@ public class GDocHelper {
         ByteSink writer = Files.asByteSink(destFile);
         writer.write(result.toByteArray());
         timing.end();
-        return destName;
+        return destFile;
     }
 
 

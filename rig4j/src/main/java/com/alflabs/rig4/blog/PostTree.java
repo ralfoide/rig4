@@ -211,7 +211,7 @@ class PostTree {
                     + ", file: " + destFile);
 
             SourceTree.Content blogHeader = mBlog.getBlogHeader();
-            blogHeader.setTransformer(generator.getLazyHtmlTransformer(destFile));
+            blogHeader.setTransformer(generator.getLazyHtmlTransformer(destFile, "pageHeader:" + index + ":"));
             // This is an index page so we get the description & images from the blog header if any
             // and as a fall-back get them from the posts content.
             String formattedHeader = blogHeader.getFormatted();
@@ -278,7 +278,7 @@ class PostTree {
                 throws Exception {
             generator.getLogger().d(TAG, "    Generate Short: " + postData.mKey);
 
-            postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
+            postData.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile, "postShort:" + postData.mKey + ":"));
 
             String fullLink = postData.mPostFull.mFileItem.getName();
 
@@ -413,8 +413,8 @@ class PostTree {
             File destFile = new File(generator.getDestDir(), this.mFileItem.getLeafFile());
             generator.getFileOps().createParentDirs(destFile);
 
-            this.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile));
-            blog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile));
+            this.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile, "postFull:"));
+            blog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile, "postFullHeader:"));
             return destFile;
         }
     }

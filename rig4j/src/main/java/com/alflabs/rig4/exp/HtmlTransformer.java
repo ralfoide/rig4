@@ -2,6 +2,7 @@ package com.alflabs.rig4.exp;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.blog.BlogSourceParser;
 import com.alflabs.rig4.blog.IzuTags;
@@ -9,6 +10,7 @@ import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.RPair;
 import com.alflabs.utils.RSparseArray;
 import com.google.common.base.Charsets;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.jsoup.Jsoup;
@@ -71,49 +73,55 @@ public class HtmlTransformer {
 
     private static final String HTML_NBSP = Entities.getByName("nbsp");
     private final Flags mFlags;
+    private final HashStore mHashStore;
     private final Timing.TimeAccumulator mTiming;
 
     @Inject
-    public HtmlTransformer(Flags flags, Timing timing) {
+    public HtmlTransformer(
+            Flags flags,
+            Timing timing,
+            HashStore hashStore) {
         mFlags = flags;
+        mHashStore = hashStore;
         mTiming = timing.get("HtmlTransformer");
     }
 
-    /**
-     * Simplifies a GDoc exported HTML.
-     * Returns the <em>Body</em> element only, usable for HTML export.
-     * This removes all Izu tags and transforms links, and images.
-     */
-    public String simplifyForHtml(@NonNull byte[] content, @NonNull Callback callback)
-            throws IOException, URISyntaxException {
-        mTiming.start();
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
-            Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
-
-            doc = cleanup(doc);
-            removeEmptyElements(doc, ELEM_A);
-            removeEmptyElements(doc, ELEM_SPAN);
-            rewriteBulletLists(doc);
-            cleanupLineStyle(doc);
-            cleanupConsolasLineStyle(doc);
-            cleanupInlineStyle(doc);
-            rewriteUrls(doc, ATTR_HREF, callback);
-            rewriteUrls(doc, ATTR_SRC, callback);
-            rewriteYoutubeEmbed(doc);
-            linkifyImages(doc);
-            removeIzuComments(doc);
-            removeIzuTags(doc);
-
-            doc.outputSettings().prettyPrint(true);
-            doc.outputSettings().charset(Charsets.UTF_8);
-
-            // -- for debugging -- return doc.html();
-            Element body = doc.getElementsByTag("body").first();
-            return body.html();
-        } finally {
-            mTiming.end();
-        }
-    }
+// Obsolete. Replaced by simplifyForProcessing + LazyTransformer.
+//    /**
+//     * Simplifies a GDoc exported HTML.
+//     * Returns the <em>Body</em> element only, usable for HTML export.
+//     * This removes all Izu tags and transforms links, and images.
+//     */
+//    public String simplifyForHtml(@NonNull byte[] content, @NonNull Callback callback)
+//            throws IOException, URISyntaxException {
+//        mTiming.start();
+//        try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
+//            Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
+//
+//            doc = cleanup(doc);
+//            removeEmptyElements(doc, ELEM_A);
+//            removeEmptyElements(doc, ELEM_SPAN);
+//            rewriteBulletLists(doc);
+//            cleanupLineStyle(doc);
+//            cleanupConsolasLineStyle(doc);
+//            cleanupInlineStyle(doc);
+//            rewriteUrls(doc, ATTR_HREF, callback, transformKey);
+//            rewriteUrls(doc, ATTR_SRC, callback, transformKey);
+//            rewriteYoutubeEmbed(doc);
+//            linkifyImages(doc);
+//            removeIzuComments(doc);
+//            removeIzuTags(doc);
+//
+//            doc.outputSettings().prettyPrint(true);
+//            doc.outputSettings().charset(Charsets.UTF_8);
+//
+//            // -- for debugging -- return doc.html();
+//            Element body = doc.getElementsByTag("body").first();
+//            return body.html();
+//        } finally {
+//            mTiming.end();
+//        }
+//    }
 
     /**
      * Simplifies a GDoc exported HTML.
@@ -208,8 +216,8 @@ public class HtmlTransformer {
                 }
 
                 element = element.clone();
-                rewriteUrls(element, ATTR_HREF, callback);
-                rewriteUrls(element, ATTR_SRC, callback);
+                rewriteUrls(element, ATTR_HREF, callback, transformKey);
+                rewriteUrls(element, ATTR_SRC, callback, transformKey);
                 rewriteYoutubeEmbed(element);
                 linkifyImages(element);
                 removeIzuComments(element);
@@ -585,7 +593,7 @@ public class HtmlTransformer {
      * First find an UL tag with some LI.
      * For any UL tag immediately after (next sibling), move its LI at the end of the first UL.
      *
-     * That will gives uses one UL instead of many per level and all the LI at the same level are
+     * That will give us one UL instead of many per level and all the LI at the same level are
      * not differentiated by their margin-left.
      *
      * Instead of simply adding the LI into the first UL, look at the margin-left values.
@@ -698,8 +706,13 @@ public class HtmlTransformer {
      * - Handle drawing exported PNGs links by downloading them and rewriting them locally.
      * - Any untreated google.com link is an error that should be loooked into.
      */
-    private void rewriteUrls(Element root, String attrName, Callback callback)
+    private void rewriteUrls(Element root, String attrName, Callback callback, String transformKey)
             throws IOException, URISyntaxException {
+
+        String contentHash = DigestUtils.shaHex(root.text());
+        String contentKey = String.format("rewrite_url_hash_A%s_K%s", attrName, transformKey);
+        String oldContentHash = mHashStore.getString(contentKey);
+        boolean useImgCache = oldContentHash != null && oldContentHash.equals(contentHash);
 
         String siteBase = null;
         String rewrittenBase = mFlags.getString(ExpFlags.EXP_REWRITTEN_URL);
@@ -739,7 +752,7 @@ public class HtmlTransformer {
                 String id = queries.get("id");
                 int w = Integer.parseInt(queries.get(QUERY_W));
                 int h = Integer.parseInt(queries.get(QEURY_H));
-                newValue = callback.processDrawing(id, w, h);
+                newValue = callback.processDrawing(id, w, h, useImgCache);
 
             } else if (host.equals("docs.google.com") && path.startsWith("/drawings/d/") && path.endsWith("/image")) {
                 // Current style of drawing URLs.
@@ -748,10 +761,10 @@ public class HtmlTransformer {
                     id = id.substring(0, id.length() - "/image".length());
                     int w = Integer.parseInt(queries.get(QUERY_W));
                     int h = Integer.parseInt(queries.get(QEURY_H));
-                    newValue = callback.processDrawing(id, w, h);
+                    newValue = callback.processDrawing(id, w, h, useImgCache);
                 } catch (Throwable t) {
                     throw new TransformerException("ERROR processing URI " + value
-                            + ", Error: " + t.toString());
+                            + ", Error: " + t);
                 }
 
             } else if (host.contains(".google.com")) {
@@ -771,12 +784,16 @@ public class HtmlTransformer {
                 int w = getIntValue(sw, 0);
                 int h = getIntValue(sh, 0);
 
-                newValue = callback.processImage(uri, w, h);
+                newValue = callback.processImage(uri, w, h, useImgCache);
             }
 
             if (newValue != null) {
                 element.attr(attrName, newValue);
             }
+        }
+
+        if (!useImgCache) {
+            mHashStore.putString(contentKey, contentHash);
         }
     }
 
@@ -861,13 +878,13 @@ public class HtmlTransformer {
          * Process a drawing by downloading it, adjusting it to change to the desired size and
          * returns the href for the new document.
          */
-        String processDrawing(String id, int width, int height) throws IOException;
+        String processDrawing(String id, int width, int height, boolean useCache) throws IOException;
 
         /**
          * Process an image by downloading it, adjusting it to change to the desired size and
          * returns the src for the new document.
          */
-        String processImage(URI uri, int width, int height) throws IOException;
+        String processImage(URI uri, int width, int height, boolean useCache) throws IOException;
     }
 
     public static class TransformerException extends RuntimeException {

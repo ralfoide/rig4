@@ -28,7 +28,7 @@ public class HashStoreTest {
         FakeFileOps fileOps = new FakeFileOps();
         BlobStore blobStore = new BlobStore(mFlags, fileOps, timing, mLogger);
 
-        mStore = new HashStore(blobStore);
+        mStore = new HashStore(mLogger, blobStore);
     }
 
     @Test

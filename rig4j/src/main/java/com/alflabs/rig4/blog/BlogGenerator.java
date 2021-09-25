@@ -248,21 +248,22 @@ public class BlogGenerator {
             mPostTree = postTree;
         }
 
-        public HtmlTransformer.LazyTransformer getLazyHtmlTransformer(File destFile) {
+        public HtmlTransformer.LazyTransformer getLazyHtmlTransformer(File destFile, @NonNull String transformKey) {
             HtmlTransformer.Callback callback = new HtmlTransformer.Callback() {
                 @Override
-                public String processDrawing(String id, int width, int height) throws IOException {
-                    return mGDocHelper.downloadDrawing(id, destFile, width, height);
+                public String processDrawing(String id, int width, int height, boolean useCache) throws IOException {
+                    return mGDocHelper.downloadDrawing(id, destFile, width, height, useCache);
                 }
 
                 @Override
-                public String processImage(URI uri, int width, int height) throws IOException {
-                    return mGDocHelper.downloadImage(uri, destFile, width, height);
+                public String processImage(URI uri, int width, int height, boolean useCache) throws IOException {
+                    return mGDocHelper.downloadImage(uri, destFile, width, height, useCache);
                 }
             };
-            // Transformer key is the directory of the file generated. If a post is reused in
-            // a different directory, its assets should be regenerated for that directory.
-            return mHtmlTransformer.createLazyTransformer(destFile.getParent(), callback);
+            // Transformer key is the full path of the file generated. If a post is reused in
+            // a different directory or different name, its assets should be regenerated for that
+            // directory.
+            return mHtmlTransformer.createLazyTransformer(transformKey + destFile.getPath(), callback);
         }
 
         public ILogger getLogger() {

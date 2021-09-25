@@ -2,6 +2,7 @@ package com.alflabs.rig4;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.utils.ILogger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,15 +24,21 @@ import java.util.Map;
  */
 @Singleton
 public class HashStore {
+    private static final String TAG = HashStore.class.getSimpleName();
+    private final boolean DEBUG = false;
+
     private final Map<String, String> mCache = new HashMap<>();
+    private final ILogger mLogger;
     private final BlobStore mBlobStore;
 
     @Inject
-    public HashStore(BlobStore blobStore) {
+    public HashStore(ILogger logger, BlobStore blobStore) {
+        mLogger = logger;
         mBlobStore = blobStore;
     }
 
     public void putString(@NonNull String descriptor, @NonNull String content) throws IOException {
+        if (DEBUG) mLogger.d(TAG, "HASH >> write [" + descriptor + "] = " + content);
         mBlobStore.putString(descriptor, content);
         mCache.put(descriptor, content);
     }
@@ -41,6 +48,7 @@ public class HashStore {
         String content = mCache.get(descriptor);
         if (content == null) {
             content = mBlobStore.getString(descriptor);
+            if (DEBUG) mLogger.d(TAG, "HASH << read [" + descriptor + "] = " + content);
             if (content != null) {
                 mCache.put(descriptor, content);
             }

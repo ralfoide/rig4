@@ -140,16 +140,16 @@ public class ArticleGenerator {
     @NonNull
     private RPair<Element, HtmlTransformer.LazyTransformer> processHtml(@NonNull byte[] content, @NonNull String title, File destFile) throws IOException, URISyntaxException {
         HtmlTransformer.LazyTransformer transformer = mHtmlTransformer.createLazyTransformer(
-                title,
+                destFile.getPath(),
                 new HtmlTransformer.Callback() {
                     @Override
-                    public String processDrawing(String id, int width, int height) throws IOException {
-                        return mGDocHelper.downloadDrawing(id, destFile, width, height);
+                    public String processDrawing(String id, int width, int height, boolean useCache) throws IOException {
+                        return mGDocHelper.downloadDrawing(id, destFile, width, height, useCache);
                     }
 
                     @Override
-                    public String processImage(URI uri, int width, int height) throws IOException {
-                        return mGDocHelper.downloadImage(uri, destFile, width, height);
+                    public String processImage(URI uri, int width, int height, boolean useCache) throws IOException {
+                        return mGDocHelper.downloadImage(uri, destFile, width, height, useCache);
                     }
                 });
 

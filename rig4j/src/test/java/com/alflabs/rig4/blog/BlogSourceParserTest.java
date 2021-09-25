@@ -1,5 +1,6 @@
 package com.alflabs.rig4.blog;
 
+import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.exp.HtmlTransformer;
 import com.alflabs.rig4.flags.Flags;
@@ -26,6 +27,7 @@ public class BlogSourceParserTest {
     @Mock private Timing mTiming;
     @Mock private Timing.TimeAccumulator mTimeAccumulator;
     @Mock private FileOps mFileOps;
+    @Mock private HashStore mHashStore;
 
     private final StringLogger mLogger = new StringLogger();
 
@@ -35,7 +37,7 @@ public class BlogSourceParserTest {
     @Before
     public void setUp() throws Exception {
         when(mTiming.get("HtmlTransformer")).thenReturn(mTimeAccumulator);
-        mHtmlTransformer = new HtmlTransformer(new Flags(mFileOps, mLogger), mTiming);
+        mHtmlTransformer = new HtmlTransformer(new Flags(mFileOps, mLogger), mTiming, mHashStore);
         mBlogSourceParser = new BlogSourceParser(mHtmlTransformer);
     }
 
