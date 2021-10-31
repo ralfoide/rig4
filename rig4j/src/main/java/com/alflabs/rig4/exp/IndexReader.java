@@ -8,6 +8,7 @@ import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.rig4.struct.Index;
 import com.alflabs.utils.ILogger;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class IndexReader {
     public Index readIndex(String indexId) throws IOException {
         mLogger.d(TAG, "Processing document: index " + indexId);
         GDocEntity entity = mGDocHelper.getGDocSync(indexId, "text/plain");
+        Preconditions.checkNotNull(entity);
         String content = new String(entity.getContent(), Charsets.UTF_8);
 
         List<ArticleEntry> articleEntries = new ArrayList<>();
