@@ -9,6 +9,7 @@ import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSink;
 import com.google.common.io.Files;
 import net.coobird.thumbnailator.Thumbnails;
@@ -409,6 +410,7 @@ public class GDocHelper {
             try {
                 mLogger.d(TAG, "        Fetching: " + fileId);
                 content = mGDocReader.readFileById(fileId, mimeType);
+                Preconditions.checkNotNull(content); // fail fast
 
                 if (content != null) {
                     // Update the store
@@ -483,9 +485,11 @@ public class GDocHelper {
                 try {
                     mLogger.d(TAG, "        Fetching: " + fileId);
                     content = mGDocReader.readFileById(fileId, mimeType);
-                } catch (IOException ignore) {
+                } catch (IOException e) {
+                    mLogger.d(TAG, "        Fetching failed", e);
                 }
             }
+            Preconditions.checkNotNull(content); // fail fast
             return content;
         };
 
@@ -498,7 +502,9 @@ public class GDocHelper {
                     mBlobStore.putBytes(contentKey, entity.getContent());
                 }
                 mHashStore.putString(metadataKey, entity.getMetadata().getContentHash());
-            } catch (IOException ignore) {}
+            } catch (IOException e) {
+                mLogger.d(TAG, "syncToStore failed", e);
+            }
         };
 
         return new GDocEntity(metadata, updateToDate, fetcher, syncToStore);

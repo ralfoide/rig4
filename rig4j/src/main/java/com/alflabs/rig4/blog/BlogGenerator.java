@@ -13,6 +13,7 @@ import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.alflabs.utils.StringUtils;
+import com.google.common.base.Preconditions;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -132,6 +133,7 @@ public class BlogGenerator {
         GDocEntity entity = mGDocHelper.getGDocAsync(blogEntry.getFileId(), "text/html");
         boolean fileChanged = !entity.isUpdateToDate();
         byte[] content = entity.getContent();
+        Preconditions.checkNotNull(content); // fail fast
         entity.syncToStore();
 
         BlogSourceParser blogSourceParser = new BlogSourceParser(mHtmlTransformer);

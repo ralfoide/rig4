@@ -46,7 +46,7 @@ public class BlogSourceParser {
         mHtmlTransformer = htmlTransformer;
     }
 
-    public ParsedResult parse(byte[] content) throws IOException, URISyntaxException {
+    public ParsedResult parse(@NonNull byte[] content) throws IOException, URISyntaxException {
         Element body = mHtmlTransformer.simplifyForProcessing(content);
 
         // Iterate on the top-level elements and keeps a state:

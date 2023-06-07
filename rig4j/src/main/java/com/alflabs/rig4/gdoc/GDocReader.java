@@ -149,6 +149,7 @@ public class GDocReader {
     /**
      * Retrieve the exported content of a file.
      */
+    @NonNull
     public byte[] readFileById(String fileId, String mimeType) throws IOException {
         // https://developers.google.com/drive/v3/web/manage-downloads
         mTiming.start();

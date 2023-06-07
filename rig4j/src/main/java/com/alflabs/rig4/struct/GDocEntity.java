@@ -1,6 +1,7 @@
 package com.alflabs.rig4.struct;
 
 import com.alflabs.annotations.NonNull;
+import com.alflabs.annotations.Null;
 import com.alflabs.rig4.gdoc.GDocMetadata;
 
 public class GDocEntity {
@@ -41,10 +42,17 @@ public class GDocEntity {
         return mContentFetched;
     }
 
+    /**
+     * Fetches and caches the content.
+     * <p/>
+     * This may fail and return null if there is no associated {@link ContentFetcher}
+     * or {@link ContentFetcher#fetchContent(GDocEntity)} failed.
+     */
+    @Null
     public byte[] getContent() {
-        if (mContent == null && mFetcher != null && !mContentFetched) {
+        if ((mContent == null || !mContentFetched) && mFetcher != null) {
             mContent = mFetcher.fetchContent(this);
-            mContentFetched = true;
+            mContentFetched = mContent != null;
         }
         return mContent;
     }
