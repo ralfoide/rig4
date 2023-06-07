@@ -485,11 +485,12 @@ public class GDocHelper {
                 try {
                     mLogger.d(TAG, "        Fetching: " + fileId);
                     content = mGDocReader.readFileById(fileId, mimeType);
+                    Preconditions.checkNotNull(content); // fail fast
                 } catch (IOException e) {
                     mLogger.d(TAG, "        Fetching failed", e);
+                    throw new RuntimeException(e);
                 }
             }
-            Preconditions.checkNotNull(content); // fail fast
             return content;
         };
 
