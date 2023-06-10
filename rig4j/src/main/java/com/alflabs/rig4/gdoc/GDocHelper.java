@@ -8,9 +8,11 @@ import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSink;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.resizers.configurations.Antialiasing;
@@ -25,10 +27,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
@@ -411,13 +410,15 @@ public class GDocHelper {
                 mLogger.d(TAG, "        Fetching: " + fileId);
                 content = mGDocReader.readFileById(fileId, mimeType);
                 Preconditions.checkNotNull(content); // fail fast
+                mLogger.d(TAG, "        Fetched sync size: " + content.length);
 
-                if (content != null) {
-                    // Update the store
-                    mBlobStore.putBytes(contentKey, content);
-                    mHashStore.putString(metadataKey, metadata.getContentHash());
-                }
-            } catch (IOException ignore) {}
+                // Update the store
+                mBlobStore.putBytes(contentKey, content);
+                mHashStore.putString(metadataKey, metadata.getContentHash());
+            } catch (IOException e) {
+                mLogger.d(TAG, "        Fetching " + mimeType + " sync failed", e);
+                throw new RuntimeException(e);
+            }
         }
 
         return new GDocEntity(metadata, updateToDate, content);
@@ -483,12 +484,23 @@ public class GDocHelper {
             }
             if (content == null) {
                 try {
-                    mLogger.d(TAG, "        Fetching: " + fileId);
-                    content = mGDocReader.readFileById(fileId, mimeType);
+                    mLogger.d(TAG, "        Fetching " + mimeType + ": " + fileId);
+                    // 2023-06-08 Use file.export via readFileById() started to fail.
+                    // Instead, we're not using the direct exportLinks URL if available.
+                    String exportLink = metadata.getExportLinks().get(mimeType);
+                    if (exportLink != null) {
+                        URL url = new URL(exportLink);
+                        try (InputStream inputStream = mGDocReader.getDataByUrl(url)) {
+                            content = ByteStreams.toByteArray(inputStream);
+                        }
+                    } else {
+                        // Legacy.
+                        content = mGDocReader.readFileById(fileId, mimeType);
+                    }
                     Preconditions.checkNotNull(content); // fail fast
-                    mLogger.d(TAG, "        Fetched size: " + content.length);
+                    mLogger.d(TAG, "        Fetched async size: " + content.length);
                 } catch (IOException e) {
-                    mLogger.d(TAG, "        Fetching failed", e);
+                    mLogger.d(TAG, "        Fetching async failed", e);
                     throw new RuntimeException(e);
                 }
             }

@@ -33,6 +33,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  *
@@ -174,17 +175,18 @@ public class GDocReader {
         try {
             Drive.Files.Get get = mDrive.files()
                     .get(fileId)
-                    .setFields("md5Checksum,modifiedTime,version,name");
+                    .setFields("md5Checksum,modifiedTime,version,name,exportLinks");
             com.google.api.services.drive.model.File gfile = get.execute();
 
             Long version = gfile.getVersion();
             String checksum = gfile.getMd5Checksum();
             DateTime dateTime = gfile.getModifiedTime();
+            Map<String, String> exportLinks = gfile.getExportLinks();
 
             String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
             hash = DigestUtils.shaHex(hash);
 
-            return GDocMetadata.create(gfile.getName(), hash);
+            return GDocMetadata.create(gfile.getName(), hash, exportLinks);
         } finally {
             mTiming.end();
         }
@@ -193,7 +195,7 @@ public class GDocReader {
     public InputStream getDataByUrl(URL url) throws IOException {
         mTiming.start();
         try {
-            int timeoutSeconds = 10;
+            int timeoutSeconds = 30;
             int retry = 0;
             while (true) {
                 try {
@@ -208,7 +210,7 @@ public class GDocReader {
                     }
                     mLogger.d(TAG, "SocketTimeoutException retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url.toString());
                     try {
-                        Thread.sleep(1000 * (timeoutSeconds / 2));
+                        Thread.sleep(1000L * (timeoutSeconds / 2));
                     } catch (InterruptedException ignore) {}
                     timeoutSeconds *= 2;
                     retry++;

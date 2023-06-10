@@ -16,6 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.util.Collections;
+
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +35,7 @@ public class IndexReaderTest {
 
     @Test
     public void testReadIndex_empty() throws Exception {
-        GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash");
+        GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash", Collections.emptyMap());
         GDocEntity entity = new GDocEntity(gDocMetadata, false /* updateToDate */,
                 "".getBytes(Charsets.UTF_8));
         when(mGDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity);
@@ -53,7 +55,7 @@ public class IndexReaderTest {
                 "blog         id_cat_1\n" +
                 "blog         id_cat_2\n" +
                 "blog.html    45678901_file4\n";
-        GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash");
+        GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash", Collections.emptyMap());
         GDocEntity entity = new GDocEntity(gDocMetadata, false /* updateToDate */,
                 content.getBytes(Charsets.UTF_8));
         when(mGDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity);
@@ -73,7 +75,7 @@ public class IndexReaderTest {
     }
 
     @Test
-    public void testRedBlogEntries() throws Exception {
+    public void testReadBlogEntries() throws Exception {
         String content =
                 "blog           12345\n" +
                 "Blog           23456\n" +
@@ -81,7 +83,7 @@ public class IndexReaderTest {
                 "blog 1         45678\n" +
                 "Blog 234       56789\n" +
                 "blog 56 (desc) 67890\n";
-        GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash");
+        GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash", Collections.emptyMap());
         GDocEntity entity = new GDocEntity(gDocMetadata, false /* updateToDate */,
                 content.getBytes(Charsets.UTF_8));
         when(mGDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity);

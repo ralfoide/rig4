@@ -59,7 +59,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes(anyString())).thenThrow(new FileNotFoundException());
         when(mHashStore.getString(anyString())).thenThrow(new FileNotFoundException());
 
-        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash");
+        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", exportLinks);
         byte[] contentBytes = "GDoc File Content".getBytes(Charsets.UTF_8);
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);
@@ -90,7 +90,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes("gdoc-content-gdoc id-text/html")).thenReturn(contentBytes);
         when(mHashStore.getString("gdoc-hash-gdoc id")).thenReturn("gdoc content hash");
 
-        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash");
+        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", exportLinks);
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);
         when(mGDocReader.readFileById("gdoc id", "text/html"))
@@ -123,7 +123,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes("gdoc-content-gdoc id-text/html")).thenReturn(oldContentBytes);
         when(mHashStore.getString("gdoc-hash-gdoc id")).thenReturn(oldContentHash);
 
-        GDocMetadata newMetadata = GDocMetadata.create("gdoc title", newContentHash);
+        GDocMetadata newMetadata = GDocMetadata.create("gdoc title", newContentHash, exportLinks);
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(newMetadata);
         when(mGDocReader.readFileById("gdoc id", "text/html")).thenReturn(newContentBytes);
 
@@ -163,7 +163,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes(anyString())).thenThrow(new FileNotFoundException());
         when(mHashStore.getString(anyString())).thenThrow(new FileNotFoundException());
 
-        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash");
+        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", exportLinks);
         byte[] contentBytes = "GDoc File Content".getBytes(Charsets.UTF_8);
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);
