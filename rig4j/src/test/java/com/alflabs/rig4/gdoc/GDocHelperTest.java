@@ -15,6 +15,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.io.FileNotFoundException;
+import java.util.Collections;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -59,7 +60,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes(anyString())).thenThrow(new FileNotFoundException());
         when(mHashStore.getString(anyString())).thenThrow(new FileNotFoundException());
 
-        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", exportLinks);
+        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", Collections.emptyMap());
         byte[] contentBytes = "GDoc File Content".getBytes(Charsets.UTF_8);
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);
@@ -90,7 +91,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes("gdoc-content-gdoc id-text/html")).thenReturn(contentBytes);
         when(mHashStore.getString("gdoc-hash-gdoc id")).thenReturn("gdoc content hash");
 
-        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", exportLinks);
+        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", Collections.emptyMap());
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);
         when(mGDocReader.readFileById("gdoc id", "text/html"))
@@ -123,7 +124,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes("gdoc-content-gdoc id-text/html")).thenReturn(oldContentBytes);
         when(mHashStore.getString("gdoc-hash-gdoc id")).thenReturn(oldContentHash);
 
-        GDocMetadata newMetadata = GDocMetadata.create("gdoc title", newContentHash, exportLinks);
+        GDocMetadata newMetadata = GDocMetadata.create("gdoc title", newContentHash, Collections.emptyMap());
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(newMetadata);
         when(mGDocReader.readFileById("gdoc id", "text/html")).thenReturn(newContentBytes);
 
@@ -163,7 +164,7 @@ public class GDocHelperTest {
         when(mBlobStore.getBytes(anyString())).thenThrow(new FileNotFoundException());
         when(mHashStore.getString(anyString())).thenThrow(new FileNotFoundException());
 
-        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", exportLinks);
+        GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", Collections.emptyMap());
         byte[] contentBytes = "GDoc File Content".getBytes(Charsets.UTF_8);
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);

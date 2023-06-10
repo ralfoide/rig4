@@ -86,48 +86,11 @@ public class HtmlTransformer {
         mTiming = timing.get("HtmlTransformer");
     }
 
-// Obsolete. Replaced by simplifyForProcessing + LazyTransformer.
-//    /**
-//     * Simplifies a GDoc exported HTML.
-//     * Returns the <em>Body</em> element only, usable for HTML export.
-//     * This removes all Izu tags and transforms links, and images.
-//     */
-//    public String simplifyForHtml(@NonNull byte[] content, @NonNull Callback callback)
-//            throws IOException, URISyntaxException {
-//        mTiming.start();
-//        try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
-//            Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
-//
-//            doc = cleanup(doc);
-//            removeEmptyElements(doc, ELEM_A);
-//            removeEmptyElements(doc, ELEM_SPAN);
-//            rewriteBulletLists(doc);
-//            cleanupLineStyle(doc);
-//            cleanupConsolasLineStyle(doc);
-//            cleanupInlineStyle(doc);
-//            rewriteUrls(doc, ATTR_HREF, callback, transformKey);
-//            rewriteUrls(doc, ATTR_SRC, callback, transformKey);
-//            rewriteYoutubeEmbed(doc);
-//            linkifyImages(doc);
-//            removeIzuComments(doc);
-//            removeIzuTags(doc);
-//
-//            doc.outputSettings().prettyPrint(true);
-//            doc.outputSettings().charset(Charsets.UTF_8);
-//
-//            // -- for debugging -- return doc.html();
-//            Element body = doc.getElementsByTag("body").first();
-//            return body.html();
-//        } finally {
-//            mTiming.end();
-//        }
-//    }
-
     /**
      * Simplifies a GDoc exported HTML.
      * Returns the <em>Body</em> element only for intermediate processing.
-     *
-     * This does NOT removes Izu tags and does not transforms links, and images.
+     * <p/>
+     * This does NOT remove Izu tags and does not transform links, and images.
      * The output is designed to be given to {@link LazyTransformer} later.
      */
     public Element simplifyForProcessing(@NonNull byte[] content)
@@ -284,6 +247,7 @@ public class HtmlTransformer {
         relaxed.addTags(ELEM_HR);
         relaxed.addTags(ELEM_STYLE);
         relaxed.addProtocols(ELEM_A, ATTR_HREF, "#"); // allow internal anchors
+        relaxed.addProtocols(ELEM_IMG, ATTR_SRC, "http", "https", "data"); // also allow direct data
         relaxed.addAttributes(":all", ATTR_ID);
         relaxed.addAttributes(":all", ATTR_STYLE);
         Cleaner cleaner = new Cleaner(relaxed);
@@ -440,7 +404,7 @@ public class HtmlTransformer {
     }
 
     /**
-     * Cleanup all STYLE attributes in 2 pases:
+     * Cleanup all STYLE attributes in 2 passes:
      * - The first P/SPAN is located and acts as a markers for the "default paragraph".
      *   A simple normal-style line can be added for that purpose as the very first line in the doc.
      * - This method descends all elements recursively, only keeping the style that is a delta with
@@ -701,10 +665,10 @@ public class HtmlTransformer {
 
     /**
      * Rewrite URLs:
-     * - The gdoc exporter wraps all URLs using the google URL redirectory. Simply refer to the
+     * - The gdoc exporter wraps all URLs using the google URL redirector. Simply refer to the
      *   source directly and bypass the redirector.
      * - Handle drawing exported PNGs links by downloading them and rewriting them locally.
-     * - Any untreated google.com link is an error that should be loooked into.
+     * - Any untreated google.com link is an error that should be looked into.
      */
     private void rewriteUrls(Element root, String attrName, Callback callback, String transformKey)
             throws IOException, URISyntaxException {
@@ -784,11 +748,19 @@ public class HtmlTransformer {
                 int w = getIntValue(sw, 0);
                 int h = getIntValue(sh, 0);
 
+                // TBD: If source starts with "data:image/png;base64,", we should extract the image,
+                // save it locally as either jpg or png, and update the src to a URL. That will make
+                // pages more cache-friendly and easier to load.
+
                 newValue = callback.processImage(uri, w, h, useImgCache);
             }
 
             if (newValue != null) {
                 element.attr(attrName, newValue);
+                // DEBUG
+                System.out.println("element = " + element);
+                System.out.println("- old val = " + value);
+                System.out.println("+ new val = " + newValue);
             }
         }
 
