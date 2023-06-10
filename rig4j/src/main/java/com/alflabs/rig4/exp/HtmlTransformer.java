@@ -20,7 +20,7 @@ import org.jsoup.nodes.Entities;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.safety.Cleaner;
-import org.jsoup.safety.Whitelist;
+import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
 import org.jsoup.select.NodeFilter;
 import org.jsoup.select.NodeTraversor;
@@ -260,7 +260,7 @@ public class HtmlTransformer {
                     Element body = dirtyDoc.body();
                     body.appendChild(p.clone());
 
-                    Cleaner cleaner = new Cleaner(Whitelist.none());
+                    Cleaner cleaner = new Cleaner(Safelist.none());
                     Document cleanDoc = cleaner.clean(dirtyDoc);
                     String cleaned = cleanDoc.body().html().trim();
 
@@ -279,7 +279,7 @@ public class HtmlTransformer {
      * Things we keep for gdoc are HR and STYLE tags as well as all STYLE attributes.
      */
     private Document cleanup(Document doc) {
-        Whitelist relaxed = Whitelist.relaxed();
+        Safelist relaxed = Safelist.relaxed();
         relaxed.preserveRelativeLinks(true);
         relaxed.addTags(ELEM_HR);
         relaxed.addTags(ELEM_STYLE);

@@ -37,14 +37,15 @@ configurations {
 
 dependencies {
     runtimeCompile project(":LibUtilsJava")
-    runtimeCompile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
-    runtimeCompile "org.jsoup:jsoup:1.11.2"
+    runtimeCompile "com.fasterxml.jackson.core:jackson-databind:2.12.7.1"
+    runtimeCompile "org.jsoup:jsoup:1.15.3"
     runtimeCompile "net.coobird:thumbnailator:0.4.8"
 
-    runtimeCompile "com.google.apis:google-api-services-drive:v3-rev90-1.23.0"
-    runtimeCompile "com.google.oauth-client:google-oauth-client-jetty:1.23.0"
-    runtimeCompile "com.google.http-client:google-http-client-jackson2:1.23.0"
-    runtimeCompile "com.google.guava:guava:20.0"   // 20.0 needed by google-api-services-drive
+    runtimeCompile "com.google.apis:google-api-services-drive:v3-rev20211107-1.32.1"
+    runtimeCompile "com.google.api-client:google-api-client:1.35.2"
+    runtimeCompile "com.google.oauth-client:google-oauth-client-jetty:1.34.1"
+    runtimeCompile "com.google.http-client:google-http-client-jackson2:1.43.1"
+    runtimeCompile "com.google.guava:guava:30.0-jre"   // 20.0 needed by google-api-services-drive
 
     runtimeCompile "com.google.dagger:dagger:2.11"
     runtimeCompile "javax.annotation:javax.annotation-api:1.3.2"
@@ -54,10 +55,10 @@ dependencies {
     runtimeCompile "com.google.auto.factory:auto-factory:1.0-beta5"
     annotationProcessor "com.google.auto.factory:auto-factory:1.0-beta5"
 
-    testImplementation "junit:junit:4.10"
+    testImplementation "junit:junit:4.13.1"
     testImplementation "com.google.truth:truth:0.31"
     testImplementation "org.mockito:mockito-core:2.2.9"
-    testImplementation "com.google.guava:guava:20.0"
+    testImplementation "com.google.guava:guava:30.0-jre"
 }
 
 jar {

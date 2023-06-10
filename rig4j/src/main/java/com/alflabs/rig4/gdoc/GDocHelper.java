@@ -486,6 +486,7 @@ public class GDocHelper {
                     mLogger.d(TAG, "        Fetching: " + fileId);
                     content = mGDocReader.readFileById(fileId, mimeType);
                     Preconditions.checkNotNull(content); // fail fast
+                    mLogger.d(TAG, "        Fetched size: " + content.length);
                 } catch (IOException e) {
                     mLogger.d(TAG, "        Fetching failed", e);
                     throw new RuntimeException(e);
