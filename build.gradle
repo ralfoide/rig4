@@ -31,15 +31,19 @@ repositories {
 }
 
 dependencies {
+    implementation project(":rig4k-common")
+    implementation project(":rig4k-main")
     implementation project(":rig4k-dl")
 
+    testImplementation testFixtures(project(":rig4k-common"))
+    testImplementation testFixtures(project(":rig4k-main"))
     testImplementation testFixtures(project(":rig4k-dl"))
 }
 
 jar {
     manifest {
         attributes(
-            "Main-Class": "com.alflabs.rig4kdl.EntryPoint",
+            "Main-Class": artifact_main,
         )
     }
 }
@@ -80,7 +84,7 @@ artifacts {
 
 task run(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = "com.alflabs.rig4kdl.EntryPoint"
+    main = artifact_main
     args "-c", "~/rig42k.rc"
 }
 

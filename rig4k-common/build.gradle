@@ -33,20 +33,7 @@ kapt {
 }
 
 dependencies {
-    implementation project(":rig4k-common")
     implementation "com.google.guava:guava:$vers_guava"
-//    implementation "com.squareup.okhttp3:okhttp:$vers_okhttp"
-//    implementation "com.fasterxml.jackson.core:jackson-databind:$vers_jackson"
-
-//    implementation "org.jetbrains.kotlin:kotlin-stdlib:$vers_kotlin"
-//    // For Kotlin KTS and Scripting Host:
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-common:$vers_kotlin")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:$vers_kotlin")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:$vers_kotlin")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-dependencies:$vers_kotlin")
-//    implementation "org.jetbrains.kotlin:kotlin-script-runtime:$vers_kotlin"
-//    // For the Java Scripting version:
-//    runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:$vers_kotlin")
 
     // Reminder: use kapt instead of annotationProcessor for daggerized kotlin sources!
     implementation  "com.google.dagger:dagger:$vers_dagger"

@@ -11,6 +11,7 @@ pluginManagement {
     }
 }
 
+include 'rig4k-common'
 include "rig4k-dl"
-
+include 'rig4k-main'
 
