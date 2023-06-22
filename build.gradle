@@ -1,0 +1,86 @@
+/*
+ * Project: rig4k
+ * Copyright (C) 2023 alf.labs gmail com,
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+// ----------
+// IMPORTANT: all plugin/deps VERSIONS are defined in gradle.properties.
+// ----------
+
+apply plugin: "java"
+apply plugin: "idea"
+
+group   artifact_group
+version artifact_vers
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":rig4k-dl")
+
+    testImplementation testFixtures(project(":rig4k-dl"))
+}
+
+jar {
+    manifest {
+        attributes(
+            "Main-Class": "com.alflabs.rig4kdl.EntryPoint",
+        )
+    }
+}
+
+// Build a "fat" jar with all the dependencies. C.f. http://stackoverflow.com/questions/4871656
+task fatJar(type: Jar) {
+    // Somehow fatJar lacks a dependsOn ":engine1:jar". Instead of adding just that one,
+    // ensure we have a dependency on all subprojects' jars.
+    subprojects.forEach { dependsOn ":${it.name}:jar" }
+
+    doFirst {
+        println "## fatJar: Packaging ${configurations.default.size()} libraries"
+        configurations.default.collect {
+            if (it.name.contains("SNAPSHOT")) { println "## fatJar: adding " + it.name }
+        }
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest.from jar.manifest
+    classifier = "all"
+    from {
+        // Should we be using configurations.default or configurations.runtimeClasspath?
+        // They seemed the same when examining their content.
+        configurations.default.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+    with jar
+}
+
+artifacts {
+    archives fatJar
+}
+
+task run(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = "com.alflabs.rig4kdl.EntryPoint"
+    args "-c", "~/rig42k.rc"
+}
+
