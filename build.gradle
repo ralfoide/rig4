@@ -85,6 +85,6 @@ artifacts {
 task run(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = artifact_main
-    args "-c", "~/rig42k.rc"
+    args "--help", "-c", "~/rig42k.rc"
 }
 

@@ -28,6 +28,10 @@ repositories {
     mavenCentral()
 }
 
+kotlin {
+    jvmToolchain(compile_jvm_target.toInteger())
+}
+
 kapt {
     correctErrorTypes = true
 }

@@ -28,6 +28,10 @@ repositories {
     mavenCentral()
 }
 
+kotlin {
+    jvmToolchain(compile_jvm_target.toInteger())
+}
+
 kapt {
     correctErrorTypes = true
 }
@@ -35,6 +39,8 @@ kapt {
 dependencies {
     implementation project(":rig4k-common")
     implementation "com.google.guava:guava:$vers_guava"
+    implementation "com.github.ajalt.clikt:clikt:$vers_clikt"
+
 //    implementation "com.squareup.okhttp3:okhttp:$vers_okhttp"
 //    implementation "com.fasterxml.jackson.core:jackson-databind:$vers_jackson"
 
