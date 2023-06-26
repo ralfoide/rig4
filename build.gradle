@@ -49,7 +49,7 @@ jar {
 }
 
 // Build a "fat" jar with all the dependencies. C.f. http://stackoverflow.com/questions/4871656
-task fatJar(type: Jar) {
+tasks.register('fatJar', Jar) {
     // Somehow fatJar lacks a dependsOn ":engine1:jar". Instead of adding just that one,
     // ensure we have a dependency on all subprojects' jars.
     subprojects.forEach { dependsOn ":${it.name}:jar" }
@@ -57,7 +57,9 @@ task fatJar(type: Jar) {
     doFirst {
         println "## fatJar: Packaging ${configurations.default.size()} libraries"
         configurations.default.collect {
-            if (it.name.contains("SNAPSHOT")) { println "## fatJar: adding " + it.name }
+            if (it.name.contains("SNAPSHOT")) {
+                println "## fatJar: adding " + it.name
+            }
         }
     }
 
@@ -82,9 +84,9 @@ artifacts {
     archives fatJar
 }
 
-task run(type: JavaExec) {
+tasks.register('run', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = artifact_main
+    mainClass = artifact_main
     args "--help", "-c", "~/rig42k.rc"
 }
 

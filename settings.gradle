@@ -15,3 +15,5 @@ include 'rig4k-common'
 include "rig4k-dl"
 include 'rig4k-main'
 
+include ":LibUtilsJava"
+project(":LibUtilsJava").projectDir = new File(rootProject.projectDir, "LibUtils/LibUtilsJava")
