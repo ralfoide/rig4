@@ -37,8 +37,6 @@ kapt {
 }
 
 dependencies {
-    implementation project(":rig4k-common")
-    implementation project(":rig4k-dl")
     implementation "com.google.guava:guava:$vers_guava"
     implementation "com.github.ajalt.clikt:clikt:$vers_clikt"
 

@@ -31,13 +31,9 @@ repositories {
 }
 
 dependencies {
-    implementation project(":rig4k-common")
-    implementation project(":rig4k-main")
-    implementation project(":rig4k-dl")
+    implementation project(":rig4k")
 
-    testImplementation testFixtures(project(":rig4k-common"))
-    testImplementation testFixtures(project(":rig4k-main"))
-    testImplementation testFixtures(project(":rig4k-dl"))
+    testImplementation testFixtures(project(":rig4k"))
 }
 
 jar {
