@@ -40,28 +40,23 @@ dependencies {
     implementation "com.google.guava:guava:$vers_guava"
     implementation "com.github.ajalt.clikt:clikt:$vers_clikt"
 
-//    implementation "com.squareup.okhttp3:okhttp:$vers_okhttp"
-//    implementation "com.fasterxml.jackson.core:jackson-databind:$vers_jackson"
-
-//    implementation "org.jetbrains.kotlin:kotlin-stdlib:$vers_kotlin"
-//    // For Kotlin KTS and Scripting Host:
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-common:$vers_kotlin")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:$vers_kotlin")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:$vers_kotlin")
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-dependencies:$vers_kotlin")
-//    implementation "org.jetbrains.kotlin:kotlin-script-runtime:$vers_kotlin"
-//    // For the Java Scripting version:
-//    runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:$vers_kotlin")
+    implementation "com.squareup.okhttp3:okhttp:$vers_okhttp"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$vers_jackson"
+    implementation "org.jsoup:jsoup:1.15.3"
+    implementation "com.google.apis:google-api-services-drive:v3-rev20211107-1.32.1"
+    implementation "com.google.api-client:google-api-client:1.35.2"
+    implementation "com.google.oauth-client:google-oauth-client-jetty:1.34.1"
+    implementation "com.google.http-client:google-http-client-jackson2:1.43.1"
 
     // Reminder: use kapt instead of annotationProcessor for daggerized kotlin sources!
     implementation  "com.google.dagger:dagger:$vers_dagger"
+    implementation project(path: ':LibUtilsJava')
     kapt            "com.google.dagger:dagger-compiler:$vers_dagger"
     kaptTest        "com.google.dagger:dagger-compiler:$vers_dagger"
 
-//    testImplementation testFixtures(project(":common"))
-    testImplementation "junit:junit:$vers_junit"
+//  testImplementation "junit:junit:$vers_junit"
     testImplementation "com.google.truth:truth:$vers_truth"
     testImplementation "org.mockito:mockito-core:$vers_mockito"
+    testImplementation "org.mockito.kotlin:mockito-kotlin:$vers_mockito_kotlin"
     testImplementation "com.google.guava:guava:$vers_guava"
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$vers_mockito_kotlin"
 }

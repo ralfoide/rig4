@@ -32,8 +32,6 @@ repositories {
 
 dependencies {
     implementation project(":rig4k")
-
-    testImplementation testFixtures(project(":rig4k"))
 }
 
 jar {
