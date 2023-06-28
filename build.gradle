@@ -43,7 +43,7 @@ jar {
 }
 
 // Build a "fat" jar with all the dependencies. C.f. http://stackoverflow.com/questions/4871656
-tasks.register('fatJar', Jar) {
+tasks.register("fatJar", Jar) {
     // Somehow fatJar lacks a dependsOn ":engine1:jar". Instead of adding just that one,
     // ensure we have a dependency on all subprojects' jars.
     subprojects.forEach { dependsOn ":${it.name}:jar" }
@@ -78,7 +78,7 @@ artifacts {
     archives fatJar
 }
 
-tasks.register('run', JavaExec) {
+tasks.register("run", JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = artifact_main
     args "--help", "-c", "~/rig42k.rc"
