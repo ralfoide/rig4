@@ -7,13 +7,14 @@ import javax.inject.Singleton
 
 @Singleton
 class DlCommand @Inject constructor(
-    private val gDocReader: GDocReader
+    private val gDocReader: GDocReader,
+    gDocReaderOptions: GDocReaderOptions,
 ): CliktCommand(name = "dl", help = "Download from GDocs") {
-    private val gDocReaderOptions by GDocReaderOptions()
-
+    @Suppress("unused")
+    private val _gDocReaderOptions by gDocReaderOptions
 
     override fun run() {
-        gDocReader.init(gDocReaderOptions)
+        gDocReader.init()
         println("@@ Rig4k-DL run")
     }
 

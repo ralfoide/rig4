@@ -29,49 +29,29 @@ import javax.inject.Singleton
 
 @Singleton
 class GDocReader @Inject constructor(
-    private val mJsonFactory: JsonFactory,
-    private val _timing: Timing,
-    private val logger: ILogger
+    private val gDocReaderOptions: GDocReaderOptions,
+    private val jsonFactory: JsonFactory,
+    private val logger: ILogger,
+    timing: Timing,
 ) {
     companion object {
         private val TAG = GDocReader::class.java.simpleName
         private const val APPLICATION_NAME = "rig4"
     }
 
-    private val timing = _timing.get("GDocReader")
-    private lateinit var mHttpTransport: NetHttpTransport
-    private lateinit var mDrive: Drive
-    private lateinit var options: GDocReaderOptions
+    private val timingAcc = timing.get("GDocReader")
+    private lateinit var httpTransport: NetHttpTransport
+    private lateinit var drive: Drive
 
-
-    fun declareFlags() {
-//        mFlags.addString(
-//            GDOC_ROOT_DIR,
-//            "~/.rig42",
-//            "Directory where Google Drive API stores credentials files."
-//        )
-//        mFlags.addString(
-//            GDOC_PATH_CLIENT_SECRET_JSON,
-//            "\$GDOC_ROOT_DIR/client_secret.json",
-//            "Path to load client_secret.json from Google Drive API."
-//        )
-//        mFlags.addString(
-//            GDOC_PATH_DATA_STORE_DIR,
-//            "\$GDOC_ROOT_DIR/gdoc_store",
-//            "Directory where the Google Drive API stores local credentials."
-//        )
-    }
-
-    fun init(options: GDocReaderOptions) {
-        this.options = options
-        timing.start()
-        mHttpTransport = GoogleNetHttpTransport.newTrustedTransport()
+    fun init() {
+        timingAcc.start()
+        httpTransport = GoogleNetHttpTransport.newTrustedTransport()
         val credential = authorize()
         // set up the global Drive instance
-        mDrive = Drive.Builder(mHttpTransport, mJsonFactory, credential)
+        drive = Drive.Builder(httpTransport, jsonFactory, credential)
             .setApplicationName(APPLICATION_NAME)
             .build()
-        timing.end()
+        timingAcc.end()
     }
 
     /**
@@ -88,8 +68,8 @@ class GDocReader @Inject constructor(
 
         // set up authorization code flow
         val flow = GoogleAuthorizationCodeFlow.Builder(
-            mHttpTransport,
-            mJsonFactory,
+            httpTransport,
+            jsonFactory,
             clientSecrets,
             listOf(DriveScopes.DRIVE_READONLY, DriveScopes.DRIVE_METADATA_READONLY)
         )
@@ -103,8 +83,8 @@ class GDocReader @Inject constructor(
     @Throws(IOException::class)
     private fun getFileDataStoreFactory(): FileDataStoreFactory {
         val path = StringUtils.expandUserHome(
-            options.gdocPathDataStoreDir
-                .replace("\$GDOC_ROOT_DIR", options.gdocRootDir)
+            gDocReaderOptions.gdocPathDataStoreDir
+                .replace("\$GDOC_ROOT_DIR", gDocReaderOptions.gdocRootDir)
         )
         return try {
             FileDataStoreFactory(File(path))
@@ -117,11 +97,11 @@ class GDocReader @Inject constructor(
     @Throws(IOException::class)
     private fun getGoogleClientSecrets(): GoogleClientSecrets {
         val path = StringUtils.expandUserHome(
-            options.gdocPathClientSecretJson
-                .replace("\$GDOC_ROOT_DIR", options.gdocRootDir)
+            gDocReaderOptions.gdocPathClientSecretJson
+                .replace("\$GDOC_ROOT_DIR", gDocReaderOptions.gdocRootDir)
         )
         return try {
-            GoogleClientSecrets.load(mJsonFactory, FileReader(path))
+            GoogleClientSecrets.load(jsonFactory, FileReader(path))
         } catch (e: IOException) {
             logger.d(
                 TAG,
@@ -139,13 +119,13 @@ class GDocReader @Inject constructor(
     @Throws(IOException::class)
     fun readFileById(fileId: String, mimeType: String): ByteArray {
         // https://developers.google.com/drive/v3/web/manage-downloads
-        timing.start()
+        timingAcc.start()
         return try {
             val baos = ByteArrayOutputStream()
-            mDrive.files().export(fileId, mimeType).executeAndDownloadTo(baos)
+            drive.files().export(fileId, mimeType).executeAndDownloadTo(baos)
             baos.toByteArray()
         } finally {
-            timing.end()
+            timingAcc.end()
         }
     }
 
@@ -157,9 +137,9 @@ class GDocReader @Inject constructor(
         // We need to explicitely tell which fields we want, otherwsie the response
         // contains nothing useful. This is still a hint and some fields might just
         // be missing (e.g. the md5 checksum on a gdoc).
-        timing.start()
+        timingAcc.start()
         return try {
-            val get = mDrive.files()[fileId]
+            val get = drive.files()[fileId]
                 .setFields("md5Checksum,modifiedTime,version,name,exportLinks")
             val gfile = get.execute()
             val version = gfile.version
@@ -171,19 +151,19 @@ class GDocReader @Inject constructor(
             hash = DigestUtils.shaHex(hash)
             GDocMetadata(gfile.name, hash, exportLinks)
         } finally {
-            timing.end()
+            timingAcc.end()
         }
     }
 
     @Throws(IOException::class)
     fun getDataByUrl(url: URL): InputStream {
-        timing.start()
+        timingAcc.start()
         try {
             var timeoutSeconds = 30
             var retry = 0
             while (true) {
                 try {
-                    val request = mDrive!!.requestFactory.buildGetRequest(GenericUrl(url))
+                    val request = drive!!.requestFactory.buildGetRequest(GenericUrl(url))
                     request.setReadTimeout(1000 * timeoutSeconds) // read timeout in milliseconds
                     request.setThrowExceptionOnExecuteError(true)
                     val response = request.execute()
@@ -205,7 +185,7 @@ class GDocReader @Inject constructor(
                 }
             }
         } finally {
-            timing.end()
+            timingAcc.end()
         }
     }
 }

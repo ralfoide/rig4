@@ -1,5 +1,6 @@
 package com.alflabs.rig4k.dagger
 
+import com.alflabs.rig4k.main.EntryPointTest
 import dagger.Component
 import javax.inject.Singleton
 
@@ -10,8 +11,7 @@ import javax.inject.Singleton
     LoggerModule::class,
     JsonFactoryModule::class])
 interface IRigTestComponent : IRigComponent {
-
-//    fun inject(test: ScriptTest2kBase)
+    fun inject(entryPointTest: EntryPointTest)
 
     @Component.Factory
     interface Factory {

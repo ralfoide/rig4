@@ -3,8 +3,11 @@ package com.alflabs.rig4k.dl
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class GDocReaderOptions: OptionGroup("GDocReader Options") {
+@Singleton
+class GDocReaderOptions @Inject constructor(): OptionGroup("GDocReader Options") {
     val gdocRootDir by option(
         help = "Directory where Google Drive API stores credentials files.")
         .default("~/.rig42")
