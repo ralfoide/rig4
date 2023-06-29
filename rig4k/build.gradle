@@ -39,6 +39,7 @@ kapt {
 dependencies {
     implementation "com.google.guava:guava:$vers_guava"
     implementation "com.github.ajalt.clikt:clikt:$vers_clikt"
+    implementation "net.coobird:thumbnailator:0.4.8"
 
     implementation "com.squareup.okhttp3:okhttp:$vers_okhttp"
     implementation "com.fasterxml.jackson.core:jackson-databind:$vers_jackson"

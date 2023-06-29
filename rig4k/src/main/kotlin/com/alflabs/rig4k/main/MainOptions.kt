@@ -9,5 +9,4 @@ import javax.inject.Singleton
 @Singleton
 class MainOptions @Inject constructor(): OptionGroup("Main Options") {
     val verbose by option(help = "Verbose mode").flag()
-    val configPath by option("-c", "--config", help = "Path to configuration file")
 }

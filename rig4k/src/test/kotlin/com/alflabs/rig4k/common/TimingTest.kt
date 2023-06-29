@@ -3,7 +3,6 @@ package com.alflabs.rig4k.common
 import com.alflabs.utils.IClock
 import com.alflabs.utils.MockClock
 import com.alflabs.utils.StringLogger
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -13,6 +12,7 @@ import org.mockito.junit.MockitoRule
 
 class TimingTest {
     @get:Rule var mockitoRule: MockitoRule = MockitoJUnit.rule()
+
     private val logger = StringLogger()
     private val clock: IClock = MockClock()
 
