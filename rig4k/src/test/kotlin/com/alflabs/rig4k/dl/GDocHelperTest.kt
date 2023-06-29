@@ -7,17 +7,15 @@ import com.alflabs.utils.FakeFileOps
 import com.alflabs.utils.ILogger
 import com.alflabs.utils.MockClock
 import com.google.common.base.Charsets
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.ArgumentMatchers
-import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
+import org.mockito.kotlin.any
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.io.FileNotFoundException
@@ -41,16 +39,16 @@ class GDocHelperTest {
     // --- GetGDocSync
     @Test
     fun testGetGDocSync_invalidId() {
-        whenever(blobStore.getBytes(ArgumentMatchers.anyString()))
+        whenever(blobStore.getBytes(any()))
             .thenThrow(FileNotFoundException())
-        whenever(hashStore.getString(ArgumentMatchers.anyString()))
+        whenever(hashStore.getString(any()))
             .thenThrow(FileNotFoundException())
-        whenever(gDocReader.getMetadataById(ArgumentMatchers.anyString()))
+        whenever(gDocReader.getMetadataById(any()))
             .thenThrow(FileNotFoundException())
         whenever(
             gDocReader.readFileById(
-                ArgumentMatchers.anyString(),
-                ArgumentMatchers.anyString()
+                any(),
+                any()
             )
         ).thenThrow(FileNotFoundException())
         val entity = helper.getGDocSync("gdoc id", "text/html")
@@ -59,9 +57,9 @@ class GDocHelperTest {
 
     @Test
     fun testGetGDocSync_notCached() {
-        whenever(blobStore.getBytes(ArgumentMatchers.anyString()))
+        whenever(blobStore.getBytes(any()))
             .thenThrow(FileNotFoundException())
-        whenever(hashStore.getString(ArgumentMatchers.anyString()))
+        whenever(hashStore.getString(any()))
             .thenThrow(FileNotFoundException())
         val gDocMetadata = GDocMetadata("gdoc title", "gdoc content hash", emptyMap())
         val contentBytes = "GDoc File Content".toByteArray(Charsets.UTF_8)
@@ -109,7 +107,7 @@ class GDocHelperTest {
 
         // GDoc is fetched for both metadata but not content (since the content hash matches)
         verify(gDocReader).getMetadataById("gdoc id")
-        verify(gDocReader).readFileById("gdoc id", "text/html")
+        verify(gDocReader, never()).readFileById("gdoc id", "text/html")
 
         // The stores are not updated since the data has not changed
         verify(hashStore, never())
@@ -153,16 +151,16 @@ class GDocHelperTest {
     // --- GetGDocAsync
     @Test
     fun testGetGDocAsync_invalidId() {
-        whenever(blobStore.getBytes(ArgumentMatchers.anyString()))
+        whenever(blobStore.getBytes(any()))
             .thenThrow(FileNotFoundException())
-        whenever(hashStore.getString(ArgumentMatchers.anyString()))
+        whenever(hashStore.getString(any()))
             .thenThrow(FileNotFoundException())
-        whenever(gDocReader.getMetadataById(ArgumentMatchers.anyString()))
+        whenever(gDocReader.getMetadataById(any()))
             .thenThrow(FileNotFoundException())
         whenever(
             gDocReader.readFileById(
-                ArgumentMatchers.anyString(),
-                ArgumentMatchers.anyString()
+                any(),
+                any()
             )
         ).thenThrow(FileNotFoundException())
         val entity = helper.getGDocAsync("gdoc id", "text/html")
@@ -171,9 +169,9 @@ class GDocHelperTest {
 
     @Test
     fun testGetGDocAsync_notCached() {
-        whenever(blobStore.getBytes(ArgumentMatchers.anyString()))
+        whenever(blobStore.getBytes(any()))
             .thenThrow(FileNotFoundException())
-        whenever(hashStore.getString(ArgumentMatchers.anyString()))
+        whenever(hashStore.getString(any()))
             .thenThrow(FileNotFoundException())
         val gDocMetadata = GDocMetadata("gdoc title", "gdoc content hash", emptyMap())
         val contentBytes = "GDoc File Content".toByteArray(Charsets.UTF_8)
@@ -187,24 +185,19 @@ class GDocHelperTest {
 
         // Content is not retrieved yet
         verify(gDocReader).getMetadataById("gdoc id")
-        verify(gDocReader, never())
-            .readFileById(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())
+        verify(gDocReader, never()).readFileById(any(), any())
 
         // Store has not been updated yet
-        verify(hashStore, never())
-            .putString(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())
-        verify(blobStore, never())
-            .putBytes(ArgumentMatchers.anyString(), ArgumentMatchers.any())
+        verify(hashStore, never()).putString(any(), any())
+        verify(blobStore, never()).putBytes(any(), any())
 
         // Retrieve the content now, which triggers a fetch from gdoc
         assertThat(entity.getContent()).isEqualTo(contentBytes)
         verify(gDocReader).readFileById("gdoc id", "text/html")
 
         // Store still has not been updated yet
-        verify(hashStore, never())
-            .putString(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())
-        verify(blobStore, never())
-            .putBytes(ArgumentMatchers.anyString(), ArgumentMatchers.any())
+        verify(hashStore, never()).putString(any(), any())
+        verify(blobStore, never()).putBytes(any(), any())
 
         // Sync to the store now.
         entity.syncToStore()

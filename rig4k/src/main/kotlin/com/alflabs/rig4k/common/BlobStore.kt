@@ -28,17 +28,15 @@ import javax.inject.Singleton
 @Singleton
 class BlobStore @Inject constructor(
     private val blobStoreOptions: BlobStoreOptions,
-    fileOps: FileOps,
+    private val fileOps: FileOps,
     timing: Timing,
-    logger: ILogger
+    private val logger: ILogger
 ) {
     companion object {
         private val TAG = BlobStore::class.java.simpleName
         private const val DEBUG = false
     }
 
-    private val fileOps = fileOps
-    private val logger = logger
     private val timing = timing.get("BlobStore")
 
     @Throws(IOException::class)

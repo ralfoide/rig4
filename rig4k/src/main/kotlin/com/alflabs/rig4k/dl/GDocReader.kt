@@ -39,19 +39,19 @@ class GDocReader @Inject constructor(
         private const val APPLICATION_NAME = "rig4"
     }
 
-    private val timingAcc = timing.get("GDocReader")
+    private val timing = timing.get("GDocReader")
     private lateinit var httpTransport: NetHttpTransport
     private lateinit var drive: Drive
 
     fun init() {
-        timingAcc.start()
+        timing.start()
         httpTransport = GoogleNetHttpTransport.newTrustedTransport()
         val credential = authorize()
         // set up the global Drive instance
         drive = Drive.Builder(httpTransport, jsonFactory, credential)
             .setApplicationName(APPLICATION_NAME)
             .build()
-        timingAcc.end()
+        timing.end()
     }
 
     /**
@@ -119,13 +119,13 @@ class GDocReader @Inject constructor(
     @Throws(IOException::class)
     fun readFileById(fileId: String, mimeType: String): ByteArray {
         // https://developers.google.com/drive/v3/web/manage-downloads
-        timingAcc.start()
+        timing.start()
         return try {
             val baos = ByteArrayOutputStream()
             drive.files().export(fileId, mimeType).executeAndDownloadTo(baos)
             baos.toByteArray()
         } finally {
-            timingAcc.end()
+            timing.end()
         }
     }
 
@@ -137,7 +137,7 @@ class GDocReader @Inject constructor(
         // We need to explicitely tell which fields we want, otherwsie the response
         // contains nothing useful. This is still a hint and some fields might just
         // be missing (e.g. the md5 checksum on a gdoc).
-        timingAcc.start()
+        timing.start()
         return try {
             val get = drive.files()[fileId]
                 .setFields("md5Checksum,modifiedTime,version,name,exportLinks")
@@ -151,13 +151,13 @@ class GDocReader @Inject constructor(
             hash = DigestUtils.shaHex(hash)
             GDocMetadata(gfile.name, hash, exportLinks)
         } finally {
-            timingAcc.end()
+            timing.end()
         }
     }
 
     @Throws(IOException::class)
     fun getDataByUrl(url: URL): InputStream {
-        timingAcc.start()
+        timing.start()
         try {
             var timeoutSeconds = 30
             var retry = 0
@@ -185,7 +185,7 @@ class GDocReader @Inject constructor(
                 }
             }
         } finally {
-            timingAcc.end()
+            timing.end()
         }
     }
 }
