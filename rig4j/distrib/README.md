@@ -16,7 +16,7 @@ First time need to deal with OAuth2:
 * If the console shows the IAM (admin) screen, use 3-dot menu > API > Credentials.
 * Select Java Rig4 Json and download JSON.
 * Store it in the path indicated in the console error.
-* Note: Use cygwin to create the `.rig42` folder, can't create it using Win Explorer.
+* Note: Use cygwin to create the `.rig42k` folder, can't create it using Win Explorer.
 * Run `rig4.sh` again and follow the web browser OAuth2 verification screen.
 * The console app will auto-update.
 
@@ -37,7 +37,7 @@ Gradle:
 * Single Instance Only
 * Project: rig4j
 
-Config for testing: "C:/Users/$USER/.rig42rc"
+Config for testing: "C:/Users/$USER/.rig42krc"
 
     exp-doc-id = ...doc-id...
     exp-dest-dir = c:/Temp/trains

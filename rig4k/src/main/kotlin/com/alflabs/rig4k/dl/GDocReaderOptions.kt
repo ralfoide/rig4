@@ -10,7 +10,7 @@ import javax.inject.Singleton
 class GDocReaderOptions @Inject constructor(): OptionGroup("GDocReader Options") {
     val gdocRootDir by option(
         help = "Directory where Google Drive API stores credentials files.")
-        .default("~/.rig42")
+        .default("~/.rig42k")
 
     val gdocPathClientSecretJson by option(
         help = "Path to load client_secret.json from Google Drive API.")

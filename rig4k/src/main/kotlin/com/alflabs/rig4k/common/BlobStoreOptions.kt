@@ -9,6 +9,6 @@ import javax.inject.Singleton
 @Singleton
 class BlobStoreOptions @Inject constructor(): OptionGroup("BlobStore Options") {
     val blobStoreDir by option(
-        help = "Directory where Rig4j caches local data.")
-        .default("~/.rig42/blob_store")
+        help = "Directory where Rig4k caches local data.")
+        .default("~/.rig42k/blob_store")
 }

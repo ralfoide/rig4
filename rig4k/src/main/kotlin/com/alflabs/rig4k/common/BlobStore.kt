@@ -29,8 +29,8 @@ import javax.inject.Singleton
 class BlobStore @Inject constructor(
     private val blobStoreOptions: BlobStoreOptions,
     private val fileOps: FileOps,
-    timing: Timing,
-    private val logger: ILogger
+    private val logger: ILogger,
+    timing: Timing
 ) {
     companion object {
         private val TAG = BlobStore::class.java.simpleName

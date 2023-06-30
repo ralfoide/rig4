@@ -1,7 +1,9 @@
 package com.alflabs.rig4k.main
 
 import com.alflabs.rig4k.common.BlobStoreOptions
+import com.alflabs.rig4k.common.Timing
 import com.alflabs.rig4k.dl.PreloadCommand
+import com.alflabs.rig4k.dl.SiteOptions
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.core.subcommands
@@ -12,17 +14,19 @@ import javax.inject.Singleton
 
 @Singleton
 class Rig4kCommand @Inject constructor(
-    dlCommand: PreloadCommand,
+    private val timing: Timing,
+    preloadCommand: PreloadCommand,
     mainOptions: MainOptions,
+    siteOptions: SiteOptions,
     blobStoreOptions: BlobStoreOptions,
 ) : NoOpCliktCommand() {
     @Suppress("unused")
     private val _mainOptions by mainOptions
     private val _blobStoreOptions by blobStoreOptions
+    private val _siteOptions by siteOptions
 
     init {
-        println("@@ MAIN init EntryPoint")
-        context { valueSource = PropertiesValueSource.from("rig42k.rc") }
-        subcommands(dlCommand)
+        subcommands(preloadCommand)
+        context { valueSource = PropertiesValueSource.from(".rig42krc") }
     }
 }
