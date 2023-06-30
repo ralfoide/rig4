@@ -1,6 +1,7 @@
 package com.alflabs.rig4k.dl
 
 import com.alflabs.rig4k.common.Timing
+import com.alflabs.rig4k.site.SiteOptions
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import javax.inject.Inject

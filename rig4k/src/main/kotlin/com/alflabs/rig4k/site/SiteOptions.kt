@@ -1,4 +1,4 @@
-package com.alflabs.rig4k.dl
+package com.alflabs.rig4k.site
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.default

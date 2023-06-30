@@ -22,7 +22,7 @@ class HashStoreTest {
     fun setUp() {
         val timing = Timing(MockClock(), logger)
         val fileOps = FakeFileOps()
-        val blobStore = BlobStore(options, fileOps, timing, logger)
+        val blobStore = BlobStore(options, fileOps, logger, timing)
         store = HashStore(logger, blobStore)
     }
 

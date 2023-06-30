@@ -1,7 +1,6 @@
 package com.alflabs.rig4k.common
 
 import com.alflabs.utils.FakeFileOps
-import com.alflabs.utils.FileOps
 import com.alflabs.utils.ILogger
 import com.alflabs.utils.MockClock
 import com.google.common.truth.Truth
@@ -17,13 +16,13 @@ class BlobStoreTest {
 
     private val logger : ILogger = mock()
     private val options : BlobStoreOptions = mock()
-    private val mTiming = Timing(MockClock(), logger)
-    private val mFileOps = FakeFileOps()
+    private val timing = Timing(MockClock(), logger)
+    private val fileOps = FakeFileOps()
     private lateinit var mStore: BlobStore
 
     @Before
     fun setUp() {
-        mStore = BlobStore(options, mFileOps, mTiming, logger)
+        mStore = BlobStore(options, fileOps, logger, timing)
     }
 
     @Test
