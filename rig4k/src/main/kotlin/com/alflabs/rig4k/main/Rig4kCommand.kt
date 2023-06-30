@@ -1,7 +1,7 @@
 package com.alflabs.rig4k.main
 
 import com.alflabs.rig4k.common.BlobStoreOptions
-import com.alflabs.rig4k.dl.DlCommand
+import com.alflabs.rig4k.dl.PreloadCommand
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.core.subcommands
@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Singleton
 class Rig4kCommand @Inject constructor(
-    dlCommand: DlCommand,
+    dlCommand: PreloadCommand,
     mainOptions: MainOptions,
     blobStoreOptions: BlobStoreOptions,
 ) : NoOpCliktCommand() {

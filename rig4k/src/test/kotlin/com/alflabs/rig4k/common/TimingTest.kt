@@ -24,7 +24,7 @@ class TimingTest {
     }
 
     @Test
-    fun testTiming() {
+    fun testTiming_startEnd() {
         val acc1 = timing.get("name1")
         val acc2 = timing.get("name2")
         acc1.start()
@@ -33,6 +33,30 @@ class TimingTest {
         clock.sleep(901)
         acc2.end()
         acc1.end()
+        assertThat(acc1.name).isEqualTo("name1")
+        assertThat(acc1.accumulator).isEqualTo(101 + 901)
+        assertThat(acc2.name).isEqualTo("name2")
+        assertThat(acc2.accumulator).isEqualTo(901)
+        timing.printToLog()
+        assertThat(logger.string).isEqualTo(
+            """Timing: name1 = 1.002 s
+              |Timing: name2 = 0.901 s
+              |""".trimMargin()
+        )
+    }
+
+    @Test
+    fun testTiming_time() {
+        val acc1 = timing.get("name1")
+        val acc2 = timing.get("name2")
+        val ret = acc1.time {
+            clock.sleep(101)
+            acc2.time {
+                clock.sleep(901)
+            }
+            42
+        }
+        assertThat(ret).isEqualTo(42)
         assertThat(acc1.name).isEqualTo("name1")
         assertThat(acc1.accumulator).isEqualTo(101 + 901)
         assertThat(acc2.name).isEqualTo("name2")

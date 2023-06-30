@@ -41,26 +41,23 @@ class BlobStore @Inject constructor(
 
     @Throws(IOException::class)
     fun putBytes(descriptor: String, content: ByteArray) {
-        timing.start()
-        store(descriptor, "b", content)
-        timing.end()
+        timing.time {
+            store(descriptor, "b", content)
+        }
     }
 
     @Throws(IOException::class)
     fun getBytes(descriptor: String): ByteArray? {
-        timing.start()
-        return try {
+        return timing.time {
             retrieve(descriptor, "b")
-        } finally {
-            timing.end()
         }
     }
 
     @Throws(IOException::class)
     fun putString(descriptor: String, content: String) {
-        timing.start()
-        store(descriptor, "s", content.toByteArray(Charsets.UTF_8))
-        timing.end()
+        timing.time {
+            store(descriptor, "s", content.toByteArray(Charsets.UTF_8))
+        }
     }
 
     @Throws(IOException::class)
@@ -76,23 +73,23 @@ class BlobStore @Inject constructor(
 
     @Throws(IOException::class)
     fun <T> putJson(descriptor: String, content: T) {
-        timing.start()
-        // // Example version using the com.google.api.client.json.JsonGenerator API.
-        // try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-        //     JsonGenerator generator = mJsonFactory.createJsonGenerator(baos, Charsets.UTF_8);
-        //     generator.enablePrettyPrint();
-        //     generator.serialize(content);
-        //     generator.flush();
-        //     generator.close();
-        //     store(descriptor, "j", baos.toByteArray());
-        // }
+        timing.time {
+            // // Example version using the com.google.api.client.json.JsonGenerator API.
+            // try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            //     JsonGenerator generator = mJsonFactory.createJsonGenerator(baos, Charsets.UTF_8);
+            //     generator.enablePrettyPrint();
+            //     generator.serialize(content);
+            //     generator.flush();
+            //     generator.close();
+            //     store(descriptor, "j", baos.toByteArray());
+            // }
 
-        // Version using the Jackson ObjectMapper API.
-        val mapper = ObjectMapper()
-        val writer: ObjectWriter = mapper.writerWithDefaultPrettyPrinter()
-        val bytes: ByteArray = writer.writeValueAsBytes(content)
-        store(descriptor, "j", bytes)
-        timing.end()
+            // Version using the Jackson ObjectMapper API.
+            val mapper = ObjectMapper()
+            val writer: ObjectWriter = mapper.writerWithDefaultPrettyPrinter()
+            val bytes: ByteArray = writer.writeValueAsBytes(content)
+            store(descriptor, "j", bytes)
+        }
     }
 
     @Throws(IOException::class)

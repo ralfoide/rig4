@@ -44,14 +44,14 @@ class GDocReader @Inject constructor(
     private lateinit var drive: Drive
 
     fun init() {
-        timing.start()
-        httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-        val credential = authorize()
-        // set up the global Drive instance
-        drive = Drive.Builder(httpTransport, jsonFactory, credential)
-            .setApplicationName(APPLICATION_NAME)
-            .build()
-        timing.end()
+        timing.time {
+            httpTransport = GoogleNetHttpTransport.newTrustedTransport()
+            val credential = authorize()
+            // set up the global Drive instance
+            drive = Drive.Builder(httpTransport, jsonFactory, credential)
+                .setApplicationName(APPLICATION_NAME)
+                .build()
+        }
     }
 
     /**
@@ -119,13 +119,10 @@ class GDocReader @Inject constructor(
     @Throws(IOException::class)
     fun readFileById(fileId: String, mimeType: String): ByteArray {
         // https://developers.google.com/drive/v3/web/manage-downloads
-        timing.start()
-        return try {
+        return timing.time {
             val baos = ByteArrayOutputStream()
             drive.files().export(fileId, mimeType).executeAndDownloadTo(baos)
             baos.toByteArray()
-        } finally {
-            timing.end()
         }
     }
 
@@ -137,8 +134,7 @@ class GDocReader @Inject constructor(
         // We need to explicitely tell which fields we want, otherwsie the response
         // contains nothing useful. This is still a hint and some fields might just
         // be missing (e.g. the md5 checksum on a gdoc).
-        timing.start()
-        return try {
+        return timing.time {
             val get = drive.files()[fileId]
                 .setFields("md5Checksum,modifiedTime,version,name,exportLinks")
             val gfile = get.execute()
@@ -150,8 +146,6 @@ class GDocReader @Inject constructor(
                 String.format("v:%s|d:%s|c:%s", version, dateTime, checksum)
             hash = DigestUtils.shaHex(hash)
             GDocMetadata(gfile.name, hash, exportLinks)
-        } finally {
-            timing.end()
         }
     }
 

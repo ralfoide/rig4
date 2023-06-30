@@ -38,6 +38,15 @@ class Timing @Inject constructor(
         var accumulator: Long = 0
             private set
 
+        fun <T> time(block: () -> T): T {
+            try {
+                start()
+                return block.invoke()
+            } finally {
+                end()
+            }
+        }
+
         fun start(): TimeAccumulator {
             start = clock.elapsedRealtime()
             return this
