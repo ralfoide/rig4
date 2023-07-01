@@ -14,23 +14,23 @@ import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
 import org.mockito.kotlin.whenever
 
-class IndexReaderTest {
+class ExpIndexReaderTest {
     @get:Rule var mockitoRule: MockitoRule = MockitoJUnit.rule()
 
     private val logger : ILogger = Mockito.mock()
-    private val gDocHelper : GDocHelper = Mockito.mock()
-    private lateinit var reader : IndexReader
+    private val gDocHelper : ExpGDocHelper = Mockito.mock()
+    private lateinit var reader : ExpIndexReader
 
     @Before
     fun setUp() {
-        reader = IndexReader(logger, gDocHelper)
+        reader = ExpIndexReader(logger, gDocHelper)
     }
 
     @Test
     @Throws(Exception::class)
     fun testReadIndex_empty() {
         val gDocMetadata = GDocMetadata("index", "index metadata hash", emptyMap())
-        val entity = GDocEntity(
+        val entity = ExpGDocEntity(
             gDocMetadata,
             upToDate = false,
             "".toByteArray(Charsets.UTF_8)
@@ -55,7 +55,7 @@ class IndexReaderTest {
             
             """.trimIndent()
         val gDocMetadata = GDocMetadata("index", "index metadata hash", emptyMap())
-        val entity = GDocEntity(
+        val entity = ExpGDocEntity(
             gDocMetadata,
             upToDate = false,
             content.toByteArray(Charsets.UTF_8)
@@ -88,7 +88,7 @@ class IndexReaderTest {
             
             """.trimIndent()
         val gDocMetadata = GDocMetadata("index", "index metadata hash", emptyMap())
-        val entity = GDocEntity(
+        val entity = ExpGDocEntity(
             gDocMetadata,
             upToDate = false,
             content.toByteArray(Charsets.UTF_8)

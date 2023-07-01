@@ -144,7 +144,7 @@ class GDocReader @Inject constructor(
             val exportLinks = gfile.exportLinks
             var hash =
                 String.format("v:%s|d:%s|c:%s", version, dateTime, checksum)
-            hash = DigestUtils.shaHex(hash)
+            hash = DigestUtils.sha1Hex(hash)
             GDocMetadata(gfile.name, hash, exportLinks)
         }
     }
@@ -157,7 +157,7 @@ class GDocReader @Inject constructor(
             var retry = 0
             while (true) {
                 try {
-                    val request = drive!!.requestFactory.buildGetRequest(GenericUrl(url))
+                    val request = drive.requestFactory.buildGetRequest(GenericUrl(url))
                     request.setReadTimeout(1000 * timeoutSeconds) // read timeout in milliseconds
                     request.setThrowExceptionOnExecuteError(true)
                     val response = request.execute()

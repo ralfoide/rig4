@@ -117,7 +117,7 @@ class BlobStore @Inject constructor(
         suffix: String,
         content: ByteArray
     ) {
-        val key: String = DigestUtils.shaHex(descriptor) + suffix
+        val key: String = DigestUtils.sha1Hex(descriptor) + suffix
         val file = File(StringUtils.expandUserHome(blobStoreOptions.blobStoreDir), key)
         fileOps.createParentDirs(file)
         fileOps.writeBytes(content, file)
@@ -126,7 +126,7 @@ class BlobStore @Inject constructor(
 
     @Throws(IOException::class)
     private fun retrieve(descriptor: String, suffix: String): ByteArray? {
-        val key: String = DigestUtils.shaHex(descriptor) + suffix
+        val key: String = DigestUtils.sha1Hex(descriptor) + suffix
         val file = File(StringUtils.expandUserHome(blobStoreOptions.blobStoreDir), key)
         if (!fileOps.isFile(file)) return null
         val content: ByteArray = fileOps.readBytes(file)

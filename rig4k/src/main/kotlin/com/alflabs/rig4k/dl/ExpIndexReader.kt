@@ -12,12 +12,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class IndexReader @Inject constructor(
+class ExpIndexReader @Inject constructor(
     private val logger: ILogger,
-    private val gDocHelper: GDocHelper,
+    private val gDocHelper: ExpGDocHelper,
 ) {
     companion object {
-        private val TAG = IndexReader::class.java.simpleName
+        private val TAG = ExpIndexReader::class.java.simpleName
         private val sArticleLineRe =
             Pattern.compile("^([a-z0-9_/-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*")
         private val sBlogLineRe =

@@ -1,6 +1,6 @@
 package com.alflabs.rig4k.dl
 
-class GDocEntity {
+class ExpGDocEntity {
     private val _metadata: GDocMetadata
     private val _upToDate: Boolean
     private val fetcher: ContentFetcher?
@@ -61,10 +61,10 @@ class GDocEntity {
     }
 
     fun interface Syncer {
-        fun sync(entity: GDocEntity)
+        fun sync(entity: ExpGDocEntity)
     }
 
     fun interface ContentFetcher {
-        fun fetchContent(entity: GDocEntity): ByteArray?
+        fun fetchContent(entity: ExpGDocEntity): ByteArray?
     }
 }

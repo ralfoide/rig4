@@ -32,7 +32,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GDocHelper @Inject constructor(
+class ExpGDocHelper @Inject constructor(
     private val logger: ILogger,
     private val fileOps: FileOps,
     private val timing: Timing,
@@ -41,7 +41,7 @@ class GDocHelper @Inject constructor(
     private val hashStore: HashStore
 ) {
     companion object {
-        private val TAG = GDocHelper::class.java.simpleName
+        private val TAG = ExpGDocHelper::class.java.simpleName
         private const val COMPOSITE_GRAPHICS_TO_WHITE = true
     }
 
@@ -84,7 +84,7 @@ class GDocHelper @Inject constructor(
             var destName = destFile.name
             destName = destName.replace(".html", "_")
             destName = destName.replace(".", "_")
-            destName += DigestUtils.shaHex("_drawing_$id") + "d"
+            destName += DigestUtils.sha1Hex("_drawing_$id") + "d"
             logger.d(
                 TAG,
                 "         Drawing: " + destName + ", " + width + "x" + height
@@ -248,7 +248,7 @@ class GDocHelper @Inject constructor(
             var destName = destFile.name
             destName = destName.replace(".html", "_")
             destName = destName.replace(".", "_")
-            destName += DigestUtils.shaHex("_image_$path") + "i"
+            destName += DigestUtils.sha1Hex("_image_$path") + "i"
             logger.d(
                 TAG,
                 "         Image  : " + destName + ", " + width + "x" + height
@@ -371,7 +371,7 @@ class GDocHelper @Inject constructor(
      * - [.getGDocSync] when the caller is going to fetch and use the content no matter what.
      * - [.getGDocAsync] when the caller doesn't need the content if the metadata is up-to-date.
      */
-    fun getGDocSync(fileId: String, mimeType: String): GDocEntity? {
+    fun getGDocSync(fileId: String, mimeType: String): ExpGDocEntity? {
         val metadataKey = "gdoc-hash-$fileId"
         val contentKey = "gdoc-content-$fileId-$mimeType"
 
@@ -428,7 +428,7 @@ class GDocHelper @Inject constructor(
                 throw RuntimeException(e)
             }
         }
-        return GDocEntity(metadata, isUpToDate, content)
+        return ExpGDocEntity(metadata, isUpToDate, content)
     }
 
     /**
@@ -447,7 +447,7 @@ class GDocHelper @Inject constructor(
      * - [.getGDocSync] when the caller is going to fetch and use the content no matter what.
      * - [.getGDocAsync] when the caller doesn't need the content if the metadata is up-to-date.
      */
-    fun getGDocAsync(fileId: String, mimeType: String): GDocEntity? {
+    fun getGDocAsync(fileId: String, mimeType: String): ExpGDocEntity? {
         val metadataKey = "gdoc-hash-$fileId"
         val contentKey = "gdoc-content-$fileId-$mimeType"
 
@@ -476,7 +476,7 @@ class GDocHelper @Inject constructor(
             isUpToDate = metadata.contentHash == storeHash
         } catch (ignore: IOException) {
         }
-        val fetcher: GDocEntity.ContentFetcher = GDocEntity.ContentFetcher { entity ->
+        val fetcher: ExpGDocEntity.ContentFetcher = ExpGDocEntity.ContentFetcher { entity ->
             var content: ByteArray? = null
             if (entity.isToDate) {
                 try {
@@ -507,7 +507,7 @@ class GDocHelper @Inject constructor(
             }
             content
         }
-        val syncToStore: GDocEntity.Syncer = GDocEntity.Syncer { entity ->
+        val syncToStore: ExpGDocEntity.Syncer = ExpGDocEntity.Syncer { entity ->
             if (entity.isToDate) {
                 return@Syncer
             }
@@ -520,6 +520,6 @@ class GDocHelper @Inject constructor(
                 logger.d(TAG, "syncToStore failed", e)
             }
         }
-        return GDocEntity(metadata, isUpToDate, fetcher, syncToStore)
+        return ExpGDocEntity(metadata, isUpToDate, fetcher, syncToStore)
     }
 }

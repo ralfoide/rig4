@@ -20,7 +20,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.io.FileNotFoundException
 
-class GDocHelperTest {
+class ExpGDocHelperTest {
     @get:Rule var mockitoRule: MockitoRule = MockitoJUnit.rule()
 
     private val logger : ILogger = mock()
@@ -29,11 +29,11 @@ class GDocHelperTest {
     private val hashStore : HashStore = mock()
     private val timing = Timing(MockClock(), logger)
     private val fileOps = FakeFileOps()
-    private lateinit var helper: GDocHelper
+    private lateinit var helper: ExpGDocHelper
 
     @Before
     fun setUp() {
-        helper = GDocHelper(logger, fileOps, timing, gDocReader, blobStore, hashStore)
+        helper = ExpGDocHelper(logger, fileOps, timing, gDocReader, blobStore, hashStore)
     }
 
     // --- GetGDocSync

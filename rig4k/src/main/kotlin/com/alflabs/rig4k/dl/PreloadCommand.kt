@@ -10,10 +10,10 @@ import javax.inject.Singleton
 @Singleton
 class PreloadCommand @Inject constructor(
     private val timing: Timing,
-    private val gDocHelper: GDocHelper,
+    private val gDocHelper: ExpGDocHelper,
     private val gDocReader: GDocReader,
     private val siteOptions: SiteOptions,
-    private val indexReader: IndexReader,
+    private val indexReader: ExpIndexReader,
     gDocReaderOptions: GDocReaderOptions,
 ): CliktCommand(name = "preload", help = "Download from GDocs") {
     @Suppress("unused")

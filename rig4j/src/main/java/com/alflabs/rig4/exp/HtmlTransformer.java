@@ -673,7 +673,7 @@ public class HtmlTransformer {
     private void rewriteUrls(Element root, String attrName, Callback callback, String transformKey)
             throws IOException, URISyntaxException {
 
-        String contentHash = DigestUtils.shaHex(root.text());
+        String contentHash = DigestUtils.sha1Hex(root.text());
         String contentKey = String.format("rewrite_url_hash_A%s_K%s", attrName, transformKey);
         String oldContentHash = mHashStore.getString(contentKey);
         boolean useImgCache = oldContentHash != null && oldContentHash.equals(contentHash);

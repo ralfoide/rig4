@@ -85,7 +85,7 @@ public class GDocHelper {
             String destName = destFile.getName();
             destName = destName.replace(".html", "_");
             destName = destName.replace(".", "_");
-            destName += DigestUtils.shaHex("_drawing_" + id) + "d";
+            destName += DigestUtils.sha1Hex("_drawing_" + id) + "d";
 
             mLogger.d(TAG, "         Drawing: " + destName + ", " + width + "x" + height);
 
@@ -245,7 +245,7 @@ public class GDocHelper {
             String destName = destFile.getName();
             destName = destName.replace(".html", "_");
             destName = destName.replace(".", "_");
-            destName += DigestUtils.shaHex("_image_" + path) + "i";
+            destName += DigestUtils.sha1Hex("_image_" + path) + "i";
             mLogger.d(TAG, "         Image  : " + destName + ", " + width + "x" + height);
 
             // Download the image, then compares whether a PNG or JPG would be more compact.

@@ -221,7 +221,7 @@ class SourceTree {
             final int maxKeyLen = 48;
             final int maxShaLen =  8;
             if (key.length() > maxKeyLen) {
-                String shaHex = DigestUtils.shaHex(key);
+                String shaHex = DigestUtils.sha1Hex(key);
                 key = key.substring(0, maxKeyLen - 1 - maxShaLen) + "_" + shaHex.substring(0, maxShaLen);
             }
 
