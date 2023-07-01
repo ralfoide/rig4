@@ -2,7 +2,7 @@ package com.alflabs.rig4k.dl
 
 import com.alflabs.rig4k.site.ArticleEntry
 import com.alflabs.rig4k.site.BlogEntry
-import com.alflabs.rig4k.site.Index
+import com.alflabs.rig4k.site.ExpIndex
 import com.alflabs.utils.ILogger
 import com.google.common.base.Charsets
 import com.google.common.truth.Truth.assertThat
@@ -61,7 +61,7 @@ class ExpIndexReaderTest {
             content.toByteArray(Charsets.UTF_8)
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
-        val index: Index = reader.readIndex("indexId")
+        val index: ExpIndex = reader.readIndex("indexId")
         assertThat(index).isNotNull()
         assertThat(index.articleEntries).containsExactly(
             ArticleEntry("01234567_file1", "file1.html"),
@@ -94,7 +94,7 @@ class ExpIndexReaderTest {
             content.toByteArray(Charsets.UTF_8)
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
-        val index: Index = reader.readIndex("indexId")
+        val index: ExpIndex = reader.readIndex("indexId")
         assertThat(index).isNotNull()
         assertThat(index.blogEntries).containsExactly(
             BlogEntry("12345", 0),

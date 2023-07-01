@@ -2,7 +2,7 @@ package com.alflabs.rig4k.dl
 
 import com.alflabs.rig4k.site.ArticleEntry
 import com.alflabs.rig4k.site.BlogEntry
-import com.alflabs.rig4k.site.ExpIndex
+import com.alflabs.rig4k.site.Site
 import com.alflabs.utils.ILogger
 import com.google.common.base.Charsets
 import com.google.common.base.Preconditions
@@ -12,12 +12,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ExpIndexReader @Inject constructor(
+class IndexReader @Inject constructor(
     private val logger: ILogger,
     private val gDocHelper: ExpGDocHelper,
 ) {
     companion object {
-        private val TAG = ExpIndexReader::class.java.simpleName
+        private val TAG = IndexReader::class.java.simpleName
         private val sArticleLineRe =
             Pattern.compile("^([a-z0-9_/-]+.html)\\s+([a-zA-Z0-9_-]+)\\s*")
         private val sBlogLineRe =
@@ -25,14 +25,13 @@ class ExpIndexReader @Inject constructor(
     }
 
     @Throws(IOException::class)
-    fun readIndex(indexId: String): ExpIndex {
-        logger.d(TAG, "Processing document: index $indexId")
-        val entity = gDocHelper.getGDocSync(indexId, "text/plain")
-        Preconditions.checkNotNull(entity)
+    fun readIndex(site: Site) {
+        logger.d(TAG, "Processing document: index ${site.index.fileId}")
+        Preconditions.checkArgument(site.index.isAvailable)
 
-        val content = String(entity!!.getContent()!!, Charsets.UTF_8)
-        val articleEntries = mutableListOf<ArticleEntry>()
-        val blogEntries = mutableListOf<BlogEntry>()
+        val content = String(site.index.getContent(), Charsets.UTF_8)
+        val articleEntries = site.articleEntries
+        val blogEntries = site.blogEntries
 
         for (line in content
             .split("\n".toRegex())
@@ -51,6 +50,5 @@ class ExpIndexReader @Inject constructor(
                 blogEntries.add(BlogEntry(matcher.group(3), siteNumber))
             }
         }
-        return ExpIndex(articleEntries, blogEntries)
     }
 }

@@ -131,7 +131,7 @@ class GDocReader @Inject constructor(
      */
     @Throws(IOException::class)
     fun getMetadataById(fileId: String): GDocMetadata {
-        // We need to explicitely tell which fields we want, otherwsie the response
+        // We need to explicitly tell which fields we want, otherwsie the response
         // contains nothing useful. This is still a hint and some fields might just
         // be missing (e.g. the md5 checksum on a gdoc).
         return timing.time {

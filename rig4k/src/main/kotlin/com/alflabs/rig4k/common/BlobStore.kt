@@ -3,8 +3,7 @@ package com.alflabs.rig4k.common
 import com.alflabs.utils.FileOps
 import com.alflabs.utils.ILogger
 import com.alflabs.utils.StringUtils
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.ObjectWriter
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.base.Charsets
 import org.apache.commons.codec.digest.DigestUtils
 import java.io.File
@@ -54,6 +53,13 @@ class BlobStore @Inject constructor(
     }
 
     @Throws(IOException::class)
+    fun hasBytes(descriptor: String): Boolean {
+        return timing.time {
+            checkExists(descriptor, "b")
+        }
+    }
+
+    @Throws(IOException::class)
     fun putString(descriptor: String, content: String) {
         timing.time {
             store(descriptor, "s", content.toByteArray(Charsets.UTF_8))
@@ -72,22 +78,18 @@ class BlobStore @Inject constructor(
     }
 
     @Throws(IOException::class)
+    fun hasString(descriptor: String): Boolean {
+        return timing.time {
+            checkExists(descriptor, "s")
+        }
+    }
+
+    @Throws(IOException::class)
     fun <T> putJson(descriptor: String, content: T) {
         timing.time {
-            // // Example version using the com.google.api.client.json.JsonGenerator API.
-            // try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            //     JsonGenerator generator = mJsonFactory.createJsonGenerator(baos, Charsets.UTF_8);
-            //     generator.enablePrettyPrint();
-            //     generator.serialize(content);
-            //     generator.flush();
-            //     generator.close();
-            //     store(descriptor, "j", baos.toByteArray());
-            // }
-
-            // Version using the Jackson ObjectMapper API.
-            val mapper = ObjectMapper()
-            val writer: ObjectWriter = mapper.writerWithDefaultPrettyPrinter()
-            val bytes: ByteArray = writer.writeValueAsBytes(content)
+            // Version using the kotlin Jackson ObjectMapper API.
+            val mapper = jacksonObjectMapper()
+            val bytes: ByteArray = mapper.writeValueAsBytes(content)
             store(descriptor, "j", bytes)
         }
     }
@@ -97,17 +99,18 @@ class BlobStore @Inject constructor(
         timing.start()
         return try {
             val bytes = retrieve(descriptor, "j") ?: return null
-            // Version using the Jackson ObjectMapper API.
-            val mapper = ObjectMapper()
+            // Version using the kotlin Jackson ObjectMapper API.
+            val mapper = jacksonObjectMapper()
             mapper.readValue<T>(bytes, clazz)
-
-            // // Example version using the com.google.api.client.json.JsonParser API.
-            // try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes)) {
-            //     JsonParser parser = mJsonFactory.createJsonParser(bais, Charsets.UTF_8);
-            //     return parser.parse(clazz);
-            // }
         } finally {
             timing.end()
+        }
+    }
+
+    @Throws(IOException::class)
+    fun hasJson(descriptor: String): Boolean {
+        return timing.time {
+            checkExists(descriptor, "j")
         }
     }
 
@@ -132,5 +135,12 @@ class BlobStore @Inject constructor(
         val content: ByteArray = fileOps.readBytes(file)
         if (DEBUG) logger.d(TAG, "BLOB << Read  " + content.size + " bytes from " + file.path)
         return content
+    }
+
+    @Throws(IOException::class)
+    private fun checkExists(descriptor: String, suffix: String): Boolean {
+        val key: String = DigestUtils.sha1Hex(descriptor) + suffix
+        val file = File(StringUtils.expandUserHome(blobStoreOptions.blobStoreDir), key)
+        return fileOps.isFile(file)
     }
 }
