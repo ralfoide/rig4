@@ -2,58 +2,62 @@ package com.alflabs.rig4k.dl
 
 class GDocEntity {
     private val _metadata: GDocMetadata
-    private val _updateToDate: Boolean
-    private val mFetcher: ContentFetcher?
-    private val mSyncToStore: Syncer?
-    private var mContent: ByteArray?
+    private val _upToDate: Boolean
+    private val fetcher: ContentFetcher?
+    private val syncToStore: Syncer?
+    private var content: ByteArray?
     private var _contentFetched = false
 
     val metadata: GDocMetadata
         get() = _metadata
 
-    val isUpdateToDate: Boolean
-        get() = _updateToDate
+    val isToDate: Boolean
+        get() = _upToDate
 
     val isContentFetched: Boolean
         get() = _contentFetched
 
-    constructor(metadata: GDocMetadata, updateToDate: Boolean, content: ByteArray?) {
+    constructor(
+        metadata: GDocMetadata,
+        upToDate: Boolean,
+        content: ByteArray?
+    ) {
         this._metadata = metadata
-        _updateToDate = updateToDate
-        mSyncToStore = null
-        mContent = content
-        mFetcher = null
+        this._upToDate = upToDate
+        this.syncToStore = null
+        this.content = content
+        this.fetcher = null
     }
 
     constructor(
-        metadata: GDocMetadata, updateToDate: Boolean,
+        metadata: GDocMetadata,
+        isUpToDate: Boolean,
         contentFetcher: ContentFetcher?,
         syncToStore: Syncer?
     ) {
         this._metadata = metadata
-        _updateToDate = updateToDate
-        mSyncToStore = syncToStore
-        mContent = null
-        mFetcher = contentFetcher
+        this._upToDate = isUpToDate
+        this.syncToStore = syncToStore
+        this.content = null
+        this.fetcher = contentFetcher
     }
 
     /**
      * Fetches and caches the content.
      *
-     *
      * This may fail and return null if there is no associated [ContentFetcher]
      * or [ContentFetcher.fetchContent] failed.
      */
     fun getContent(): ByteArray? {
-        if ((mContent == null || !_contentFetched) && mFetcher != null) {
-            mContent = mFetcher.fetchContent(this)
-            _contentFetched = mContent != null
+        if ((content == null || !_contentFetched) && fetcher != null) {
+            content = fetcher.fetchContent(this)
+            _contentFetched = content != null
         }
-        return mContent
+        return content
     }
 
     fun syncToStore() {
-        mSyncToStore?.sync(this)
+        syncToStore?.sync(this)
     }
 
     fun interface Syncer {

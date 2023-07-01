@@ -29,14 +29,16 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import javax.imageio.ImageIO
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class GDocHelper @Inject constructor(
-    private val mLogger: ILogger,
-    private val mFileOps: FileOps,
-    private val mTiming: Timing,
-    private val mGDocReader: GDocReader,
-    private val mBlobStore: BlobStore,
-    private val mHashStore: HashStore
+    private val logger: ILogger,
+    private val fileOps: FileOps,
+    private val timing: Timing,
+    private val gDocReader: GDocReader,
+    private val blobStore: BlobStore,
+    private val hashStore: HashStore
 ) {
     companion object {
         private val TAG = GDocHelper::class.java.simpleName
@@ -51,7 +53,7 @@ class GDocHelper @Inject constructor(
         height: Int,
         useCache: Boolean
     ): String {
-        val timing = mTiming.get("Html.Drawing").start()
+        val timing = timing.get("Html.Drawing").start()
         return try {
             val cacheKey = String.format(
                 "dl_drawing_fullpath_I%s_D%s_W%d_H%d",
@@ -61,12 +63,12 @@ class GDocHelper @Inject constructor(
                 height
             )
             if (useCache) {
-                val cachedFilePath: String? = mHashStore.getString(cacheKey)
+                val cachedFilePath: String? = hashStore.getString(cacheKey)
                 if (cachedFilePath != null) {
                     val cachedFile = File(cachedFilePath)
-                    if (mFileOps.isFile(cachedFile)) {
+                    if (fileOps.isFile(cachedFile)) {
                         val cachedName = cachedFile.name
-                        mLogger.d(
+                        logger.d(
                             TAG,
                             "         Cached : " + cachedName + ", " + width + "x" + height
                         )
@@ -83,23 +85,23 @@ class GDocHelper @Inject constructor(
             destName = destName.replace(".html", "_")
             destName = destName.replace(".", "_")
             destName += DigestUtils.shaHex("_drawing_$id") + "d"
-            mLogger.d(
+            logger.d(
                 TAG,
                 "         Drawing: " + destName + ", " + width + "x" + height
             )
             val url = URL("https://docs.google.com/drawings/d/$id/export/$extension")
-            val stream = mGDocReader.getDataByUrl(url)
+            val stream = gDocReader.getDataByUrl(url)
             var image: BufferedImage = ImageIO.read(stream)
             val keyImageHash = destName
             val keyImageName = destName + "_name"
             val imageHash = computeImageHash(image, width, height)
-            val storedImageHash: String? = mHashStore.getString(keyImageHash)
+            val storedImageHash: String? = hashStore.getString(keyImageHash)
             if (imageHash == storedImageHash) {
-                val storedImageName: String? = mHashStore.getString(keyImageName)
+                val storedImageName: String? = hashStore.getString(keyImageName)
                 if (storedImageName != null) {
                     val actualFile = File(destFile.parentFile, storedImageName)
-                    if (mFileOps.isFile(actualFile)) {
-                        mHashStore.putString(cacheKey, actualFile.path)
+                    if (fileOps.isFile(actualFile)) {
+                        hashStore.putString(cacheKey, actualFile.path)
                         return storedImageName
                     }
                 }
@@ -109,9 +111,9 @@ class GDocHelper @Inject constructor(
             }
             val imgFile = writeImageJpgOrPng(destFile, destName, image, width, height)
             destName = imgFile.name
-            mHashStore.putString(cacheKey, imgFile.path)
-            mHashStore.putString(keyImageHash, imageHash)
-            mHashStore.putString(keyImageName, destName)
+            hashStore.putString(cacheKey, imgFile.path)
+            hashStore.putString(keyImageHash, imageHash)
+            hashStore.putString(keyImageName, destName)
             destName
         } finally {
             timing.end()
@@ -119,7 +121,7 @@ class GDocHelper @Inject constructor(
     }
 
     private fun computeImageHash(image: BufferedImage, width: Int, height: Int): String {
-        val timing = mTiming.get("Html.Image.Hash").start()
+        val timing = timing.get("Html.Image.Hash").start()
         val digest: MessageDigest = try {
             MessageDigest.getInstance("SHA")
         } catch (e: NoSuchAlgorithmException) {
@@ -137,7 +139,7 @@ class GDocHelper @Inject constructor(
 
     @Throws(IOException::class)
     private fun cropAndResizeDrawing(image: BufferedImage, width: Int, height: Int): BufferedImage {
-        val timing = mTiming.get("Html.Drawing.Crop").start()
+        val timing = timing.get("Html.Drawing.Crop").start()
         val srcw: Int = image.width
         val srch: Int = image.height
         val raster: WritableRaster = image.raster
@@ -201,7 +203,7 @@ class GDocHelper @Inject constructor(
             g2d.drawImage(subImage, 0, 0, Color.WHITE, null /*observer*/)
             subImage = white
         }
-        mLogger.d(
+        logger.d(
             TAG, String.format(
                 "        Resizing: from [%dx%d] to (%dx%d)+[%dx%d]",
                 srcw, srch, x1, y1, destw, desth
@@ -219,7 +221,7 @@ class GDocHelper @Inject constructor(
         height: Int,
         useCache: Boolean
     ): String {
-        val timing = mTiming.get("Html.Image").start()
+        val timing = timing.get("Html.Image").start()
         return try {
             val cacheKey = String.format(
                 "dl_image_fullpath_U%s_D%s_W%d_H%d",
@@ -229,12 +231,12 @@ class GDocHelper @Inject constructor(
                 height
             )
             if (useCache) {
-                val cachedFilePath: String? = mHashStore.getString(cacheKey)
+                val cachedFilePath: String? = hashStore.getString(cacheKey)
                 if (cachedFilePath != null) {
                     val cachedFile = File(cachedFilePath)
-                    if (mFileOps.isFile(cachedFile)) {
+                    if (fileOps.isFile(cachedFile)) {
                         val cachedName = cachedFile.name
-                        mLogger.d(
+                        logger.d(
                             TAG,
                             "         Cached : " + cachedName + ", " + width + "x" + height
                         )
@@ -247,7 +249,7 @@ class GDocHelper @Inject constructor(
             destName = destName.replace(".html", "_")
             destName = destName.replace(".", "_")
             destName += DigestUtils.shaHex("_image_$path") + "i"
-            mLogger.d(
+            logger.d(
                 TAG,
                 "         Image  : " + destName + ", " + width + "x" + height
             )
@@ -260,22 +262,22 @@ class GDocHelper @Inject constructor(
             val keyImageHash = destName
             val keyImageName = destName + "_name"
             val imageHash = computeImageHash(image, width, height)
-            val storedImageHash: String? = mHashStore.getString(keyImageHash)
+            val storedImageHash: String? = hashStore.getString(keyImageHash)
             if (imageHash == storedImageHash) {
-                val storedImageName: String? = mHashStore.getString(keyImageName)
+                val storedImageName: String? = hashStore.getString(keyImageName)
                 if (storedImageName != null) {
                     val actualFile = File(destFile.parentFile, storedImageName)
-                    if (mFileOps.isFile(actualFile)) {
-                        mHashStore.putString(cacheKey, actualFile.path)
+                    if (fileOps.isFile(actualFile)) {
+                        hashStore.putString(cacheKey, actualFile.path)
                         return storedImageName
                     }
                 }
             }
             val imgFile = writeImageJpgOrPng(destFile, destName, image, width, height)
             destName = imgFile.name
-            mHashStore.putString(cacheKey, imgFile.path)
-            mHashStore.putString(keyImageHash, imageHash)
-            mHashStore.putString(keyImageName, destName)
+            hashStore.putString(cacheKey, imgFile.path)
+            hashStore.putString(keyImageHash, imageHash)
+            hashStore.putString(keyImageName, destName)
             destName
         } finally {
             timing.end()
@@ -315,7 +317,7 @@ class GDocHelper @Inject constructor(
         var _destName = destName
         var _width = width
         var _height = height
-        val timing = mTiming.get("Html.JpegOrPng").start()
+        val timing = timing.get("Html.JpegOrPng").start()
         val w: Int = image.width
         val h: Int = image.height
         if (_width > 0 && _height <= 0) {
@@ -345,7 +347,7 @@ class GDocHelper @Inject constructor(
         val extension = if (pngSize < jpgSize) "png" else "jpg"
         _destName += ".$extension"
         val destFile = File(destDir.parentFile, _destName)
-        mLogger.d(
+        logger.d(
             TAG, "         Writing: " + _destName
                     + ", " + _width + "x" + _height
                     + ", [png: " + pngSize + " " + (if (pngSize < jpgSize) "<" else ">") + " jpg: " + jpgSize + "]"
@@ -362,14 +364,11 @@ class GDocHelper @Inject constructor(
      * Retrieves both the content and the metadata for the given GDoc id immediately.
      * The freshness "up-to-date" flag is computed using the metadata.
      *
-     *
      * If the entity is up-to-date, the content from the blog store is used (if available).
-     * Otherwise the content is fetched immediately.
-     *
+     * Otherwise, the content is fetched immediately.
      *
      * Which one to use: <br></br>
      * - [.getGDocSync] when the caller is going to fetch and use the content no matter what.
-     * <br></br>
      * - [.getGDocAsync] when the caller doesn't need the content if the metadata is up-to-date.
      */
     fun getGDocSync(fileId: String, mimeType: String): GDocEntity? {
@@ -392,44 +391,44 @@ class GDocHelper @Inject constructor(
         // Check store data
         var content: ByteArray? = null
         try {
-            content = mBlobStore.getBytes(contentKey)
+            content = blobStore.getBytes(contentKey)
         } catch (ignore: IOException) {
         }
         val metadata: GDocMetadata = try {
-            mGDocReader.getMetadataById(fileId)
+            gDocReader.getMetadataById(fileId)
         } catch (e: IOException) {
-            mLogger.d(TAG, "Get metadata failed for $fileId")
-            mLogger.d(
+            logger.d(TAG, "Get metadata failed for $fileId")
+            logger.d(
                 TAG,
                 "If this fails, try re-issuing a new OAuth2 token (e.g. gdoc-store/credentials)."
             )
             return null
         }
-        var updateToDate = false
+        var isUpToDate = false
         if (content != null) {
             // Check freshness
             try {
-                val storeHash: String? = mHashStore.getString(metadataKey)
-                updateToDate = metadata.contentHash == storeHash
+                val storeHash: String? = hashStore.getString(metadataKey)
+                isUpToDate = metadata.contentHash == storeHash
             } catch (ignore: IOException) {
             }
         }
-        if (!updateToDate) {
+        if (!isUpToDate) {
             try {
-                mLogger.d(TAG, "        Fetching: $fileId")
-                content = mGDocReader.readFileById(fileId, mimeType)
+                logger.d(TAG, "        Fetching: $fileId")
+                content = gDocReader.readFileById(fileId, mimeType)
                 Preconditions.checkNotNull(content) // fail fast
-                mLogger.d(TAG, "        Fetched sync size: " + content.size)
+                logger.d(TAG, "        Fetched sync size: " + content.size)
 
                 // Update the store
-                mBlobStore.putBytes(contentKey, content)
-                mHashStore.putString(metadataKey, metadata.contentHash)
+                blobStore.putBytes(contentKey, content)
+                hashStore.putString(metadataKey, metadata.contentHash)
             } catch (e: IOException) {
-                mLogger.d(TAG, "        Fetching $mimeType sync failed", e)
+                logger.d(TAG, "        Fetching $mimeType sync failed", e)
                 throw RuntimeException(e)
             }
         }
-        return GDocEntity(metadata, updateToDate, content)
+        return GDocEntity(metadata, isUpToDate, content)
     }
 
     /**
@@ -437,19 +436,15 @@ class GDocHelper @Inject constructor(
      * Content retrieval is deferred till actually needed.
      * The freshness "up-to-date" flag is computed only using the metadata.
      *
-     *
      * The content fetcher also tries to use the blog store's content if available and the
      * metadata indicates the content should be up-to-date.
-     *
      *
      * The major difference with [.getGDocSync] is that the content
      * fetch does not happen immediately (whether it's from the blog store or gdoc), nor
      * are the blog/hash stores updated immediately.
      *
-     *
      * Which one to use: <br></br>
      * - [.getGDocSync] when the caller is going to fetch and use the content no matter what.
-     * <br></br>
      * - [.getGDocAsync] when the caller doesn't need the content if the metadata is up-to-date.
      */
     fun getGDocAsync(fileId: String, mimeType: String): GDocEntity? {
@@ -469,62 +464,62 @@ class GDocHelper @Inject constructor(
         // In the current context of rig with very little server-side changes and a daily
         // check, the current flaw is acceptable enough.
         val metadata: GDocMetadata = try {
-            mGDocReader.getMetadataById(fileId)
+            gDocReader.getMetadataById(fileId)
         } catch (e: IOException) {
-            mLogger.d(TAG, "Get metadata failed for $fileId")
+            logger.d(TAG, "Get metadata failed for $fileId")
             return null
         }
-        var updateToDate = false
+        var isUpToDate = false
         // Check freshness using metadata only.
         try {
-            val storeHash: String? = mHashStore.getString(metadataKey)
-            updateToDate = metadata.contentHash == storeHash
+            val storeHash: String? = hashStore.getString(metadataKey)
+            isUpToDate = metadata.contentHash == storeHash
         } catch (ignore: IOException) {
         }
         val fetcher: GDocEntity.ContentFetcher = GDocEntity.ContentFetcher { entity ->
             var content: ByteArray? = null
-            if (entity.isUpdateToDate) {
+            if (entity.isToDate) {
                 try {
-                    content = mBlobStore.getBytes(contentKey)
+                    content = blobStore.getBytes(contentKey)
                 } catch (ignore: IOException) {
                 }
             }
             if (content == null) {
                 try {
-                    mLogger.d(TAG, "        Fetching $mimeType: $fileId")
+                    logger.d(TAG, "        Fetching $mimeType: $fileId")
                     // 2023-06-08 Use file.export via readFileById() started to fail.
-                    // Instead, we're not using the direct exportLinks URL if available.
+                    // Instead, we're now using the direct exportLinks URL if available.
                     val exportLink = metadata.exportLinks[mimeType]
                     if (exportLink != null) {
                         val url = URL(exportLink)
-                        mGDocReader.getDataByUrl(url)
+                        gDocReader.getDataByUrl(url)
                             .use { inputStream -> content = ByteStreams.toByteArray(inputStream) }
                     } else {
                         // Legacy.
-                        content = mGDocReader.readFileById(fileId, mimeType)
+                        content = gDocReader.readFileById(fileId, mimeType)
                     }
                     Preconditions.checkNotNull<ByteArray>(content) // fail fast
-                    mLogger.d(TAG, "        Fetched async size: " + content!!.size)
+                    logger.d(TAG, "        Fetched async size: " + content!!.size)
                 } catch (e: IOException) {
-                    mLogger.d(TAG, "        Fetching async failed", e)
+                    logger.d(TAG, "        Fetching async failed", e)
                     throw RuntimeException(e)
                 }
             }
             content
         }
         val syncToStore: GDocEntity.Syncer = GDocEntity.Syncer { entity ->
-            if (entity.isUpdateToDate) {
+            if (entity.isToDate) {
                 return@Syncer
             }
             try {
                 if (entity.isContentFetched && entity.getContent() != null) {
-                    mBlobStore.putBytes(contentKey, entity.getContent()!!)
+                    blobStore.putBytes(contentKey, entity.getContent()!!)
                 }
-                mHashStore.putString(metadataKey, entity.metadata.contentHash)
+                hashStore.putString(metadataKey, entity.metadata.contentHash)
             } catch (e: IOException) {
-                mLogger.d(TAG, "syncToStore failed", e)
+                logger.d(TAG, "syncToStore failed", e)
             }
         }
-        return GDocEntity(metadata, updateToDate, fetcher, syncToStore)
+        return GDocEntity(metadata, isUpToDate, fetcher, syncToStore)
     }
 }

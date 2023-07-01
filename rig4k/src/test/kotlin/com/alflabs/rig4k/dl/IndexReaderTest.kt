@@ -32,7 +32,7 @@ class IndexReaderTest {
         val gDocMetadata = GDocMetadata("index", "index metadata hash", emptyMap())
         val entity = GDocEntity(
             gDocMetadata,
-            updateToDate = false,
+            upToDate = false,
             "".toByteArray(Charsets.UTF_8)
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
@@ -57,7 +57,7 @@ class IndexReaderTest {
         val gDocMetadata = GDocMetadata("index", "index metadata hash", emptyMap())
         val entity = GDocEntity(
             gDocMetadata,
-            updateToDate = false,
+            upToDate = false,
             content.toByteArray(Charsets.UTF_8)
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
@@ -90,7 +90,7 @@ class IndexReaderTest {
         val gDocMetadata = GDocMetadata("index", "index metadata hash", emptyMap())
         val entity = GDocEntity(
             gDocMetadata,
-            updateToDate = false,
+            upToDate = false,
             content.toByteArray(Charsets.UTF_8)
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
