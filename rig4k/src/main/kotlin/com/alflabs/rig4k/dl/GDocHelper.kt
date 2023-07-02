@@ -21,7 +21,7 @@ class GDocHelper @Inject constructor(
         private val TAG = GDocHelper::class.java.simpleName
     }
 
-    fun preload(entity: GDocCachedEntity) {
-        entity.preloadFromGDoc(logger, gDocReader, blobStore, hashStore)
+    fun preload(entity: IGDocCachedEntity) {
+        entity.preloadFromGDoc()
     }
 }

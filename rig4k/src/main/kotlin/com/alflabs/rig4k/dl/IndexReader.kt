@@ -13,6 +13,7 @@ import javax.inject.Singleton
 @Singleton
 class IndexReader @Inject constructor(
     private val logger: ILogger,
+    private val entityFactory: EntityFactory,
 ) {
     companion object {
         private val TAG = IndexReader::class.java.simpleName
@@ -41,13 +42,13 @@ class IndexReader @Inject constructor(
             val _line = line.trim { it <= ' ' }
             var matcher = sArticleLineRe.matcher(_line)
             if (matcher.find()) {
-                articleEntries.add(ArticleEntry(ArticleEntity(matcher.group(2)), matcher.group(1)))
+                articleEntries.add(ArticleEntry(entityFactory.article(matcher.group(2)), matcher.group(1)))
                 continue
             }
             matcher = sBlogLineRe.matcher(_line)
             if (matcher.find()) {
                 val siteNumber = matcher.group(1)?.toIntOrNull() ?: 0
-                blogEntries.add(BlogEntry(BlogEntity(matcher.group(3)), siteNumber))
+                blogEntries.add(BlogEntry(entityFactory.blog(matcher.group(3)), siteNumber))
             }
         }
     }

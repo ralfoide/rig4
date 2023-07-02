@@ -1,32 +1,35 @@
 package com.alflabs.rig4k.dl
 
+import com.alflabs.rig4k.dagger.DaggerIRigTestComponent
+import com.alflabs.rig4k.dagger.IRigTestComponent
 import com.alflabs.rig4k.site.ArticleEntry
 import com.alflabs.rig4k.site.BlogEntry
 import com.alflabs.rig4k.site.Site
-import com.alflabs.utils.ILogger
 import com.google.common.base.Charsets
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
+import javax.inject.Inject
 
 class IndexReaderTest {
     @get:Rule var mockitoRule: MockitoRule = MockitoJUnit.rule()
 
-    private val logger : ILogger = Mockito.mock()
-    private lateinit var reader : IndexReader
+    private lateinit var component: IRigTestComponent
+    @Inject lateinit var entityFactory: EntityFactory
+    @Inject lateinit var reader : IndexReader
 
     @Before
     fun setUp() {
-        reader = IndexReader(logger)
+        component = DaggerIRigTestComponent.factory().createComponent()
+        component.inject(this)
     }
 
     @Test
     fun testReadIndex_empty() {
-        val site = Site(IndexEntity("indexId"))
+        val site = Site(entityFactory.index("indexId"))
         site.index.preloadForTesting(
             GDocMetadata("index", "index metadata hash", emptyMap()),
             "".toByteArray(Charsets.UTF_8)
@@ -48,7 +51,7 @@ class IndexReaderTest {
             blog.html    45678901_file4
             
             """.trimIndent()
-        val site = Site(IndexEntity("indexId"))
+        val site = Site(entityFactory.index("indexId"))
         site.index.preloadForTesting(
             GDocMetadata("index", "index metadata hash", emptyMap()),
             content.toByteArray(Charsets.UTF_8)
@@ -56,14 +59,14 @@ class IndexReaderTest {
 
         reader.readIndex(site)
         assertThat(site.articleEntries).containsExactly(
-            ArticleEntry("01234567_file1", "file1.html"),
-            ArticleEntry("23456789_file2", "file2.html"),
-            ArticleEntry("34567890_file3", "subdir/file3.html"),
-            ArticleEntry("45678901_file4", "blog.html")
+            ArticleEntry(entityFactory.article("01234567_file1"), "file1.html"),
+            ArticleEntry(entityFactory.article("23456789_file2"), "file2.html"),
+            ArticleEntry(entityFactory.article("34567890_file3"), "subdir/file3.html"),
+            ArticleEntry(entityFactory.article("45678901_file4"), "blog.html")
         )
         assertThat(site.blogEntries).containsExactly(
-            BlogEntry("id_cat_1", 0),
-            BlogEntry("id_cat_2", 0)
+            BlogEntry(entityFactory.blog("id_cat_1"), 0),
+            BlogEntry(entityFactory.blog("id_cat_2"), 0)
         )
     }
 
@@ -78,7 +81,7 @@ class IndexReaderTest {
             blog 56 (desc) 67890
             
             """.trimIndent()
-        val site = Site(IndexEntity("indexId"))
+        val site = Site(entityFactory.index("indexId"))
         site.index.preloadForTesting(
             GDocMetadata("index", "index metadata hash", emptyMap()),
             content.toByteArray(Charsets.UTF_8)
@@ -86,12 +89,12 @@ class IndexReaderTest {
 
         reader.readIndex(site)
         assertThat(site.blogEntries).containsExactly(
-            BlogEntry("12345", 0),
-            BlogEntry("23456", 0),
-            BlogEntry("34567", 0),
-            BlogEntry("45678", 1),
-            BlogEntry("56789", 234),
-            BlogEntry("67890", 56)
+            BlogEntry(entityFactory.blog("12345"), 0),
+            BlogEntry(entityFactory.blog("23456"), 0),
+            BlogEntry(entityFactory.blog("34567"), 0),
+            BlogEntry(entityFactory.blog("45678"), 1),
+            BlogEntry(entityFactory.blog("56789"), 234),
+            BlogEntry(entityFactory.blog("67890"), 56)
         )
     }
 }

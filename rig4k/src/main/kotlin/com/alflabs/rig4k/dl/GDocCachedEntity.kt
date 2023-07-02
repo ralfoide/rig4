@@ -6,33 +6,65 @@ import com.alflabs.utils.ILogger
 import com.google.common.annotations.VisibleForTesting
 import com.google.common.base.Preconditions
 import com.google.common.io.ByteStreams
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import java.net.URL
 import javax.inject.Provider
 
-open class GDocCachedEntity(
-    val fileId: String,
-    val mimeType: String,
-) {
+@AssistedFactory
+interface IGDocCachedEntityFactory {
+    fun create(
+        @Assisted("fileId") fileId: String,
+        @Assisted("mimeType") mimeType: String,
+    ): GDocCachedEntity
+}
+
+interface IGDocCachedEntity {
+    val fileId: String
+    val mimeType: String
+    val contentHash: String
+    val isAvailable: Boolean
+
+    fun hasChanged(targetContentHash: String): Boolean
+    fun getContent(): ByteArray
+    fun preloadFromGDoc()
+    fun preloadFromCache()
+
+    @VisibleForTesting
+    fun preloadForTesting(metadata: GDocMetadata, content: ByteArray)
+}
+
+class GDocCachedEntity @AssistedInject constructor(
+    private val logger: ILogger,
+    private val gDocReader: GDocReader,
+    private val blobStore: BlobStore,
+    private val hashStore: HashStore,
+    @Assisted("fileId") override val fileId: String,
+    @Assisted("mimeType") override val mimeType: String,
+): IGDocCachedEntity {
     companion object {
         private val TAG = GDocCachedEntity::class.java.simpleName
     }
+
     private val metadataKey = "gdoc-metadata-$fileId"
     private val contentKey = "gdoc-content-$fileId-$mimeType"
     private var metadata: GDocMetadata? = null
     private var fetcher: Provider<ByteArray>? = null
     private var _content: ByteArray? = null
-    private val contentHash
+
+    override val contentHash
         get() = metadata!!.contentHash
 
-    val isAvailable
+    override val isAvailable
         get() = fetcher != null
 
-    fun hasChanged(targetContentHash: String): Boolean {
+    override fun hasChanged(targetContentHash: String): Boolean {
         assert(isAvailable)
         return contentHash == targetContentHash
     }
 
-    fun getContent(): ByteArray {
+    override fun getContent(): ByteArray {
         assert(isAvailable)
         if (_content == null) {
             _content = fetcher!!.get()
@@ -40,12 +72,7 @@ open class GDocCachedEntity(
         return _content!!
     }
 
-    fun preloadFromGDoc(
-        logger: ILogger,
-        gDocReader: GDocReader,
-        blobStore: BlobStore,
-        hashStore: HashStore,
-    ) {
+    override fun preloadFromGDoc() {
         // Synopsys / Workflow for a cached gdoc entity:
         // - get gdoc metadata once.
         // - compute content hash.
@@ -92,7 +119,7 @@ open class GDocCachedEntity(
         }
     }
 
-    fun preloadFromCache(blobStore: BlobStore) {
+    override fun preloadFromCache() {
         if (metadata == null) {
             metadata = blobStore.getJson(metadataKey, GDocMetadata::class.java)!!
         }
@@ -106,7 +133,7 @@ open class GDocCachedEntity(
     }
 
     @VisibleForTesting
-    fun preloadForTesting(metadata: GDocMetadata, content: ByteArray) {
+    override fun preloadForTesting(metadata: GDocMetadata, content: ByteArray) {
         if (this.metadata != null) {
             this.metadata = metadata
         }

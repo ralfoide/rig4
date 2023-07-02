@@ -17,6 +17,7 @@ class PreloadCommand @Inject constructor(
     private val gDocHelper: GDocHelper,
     private val siteOptions: SiteOptions,
     private val indexReader: IndexReader,
+    private val entityFactory: EntityFactory,
     gDocReaderOptions: GDocReaderOptions,
 ): CliktCommand(name = "preload", help = "Download from GDocs") {
     companion object {
@@ -30,7 +31,7 @@ class PreloadCommand @Inject constructor(
         gDocReader.init()
         timing.get("Total").time {
             // Fetch the index.
-            val site = Site(IndexEntity(siteOptions.indexGdocId))
+            val site = Site(entityFactory.index(siteOptions.indexGdocId))
             gDocHelper.preload(site.index)
             indexReader.readIndex(site)
             // Fetch content for article and blog entries to cache them.
