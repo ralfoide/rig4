@@ -1,8 +1,10 @@
 package com.alflabs.rig4k.site
 
+import com.alflabs.rig4k.dl.ArticleEntity
+
 data class ArticleEntry(
-    /** The gdoc id for the source of the article.  */
-    val fileId: String,
+    /** The entity source of the article.  */
+    val entity: ArticleEntity,
 
     /**
      * The destination file path, with optional _forward_ sub-directories (".." is not allowed).

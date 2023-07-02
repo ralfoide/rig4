@@ -3,6 +3,7 @@ package com.alflabs.rig4k.dl
 import com.alflabs.rig4k.common.Timing
 import com.alflabs.rig4k.site.Site
 import com.alflabs.rig4k.site.SiteOptions
+import com.alflabs.utils.ILogger
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import javax.inject.Inject
@@ -10,6 +11,7 @@ import javax.inject.Singleton
 
 @Singleton
 class PreloadCommand @Inject constructor(
+    private val logger: ILogger,
     private val timing: Timing,
     private val gDocReader: GDocReader,
     private val gDocHelper: GDocHelper,
@@ -17,28 +19,34 @@ class PreloadCommand @Inject constructor(
     private val indexReader: IndexReader,
     gDocReaderOptions: GDocReaderOptions,
 ): CliktCommand(name = "preload", help = "Download from GDocs") {
+    companion object {
+        private val TAG = PreloadCommand::class.java.simpleName
+    }
+
     @Suppress("unused")
     private val _gDocReaderOptions by gDocReaderOptions
 
     override fun run() {
         gDocReader.init()
-        println("@@ Rig4k-DL run")
         timing.get("Total").time {
-            // Always fetch the index
+            // Fetch the index.
             val site = Site(IndexEntity(siteOptions.indexGdocId))
             gDocHelper.preload(site.index)
             indexReader.readIndex(site)
-
-//            // Only fetch other documents if they are not up-to-date.
-//            index.articleEntries.forEach { entry ->
-//                val entity = gDocHelper.getGDocAsync(entry.fileId, "text/html")
-//                entity?.let {
-//                }
-//            }
-
-            println("@@ read site: $site")
+            // Fetch content for article and blog entries to cache them.
+            site.articleEntries.forEach {
+                logger.d(TAG, "Cache article entity: ${it.entity.fileId}")
+                gDocHelper.preload(it.entity)
+                it.entity.getContent()
+                assert(it.entity.isAvailable)
+            }
+            site.blogEntries.forEach {
+                logger.d(TAG, "Cache blog entity: ${it.entity.fileId}")
+                gDocHelper.preload(it.entity)
+                it.entity.getContent()
+                assert(it.entity.isAvailable)
+            }
         }
         timing.printToLog()
     }
-
 }
