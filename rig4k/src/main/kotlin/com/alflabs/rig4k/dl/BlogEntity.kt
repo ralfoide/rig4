@@ -12,7 +12,7 @@ class BlogEntity @AssistedInject constructor(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as IndexEntity
+        other as BlogEntity
 
         return fileId == other.fileId
         // TBD: do we want to equal on content, or just entity properties?
