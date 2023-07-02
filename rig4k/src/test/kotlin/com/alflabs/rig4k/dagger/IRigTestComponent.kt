@@ -8,7 +8,8 @@ import javax.inject.Singleton
 @Component(modules = [
     FakeClockModule::class,
     FakeFileOpsModule::class,
-    LoggerModule::class])
+    LoggerModule::class,
+    JsonFactoryModule::class])
 interface IRigTestComponent : IRigComponent {
     fun inject(entryPointTest: EntryPointTest)
 

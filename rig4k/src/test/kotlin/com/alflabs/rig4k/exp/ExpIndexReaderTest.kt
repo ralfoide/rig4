@@ -1,11 +1,12 @@
-package com.alflabs.rig4k.dl
+package com.alflabs.rig4k.exp
 
+import com.alflabs.rig4k.dl.GDocMetadata
 import com.alflabs.rig4k.site.ArticleEntry
 import com.alflabs.rig4k.site.BlogEntry
 import com.alflabs.rig4k.site.ExpIndex
 import com.alflabs.utils.ILogger
 import com.google.common.base.Charsets
-import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -15,7 +16,8 @@ import org.mockito.junit.MockitoRule
 import org.mockito.kotlin.whenever
 
 class ExpIndexReaderTest {
-    @get:Rule var mockitoRule: MockitoRule = MockitoJUnit.rule()
+    @get:Rule
+    var mockitoRule: MockitoRule = MockitoJUnit.rule()
 
     private val logger : ILogger = Mockito.mock()
     private val gDocHelper : ExpGDocHelper = Mockito.mock()
@@ -37,9 +39,9 @@ class ExpIndexReaderTest {
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
         val index = reader.readIndex("indexId")
-        assertThat(index).isNotNull()
-        assertThat(index.articleEntries).isEmpty()
-        assertThat(index.blogEntries).isEmpty()
+        Truth.assertThat(index).isNotNull()
+        Truth.assertThat(index.articleEntries).isEmpty()
+        Truth.assertThat(index.blogEntries).isEmpty()
     }
 
     @Test
@@ -62,14 +64,14 @@ class ExpIndexReaderTest {
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
         val index: ExpIndex = reader.readIndex("indexId")
-        assertThat(index).isNotNull()
-        assertThat(index.articleEntries).containsExactly(
+        Truth.assertThat(index).isNotNull()
+        Truth.assertThat(index.articleEntries).containsExactly(
             ArticleEntry("01234567_file1", "file1.html"),
             ArticleEntry("23456789_file2", "file2.html"),
             ArticleEntry("34567890_file3", "subdir/file3.html"),
             ArticleEntry("45678901_file4", "blog.html")
         )
-        assertThat(index.blogEntries).containsExactly(
+        Truth.assertThat(index.blogEntries).containsExactly(
             BlogEntry("id_cat_1", 0),
             BlogEntry("id_cat_2", 0)
         )
@@ -95,8 +97,8 @@ class ExpIndexReaderTest {
         )
         whenever(gDocHelper.getGDocSync("indexId", "text/plain")).thenReturn(entity)
         val index: ExpIndex = reader.readIndex("indexId")
-        assertThat(index).isNotNull()
-        assertThat(index.blogEntries).containsExactly(
+        Truth.assertThat(index).isNotNull()
+        Truth.assertThat(index.blogEntries).containsExactly(
             BlogEntry("12345", 0),
             BlogEntry("23456", 0),
             BlogEntry("34567", 0),

@@ -1,4 +1,4 @@
-package com.alflabs.rig4k.dl
+package com.alflabs.rig4k.exp
 
 import com.alflabs.rig4k.site.ArticleEntry
 import com.alflabs.rig4k.site.BlogEntry

@@ -1,4 +1,6 @@
-package com.alflabs.rig4k.dl
+package com.alflabs.rig4k.exp
+
+import com.alflabs.rig4k.dl.GDocMetadata
 
 class ExpGDocEntity {
     private val _metadata: GDocMetadata

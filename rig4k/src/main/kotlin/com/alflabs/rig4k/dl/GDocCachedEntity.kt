@@ -3,6 +3,7 @@ package com.alflabs.rig4k.dl
 import com.alflabs.rig4k.common.BlobStore
 import com.alflabs.rig4k.common.HashStore
 import com.alflabs.utils.ILogger
+import com.google.common.annotations.VisibleForTesting
 import com.google.common.base.Preconditions
 import com.google.common.io.ByteStreams
 import java.net.URL
@@ -101,6 +102,16 @@ open class GDocCachedEntity(
         fetcher = Provider {
             val content = blobStore.getBytes(contentKey)
             content!!
+        }
+    }
+
+    @VisibleForTesting
+    fun preloadForTesting(metadata: GDocMetadata, content: ByteArray) {
+        if (this.metadata != null) {
+            this.metadata = metadata
+        }
+        fetcher = Provider {
+            content
         }
     }
 }

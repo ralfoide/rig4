@@ -5,7 +5,6 @@ import com.alflabs.rig4k.site.BlogEntry
 import com.alflabs.rig4k.site.Site
 import com.alflabs.utils.ILogger
 import com.google.common.base.Charsets
-import com.google.common.base.Preconditions
 import java.io.IOException
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -14,7 +13,6 @@ import javax.inject.Singleton
 @Singleton
 class IndexReader @Inject constructor(
     private val logger: ILogger,
-    private val gDocHelper: ExpGDocHelper,
 ) {
     companion object {
         private val TAG = IndexReader::class.java.simpleName
@@ -27,7 +25,9 @@ class IndexReader @Inject constructor(
     @Throws(IOException::class)
     fun readIndex(site: Site) {
         logger.d(TAG, "Processing document: index ${site.index.fileId}")
-        Preconditions.checkArgument(site.index.isAvailable)
+        assert(site.index.isAvailable) {
+            "Content not available: Site index ${site.index.fileId} has not been loaded yet."
+        }
 
         val content = String(site.index.getContent(), Charsets.UTF_8)
         val articleEntries = site.articleEntries

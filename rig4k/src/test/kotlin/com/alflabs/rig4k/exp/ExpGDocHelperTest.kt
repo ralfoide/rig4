@@ -1,8 +1,10 @@
-package com.alflabs.rig4k.dl
+package com.alflabs.rig4k.exp
 
 import com.alflabs.rig4k.common.BlobStore
 import com.alflabs.rig4k.common.HashStore
 import com.alflabs.rig4k.common.Timing
+import com.alflabs.rig4k.dl.GDocMetadata
+import com.alflabs.rig4k.dl.GDocReader
 import com.alflabs.utils.FakeFileOps
 import com.alflabs.utils.ILogger
 import com.alflabs.utils.MockClock
