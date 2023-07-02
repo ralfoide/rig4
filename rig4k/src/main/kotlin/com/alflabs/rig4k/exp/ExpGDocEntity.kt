@@ -2,6 +2,7 @@ package com.alflabs.rig4k.exp
 
 import com.alflabs.rig4k.dl.GDocMetadata
 
+@Deprecated(message = "See IndexEntity")
 class ExpGDocEntity {
     private val _metadata: GDocMetadata
     private val _upToDate: Boolean

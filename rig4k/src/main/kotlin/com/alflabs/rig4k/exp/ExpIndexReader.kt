@@ -12,6 +12,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+@Deprecated(message = "See IndexReader")
 class ExpIndexReader @Inject constructor(
     private val logger: ILogger,
     private val gDocHelper: ExpGDocHelper,
