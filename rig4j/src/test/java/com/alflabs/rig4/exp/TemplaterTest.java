@@ -121,7 +121,7 @@ public class TemplaterTest {
                 "</head>\n" +
                 "        <a href=\"{{.AbsSiteLink}}\">{{.SiteTitle}}</a>\n" +
                 "{{.Content}}\n" +
-                "    ga('create', '{{.GAUid}}', 'auto');\n";
+                "    gtag('config', '{{.GAUid}}');\n";
 
         Templater templater = new Templater(mFlags, mTiming, template);
 
@@ -156,7 +156,7 @@ public class TemplaterTest {
                 "        <a href=\"http://Site URL/replacement/\">Site Title replacement</a>\n" +
                 "Content replacement\n" +
                 "Multiple content.\n" +
-                "    ga('create', 'GA UID replacement', 'auto');\n");
+                "    gtag('config', 'GA UID replacement');\n");
 
     }
 
@@ -171,7 +171,7 @@ public class TemplaterTest {
                 "<meta property=\"og:title\"       content=\"{{.PageTitle}}\" />\n" +
                 "{{IF.Description}}<meta property=\"og:description\" content=\"{{.Description}}\" />{{ENDIF}}\n" +
                 "{{if.content}}{{.Content}}{{endif}}\n" +
-                "{{if.GAUid}}ga('create', '{{.GAUid}} is null', 'auto');{{EndIf}}\n";
+                "{{if.GAUid}}gtag('config', '{{.GAUid}} is null');{{EndIf}}\n";
 
         Templater templater = new Templater(mFlags, mTiming, template);
 
@@ -236,7 +236,7 @@ public class TemplaterTest {
         assertThat(generated).contains("background-image: url(\"./banner_image.jpg\");");
         assertThat(generated).containsMatch("<style type=\"text/css\">[^<]+CSS replacement\\s*</style>");
         assertThat(generated).contains("<a href=\"http://Site URL/replacement/\">Site Title replacement</a>");
-        assertThat(generated).contains("ga('create', 'GA UID replacement', 'auto');");
+        assertThat(generated).contains("gtag('config', 'GA UID replacement');");
         assertThat(generated).containsMatch(">\\s+Content replacement first line\\s+Content replacement second line.\\s+<");
     }
 
@@ -281,7 +281,7 @@ public class TemplaterTest {
         assertThat(generated).contains("background-image: url(\"banner_image.jpg\");");
         assertThat(generated).containsMatch("<style type=\"text/css\">[^<]+CSS replacement\\s*</style>");
         assertThat(generated).contains("<a href=\"http://Site URL/replacement/\">Site Title replacement</a>");
-        assertThat(generated).contains("ga('create', 'GA UID replacement', 'auto');");
+        assertThat(generated).contains("gtag('config', 'GA UID replacement');");
 
         // --- This part is specific to a blog page
         assertThat(generated).contains("<div>Blog Header as HTML</div>");
