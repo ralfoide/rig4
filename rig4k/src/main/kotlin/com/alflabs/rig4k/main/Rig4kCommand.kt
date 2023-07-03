@@ -2,6 +2,7 @@ package com.alflabs.rig4k.main
 
 import com.alflabs.rig4k.common.BlobStoreOptions
 import com.alflabs.rig4k.dl.PreloadCommand
+import com.alflabs.rig4k.dl.TransformCommand
 import com.alflabs.rig4k.site.SiteOptions
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.context
@@ -14,6 +15,7 @@ import javax.inject.Singleton
 @Singleton
 class Rig4kCommand @Inject constructor(
     preloadCommand: PreloadCommand,
+    transformCommand: TransformCommand,
     mainOptions: MainOptions,
     siteOptions: SiteOptions,
     blobStoreOptions: BlobStoreOptions,
@@ -24,7 +26,7 @@ class Rig4kCommand @Inject constructor(
     private val _siteOptions by siteOptions
 
     init {
-        subcommands(preloadCommand)
+        subcommands(preloadCommand, transformCommand)
         context { valueSource = PropertiesValueSource.from(".rig42krc") }
     }
 }

@@ -25,6 +25,7 @@ interface IGDocCachedEntity {
     val mimeType: String
     val contentHash: String
     val isAvailable: Boolean
+    val metadata: GDocMetadata
 
     fun hasChanged(targetContentHash: String): Boolean
     fun getContent(): ByteArray
@@ -49,12 +50,15 @@ class GDocCachedEntity @AssistedInject constructor(
 
     private val metadataKey = "gdoc-metadata-$fileId"
     private val contentKey = "gdoc-content-$fileId-$mimeType"
-    private var metadata: GDocMetadata? = null
+    private var _metadata: GDocMetadata? = null
     private var fetcher: Provider<ByteArray>? = null
     private var _content: ByteArray? = null
 
+    override val metadata: GDocMetadata
+        get() = _metadata!!
+
     override val contentHash
-        get() = metadata!!.contentHash
+        get() = _metadata!!.contentHash
 
     override val isAvailable
         get() = fetcher != null
@@ -83,10 +87,10 @@ class GDocCachedEntity @AssistedInject constructor(
         //      - creates a getter that uses the in-memory/cached content.
         // - creates a getter than fetches content from cache.
 
-        if (metadata == null && blobStore.hasJson(metadataKey)) {
-            metadata = blobStore.getJson(metadataKey, GDocMetadata::class.java)!!
+        if (_metadata == null && blobStore.hasJson(metadataKey)) {
+            _metadata = blobStore.getJson(metadataKey, GDocMetadata::class.java)!!
         }
-        val oldMetadata = metadata
+        val oldMetadata = _metadata
 
         // This can fail with IOException.
         val newMetadata = gDocReader.getMetadataById(fileId)
@@ -105,14 +109,14 @@ class GDocCachedEntity @AssistedInject constructor(
         fetcher = Provider {
             logger.d(TAG, ">> Fetching $mimeType: $fileId")
 
-            metadata = newMetadata
-            val exportLink = metadata!!.exportLinks[mimeType]
+            _metadata = newMetadata
+            val exportLink = _metadata!!.exportLinks[mimeType]
             val url = URL(exportLink!!)
             gDocReader.getDataByUrl(url)
                 .use { inputStream -> _content = ByteStreams.toByteArray(inputStream) }
             Preconditions.checkNotNull<ByteArray>(_content) // fail fast
 
-            blobStore.putJson(metadataKey, metadata!!)
+            blobStore.putJson(metadataKey, _metadata!!)
             blobStore.putBytes(contentKey, _content!!)
 
             _content!!
@@ -120,8 +124,8 @@ class GDocCachedEntity @AssistedInject constructor(
     }
 
     override fun preloadFromCache() {
-        if (metadata == null) {
-            metadata = blobStore.getJson(metadataKey, GDocMetadata::class.java)!!
+        if (_metadata == null) {
+            _metadata = blobStore.getJson(metadataKey, GDocMetadata::class.java)!!
         }
 
         assert(blobStore.hasBytes(contentKey))
@@ -134,8 +138,8 @@ class GDocCachedEntity @AssistedInject constructor(
 
     @VisibleForTesting
     override fun preloadForTesting(metadata: GDocMetadata, content: ByteArray) {
-        if (this.metadata != null) {
-            this.metadata = metadata
+        if (this._metadata != null) {
+            this._metadata = metadata
         }
         fetcher = Provider {
             content
