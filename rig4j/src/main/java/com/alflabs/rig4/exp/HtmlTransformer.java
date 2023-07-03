@@ -10,6 +10,8 @@ import com.alflabs.rig4.flags.Flags;
 import com.alflabs.utils.RPair;
 import com.alflabs.utils.RSparseArray;
 import com.google.common.base.Charsets;
+import com.steadystate.css.parser.CSSOMParser;
+import com.steadystate.css.parser.SACParserCSS3;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -24,17 +26,27 @@ import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
 import org.jsoup.select.NodeFilter;
 import org.jsoup.select.NodeTraversor;
+import org.jsoup.select.NodeVisitor;
+import org.w3c.css.sac.InputSource;
+import org.w3c.dom.css.CSSRule;
+import org.w3c.dom.css.CSSRuleList;
+import org.w3c.dom.css.CSSStyleRule;
+import org.w3c.dom.css.CSSStyleSheet;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -57,8 +69,9 @@ public class HtmlTransformer {
     private static final String ATTR_CLASS = "class";
     private static final String ATTR_HREF = "href";
     private static final String ATTR_ID = "id";
+    private static final String ATTR_TYPE = "type";
     private static final String ATTR_SRC = "src";
-    private static final String ATTR_STYLE = "style";
+    static final String ATTR_STYLE = "style";
     private static final String ATTR_TITLE = "title";
     private static final String ATTR_WIDTH = "width";
     private static final String ATTR_HEIGHT = "height";
@@ -99,6 +112,7 @@ public class HtmlTransformer {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
             Document doc = Jsoup.parse(bais, null /* charset */, "" /* base uri */);
 
+            expandStyles(doc);
             doc = cleanup(doc);
             removeEmptyElements(doc, ELEM_A);
             removeEmptyElements(doc, ELEM_SPAN);
@@ -235,6 +249,81 @@ public class HtmlTransformer {
                 return null;
             }
         };
+    }
+
+    private void expandStyles(Document doc) {
+        // Find the first <style type=text/css> element.
+        Elements styleNodes = doc.getElementsByTag(ELEM_STYLE);
+        Optional<Element> firstStyle = styleNodes
+                .stream()
+                .filter(element -> element.attr(ATTR_TYPE).equals("text/css"))
+                .findFirst();
+
+        if (!firstStyle.isPresent()) return;
+        Element styleNode = firstStyle.get();
+        String cssText = styleNode.data();
+
+        // Parse the CSS styles.
+        CSSOMParser parser = new CSSOMParser(new SACParserCSS3());
+        try {
+            CSSStyleSheet sheet = parser.parseStyleSheet(
+                    new InputSource(new StringReader(cssText)),
+                    null /* ownerNode*/,
+                    null /* href */
+            );
+            if (sheet == null) return;
+
+            CSSRuleList cssRules = sheet.getCssRules();
+            if (cssRules == null || cssRules.getLength() < 1) return;
+
+            // Create a map with all the CSS rules.
+            // We only deal with simple class selectors (e.g. class="foo", match a CSS selector ".foo").
+            // We could straight ignore any complex selector with a space, >, etc.
+            Map<String, String> rulesMap = new HashMap<>();
+
+            for (int i = 0; i < cssRules.getLength(); i++) {
+                CSSRule rule = cssRules.item(i);
+                if (rule instanceof CSSStyleRule) {
+                    CSSStyleRule styleRule = (CSSStyleRule) rule;
+                    rulesMap.put(styleRule.getSelectorText(), styleRule.getStyle().getCssText());
+                }
+            }
+
+            // Update the document nodes in-place.
+            NodeVisitor visitor = (node, depth) -> {
+                if (!(node instanceof Element)) return;
+                Element element = (Element) node;
+                // Iterate through element class names.
+                boolean modified = false;
+                Set<String> nodeClasses = element.classNames();
+                Iterator<String> nodeClassesIterator = nodeClasses.iterator();
+                while (nodeClassesIterator.hasNext()) {
+                    String c = nodeClassesIterator.next();
+                    String cssStyle = rulesMap.get("." + c);
+                    if (cssStyle == null) continue;
+
+                    // Remove the class from the element class list.
+                    nodeClassesIterator.remove();
+                    modified = true;
+
+                    // And instead expand it in the style attribute.
+                    String nodeStyle = node.attr(ATTR_STYLE);
+                    if (!nodeStyle.isEmpty()) {
+                        nodeStyle += "; ";
+                    }
+                    nodeStyle += cssStyle;
+                    node.attr(ATTR_STYLE, nodeStyle);
+                }
+                if (modified) {
+                    element.classNames(nodeClasses);
+                }
+            };
+            NodeTraversor.traverse(visitor, doc);
+
+
+        } catch (IOException e) {
+            System.out.println("Failed to read CSS: " + e);
+        }
     }
 
     /**
@@ -835,7 +924,7 @@ public class HtmlTransformer {
         return map;
     }
 
-    private static int getIntValue(String value, int missingValue) {
+    static int getIntValue(String value, int missingValue) {
         int i = missingValue;
         if (value != null) {
             try {
@@ -862,102 +951,6 @@ public class HtmlTransformer {
     public static class TransformerException extends RuntimeException {
         public TransformerException(String s) {
             super(s);
-        }
-    }
-
-    private static class CssStyles {
-        private final TreeMap<String, String> mMap = new TreeMap<>();
-
-        public CssStyles() {}
-
-        public CssStyles(String attrStyle) {
-            parseStyle(attrStyle);
-        }
-
-        public CssStyles(CssStyles styles) {
-            addAll(styles);
-        }
-
-        private void addAll(CssStyles styles) {
-            mMap.putAll(styles.mMap);
-        }
-
-        public void add(String kvStyle) {
-            String[] kv = kvStyle.split(":");
-            mMap.put(kv[0], kv.length < 2 ? "" : kv[1]);
-        }
-
-        public void parseStyle(String attrStyle) {
-            if (attrStyle != null && !attrStyle.isEmpty()) {
-                for (String s : attrStyle.split(";")) {
-                    add(s);
-                }
-            }
-        }
-
-        public RPair<CssStyles, String> deltaChildStyle(String attrStyle) {
-            CssStyles deltaChildStyles = null;
-
-            if (attrStyle != null && !attrStyle.isEmpty()) {
-                for (String s : attrStyle.split(";")) {
-                    String[] kv = s.split(":");
-
-                    boolean same = mMap.containsKey(kv[0]) && mMap.get(kv[0]).equals(kv.length < 2 ? "" : kv[1]);
-                    if (!same) {
-                        if (deltaChildStyles == null) {
-                            deltaChildStyles = new CssStyles();
-                        }
-                        deltaChildStyles.add(s);
-                    }
-                }
-            }
-
-            if (deltaChildStyles == null) {
-                return null;
-            } else {
-                CssStyles newParentStyles = new CssStyles(this);
-                newParentStyles.addAll(deltaChildStyles);
-
-                return RPair.create(newParentStyles, deltaChildStyles.generateStyle());
-            }
-        }
-
-        public String generateStyle() {
-            StringBuilder sb = new StringBuilder();
-            boolean semi = false;
-            for (Map.Entry<String, String> entry : mMap.entrySet()) {
-                if (semi) {
-                    sb.append(';');
-                }
-                sb.append(entry.getKey()).append(':').append(entry.getValue());
-                semi = true;
-            }
-            return sb.toString();
-        }
-
-        public void remove(String name) {
-            mMap.remove(name);
-        }
-
-        public boolean has(String name) {
-            return mMap.containsKey(name);
-        }
-
-        public String get(String name) {
-            return mMap.get(name);
-        }
-
-        public int getIntValue(String name, int missingValue) {
-            return HtmlTransformer.getIntValue(mMap.get(name), missingValue);
-        }
-
-        public void applyTo(Element element) {
-            String style = generateStyle();
-            if (style.isEmpty()) {
-                element.removeAttr(ATTR_STYLE);
-            } else {
-                element.attr(ATTR_STYLE, style);
-            }
         }
     }
 }

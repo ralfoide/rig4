@@ -40,6 +40,7 @@ dependencies {
     runtimeCompile "com.fasterxml.jackson.core:jackson-databind:2.12.7.1"
     runtimeCompile "org.jsoup:jsoup:1.15.3"
     runtimeCompile "net.coobird:thumbnailator:0.4.8"
+    runtimeCompile "net.sourceforge.cssparser:cssparser:0.9.30"
 
     runtimeCompile "com.google.apis:google-api-services-drive:v3-rev20211107-1.32.1"
     runtimeCompile "com.google.api-client:google-api-client:1.35.2"
