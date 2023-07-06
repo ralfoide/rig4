@@ -847,9 +847,9 @@ public class HtmlTransformer {
             if (newValue != null) {
                 element.attr(attrName, newValue);
                 // DEBUG
-                System.out.println("element = " + element);
-                System.out.println("- old val = " + value);
-                System.out.println("+ new val = " + newValue);
+                //System.out.println("element = " + element);
+                //System.out.println("- old val = " + value);
+                //System.out.println("+ new val = " + newValue);
             }
         }
 
