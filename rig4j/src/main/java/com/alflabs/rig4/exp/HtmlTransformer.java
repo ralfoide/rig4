@@ -54,6 +54,7 @@ import java.util.regex.Matcher;
 public class HtmlTransformer {
 
     private static final String ELEM_A = "a";
+    private static final String ELEM_BODY = "body";
     public  static final String ELEM_DIV = "div";
     private static final String ELEM_HR = "hr";
     private static final String ELEM_IFRAME = "iframe";
@@ -506,6 +507,8 @@ public class HtmlTransformer {
      * and the style from the css can be respected.
      */
     private void cleanupInlineStyle(Element root) {
+        // Use style from the first <P> tag as the "canonical" style.
+        // Note that below we parse from the root doc, not this element.
         Element p = root.getElementsByTag(ELEM_P).first();
         CssStyles eraseStyles = new CssStyles(p == null ? null : p.attr(ATTR_STYLE));
         // mark these as part of the baseline to get rid of
@@ -517,6 +520,13 @@ public class HtmlTransformer {
         eraseStyles.add("vertical-align:baseline");
         // this one is the default in the css so let's have it erased too
         eraseStyles.add("text-align:justify");
+        // 2023:
+        eraseStyles.add("line-height: 1");
+        eraseStyles.add("orphans: 2");
+        eraseStyles.add("widows: 2");
+        eraseStyles.add("orphans: 2");
+        eraseStyles.add("font-size: 11pt");
+        eraseStyles.add("color: rgb(0, 0, 0)");
 
         cleanupInlineStyleRecursive(root, eraseStyles);
     }
@@ -532,7 +542,8 @@ public class HtmlTransformer {
                     continue;
                 }
 
-                RPair<CssStyles, String> pair = parentStyles.deltaChildStyle(element.attr(ATTR_STYLE));
+                String style = element.attr(ATTR_STYLE);
+                RPair<CssStyles, String> pair = parentStyles.deltaChildStyle(style);
                 CssStyles newParentStyles = pair == null ? parentStyles : pair.first;
                 String newStyle = pair == null ? "" : pair.second;
                 if (newStyle.isEmpty()) {
@@ -556,6 +567,10 @@ public class HtmlTransformer {
             styles.remove("padding-right");
             styles.remove("padding-top");
             styles.remove("padding");
+            // 2023
+            styles.remove("line-height");
+            styles.remove("widows");
+            styles.remove("orphans");
             styles.applyTo(element);
         }
 

@@ -25,14 +25,16 @@ class CssStyles {
     }
 
     public void add(String kvStyle) {
-        String[] kv = kvStyle.split(":");
-        mMap.put(kv[0], kv.length < 2 ? "" : kv[1]);
+        String[] kv = kvStyle.trim().split(":");
+        String key = kv[0].trim();
+        String value = kv.length < 2 ? "" : kv[1].trim();
+        mMap.put(key, value);
     }
 
     public void parseStyle(String attrStyle) {
         if (attrStyle != null && !attrStyle.isEmpty()) {
             for (String s : attrStyle.split(";")) {
-                add(s);
+                add(s.trim());
             }
         }
     }
@@ -43,10 +45,9 @@ class CssStyles {
         if (attrStyle != null && !attrStyle.isEmpty()) {
             for (String s : attrStyle.split(";")) {
                 String[] kv = s.split(":");
-
-                boolean same = mMap.containsKey(kv[0]) && mMap.get(kv[0]).equals(kv.length < 2 ?
-                        "" :
-                        kv[1]);
+                String key = kv[0].trim();
+                String value = kv.length < 2 ? "" : kv[1].trim();
+                boolean same = mMap.containsKey(key) && mMap.get(key).equals(value);
                 if (!same) {
                     if (deltaChildStyles == null) {
                         deltaChildStyles = new CssStyles();

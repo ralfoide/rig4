@@ -310,6 +310,8 @@ public class GDocHelper {
 
         if (width > 0 && height <= 0) {
             height = (int) Math.round(h * (double) w / (double) width);
+        } else if (width <= 0 && height > 0) {
+            width = (int) Math.round(w * (double) h / (double) height);
         } else if (width <= 0 && height <= 0) {
             width = image.getWidth();
             height = image.getHeight();
