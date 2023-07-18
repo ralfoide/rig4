@@ -209,11 +209,11 @@ public class GDocReader {
                     request.setThrowExceptionOnExecuteError(true);
                     HttpResponse response = request.execute();
                     return response.getContent();
-                } catch (SocketTimeoutException e) {
+                } catch (Exception e) {
                     if (retry > 3) {
                         throw e;
                     }
-                    mLogger.d(TAG, "SocketTimeoutException retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url.toString());
+                    mLogger.d(TAG, e.getClass().getSimpleName() + " retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url.toString());
                     try {
                         Thread.sleep(1000L * (timeoutSeconds / 2));
                     } catch (InterruptedException ignore) {}
