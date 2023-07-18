@@ -192,6 +192,11 @@ public class GDocReader {
         }
     }
 
+    /**
+     * Fetches data from a GDrive URL.
+     *
+     * This handles reties with increasing timeouts and should handle 403 auth access.
+     */
     public InputStream getDataByUrl(URL url) throws IOException {
         mTiming.start();
         try {

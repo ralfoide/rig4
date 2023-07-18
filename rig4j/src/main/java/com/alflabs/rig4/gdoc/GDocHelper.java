@@ -253,7 +253,9 @@ public class GDocHelper {
             // The gdoc exported images seem to always be PNG, even when copied from photos.
             // Drawings are fairly compact in PNG, but not photos.
 
-            BufferedImage image = ImageIO.read(uri.toURL());
+            // Direct reading can fail with a 403 (auth issue).
+            InputStream stream = mGDocReader.getDataByUrl(uri.toURL());
+            BufferedImage image = ImageIO.read(stream);
 
             final String keyImageHash = destName;
             final String keyImageName = destName + "_name";
