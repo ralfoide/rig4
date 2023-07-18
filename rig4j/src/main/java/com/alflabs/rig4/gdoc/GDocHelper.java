@@ -8,7 +8,6 @@ import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.struct.GDocEntity;
 import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSink;
@@ -66,20 +65,13 @@ public class GDocHelper {
         try {
             String cacheKey = String.format("dl_drawing_fullpath_I%s_D%s_W%d_H%d", id, destFile.getPath(), width, height);
             if (useCache) {
-                String cachedFilePath = mHashStore.getString(cacheKey);
-                if (cachedFilePath != null) {
-                    File cachedFile = new File(cachedFilePath);
-                    if (mFileOps.isFile(cachedFile)) {
-                        String cachedName = cachedFile.getName();
-                        mLogger.d(TAG, "         Cached : " + cachedName + ", " + width + "x" + height);
-                        return cachedName;
-                    }
-                }
+                String cachedName = getCachedFilePath(width, height, cacheKey);
+                if (cachedName != null) return cachedName;
             }
 
             // Note: There is no Drive API for embedded drawings.
             // Experience shows that we can't even get the metadata like for a normal gdoc.
-            // Instead we just download them every time the doc is generated.
+            // Instead, we just download them every time the doc is generated.
 
             String extension = "png";
             String destName = destFile.getName();
@@ -90,8 +82,21 @@ public class GDocHelper {
             mLogger.d(TAG, "         Drawing: " + destName + ", " + width + "x" + height);
 
             URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
-            InputStream stream = mGDocReader.getDataByUrl(url);
-            BufferedImage image = ImageIO.read(stream);
+            BufferedImage image;
+            try {
+                InputStream stream = mGDocReader.getDataByUrl(url);
+                image = ImageIO.read(stream);
+            } catch (Exception e) {
+                // If we fail with an exception, try to fall back on the last cache;
+                // only throw if we have nothing to use.
+                String cachedName = getCachedFilePath(width, height, cacheKey);
+                if (cachedName != null) {
+                    mLogger.d(TAG, "         Drawing: Fallback on cache instead of " + e.getClass().getSimpleName());
+                    return cachedName;
+                } else {
+                    throw e;
+                }
+            }
 
             final String keyImageHash = destName;
             final String keyImageName = destName + "_name";
@@ -229,15 +234,8 @@ public class GDocHelper {
         try {
             String cacheKey = String.format("dl_image_fullpath_U%s_D%s_W%d_H%d", uri, destFile.getPath(), width, height);
             if (useCache) {
-                String cachedFilePath = mHashStore.getString(cacheKey);
-                if (cachedFilePath != null) {
-                    File cachedFile = new File(cachedFilePath);
-                    if (mFileOps.isFile(cachedFile)) {
-                        String cachedName = cachedFile.getName();
-                        mLogger.d(TAG, "         Cached : " + cachedName + ", " + width + "x" + height);
-                        return cachedName;
-                    }
-                }
+                String cachedName = getCachedFilePath(width, height, cacheKey);
+                if (cachedName != null) return cachedName;
             }
 
             String path = uri.getPath();
@@ -253,9 +251,22 @@ public class GDocHelper {
             // The gdoc exported images seem to always be PNG, even when copied from photos.
             // Drawings are fairly compact in PNG, but not photos.
 
-            // Direct reading can fail with a 403 (auth issue).
-            InputStream stream = mGDocReader.getDataByUrl(uri.toURL());
-            BufferedImage image = ImageIO.read(stream);
+            BufferedImage image;
+            try {
+                // Direct reading can fail with a 403 (auth issue).
+                InputStream stream = mGDocReader.getDataByUrl(uri.toURL());
+                image = ImageIO.read(stream);
+            } catch (Exception e) {
+                // If we still fail with an exception, try to fall back on the last cache;
+                // only throw if we have nothing to use.
+                String cachedName = getCachedFilePath(width, height, cacheKey);
+                if (cachedName != null) {
+                    mLogger.d(TAG, "         Image  : Fallback on cache instead of " + e.getClass().getSimpleName());
+                    return cachedName;
+                } else {
+                    throw e;
+                }
+            }
 
             final String keyImageHash = destName;
             final String keyImageName = destName + "_name";
@@ -283,6 +294,22 @@ public class GDocHelper {
         } finally {
             timing.end();
         }
+    }
+
+    /** Computes and validates the cached file path for the given image/drawing.
+     * @return A non-null file path on success, or null if there's no such cache file.
+     */
+    private String getCachedFilePath(int width, int height, String cacheKey) throws IOException {
+        String cachedFilePath = mHashStore.getString(cacheKey);
+        if (cachedFilePath != null) {
+            File cachedFile = new File(cachedFilePath);
+            if (mFileOps.isFile(cachedFile)) {
+                String cachedName = cachedFile.getName();
+                mLogger.d(TAG, "         Cached : " + cachedName + ", " + width + "x" + height);
+                return cachedName;
+            }
+        }
+        return null;
     }
 
     /**
