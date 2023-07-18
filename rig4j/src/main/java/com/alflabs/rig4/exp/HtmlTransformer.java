@@ -841,13 +841,17 @@ public class HtmlTransformer {
 
             } else if (attrName.equals(ATTR_SRC) && element.tagName().equals(ELEM_IMG)) {
                 CssStyles styles = new CssStyles(element.attr(ATTR_STYLE));
-                String sw = element.attr(ATTR_WIDTH);
-                String sh = element.attr(ATTR_HEIGHT);
+                String sw = getStyleAttr(element, styles, ATTR_WIDTH, "");
+                String sh = getStyleAttr(element, styles, ATTR_HEIGHT, "");
                 if (sw.isEmpty()) {
-                    sw = styles.get(ATTR_WIDTH);
-                }
-                if (sh.isEmpty()) {
-                    sh = styles.get(ATTR_HEIGHT);
+                    // Look for the size in the parent. The latest html format is
+                    // <span style="...width...height..."><img></span>
+                    Element parent = element.parent();
+                    if (parent != null && parent.tagName().equals(ELEM_SPAN)) {
+                        CssStyles pstyles = new CssStyles(parent.attr(ATTR_STYLE));
+                        sw = getStyleAttr(parent, pstyles, ATTR_WIDTH, sw);
+                        sh = getStyleAttr(parent, pstyles, ATTR_HEIGHT, sh);
+                    }
                 }
                 int w = getIntValue(sw, 0);
                 int h = getIntValue(sh, 0);
@@ -874,7 +878,23 @@ public class HtmlTransformer {
     }
 
     /**
-     * Expand youtube embedded URLs into a youtube iframe viewer.
+     * Extracts the style attribute from the element's attributes or from its CSS styles.
+     * Otherwise, return the specified default value.
+     */
+    private String getStyleAttr(Element element, CssStyles styles, String name, String missingValue) {
+        String value = element.attr(name);
+        if (value.isEmpty()) {
+            value = styles.get(name);
+        }
+        if (value == null || value.isEmpty()) {
+            value = missingValue;
+        }
+        return value;
+    }
+
+
+    /**
+     * Expand YouTube embedded URLs into a YouTube iframe viewer.
      * This only does it if the URL contains a "&rig4embed" attribute.
      */
     private void rewriteYoutubeEmbed(Element root) throws URISyntaxException {

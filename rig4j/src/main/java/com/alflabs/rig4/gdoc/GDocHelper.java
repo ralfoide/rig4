@@ -310,14 +310,18 @@ public class GDocHelper {
         int w = image.getWidth();
         int h = image.getHeight();
 
+        // TEMP DEBUG for resize
+        mLogger.d(TAG, "@@ DEBUG: target: " + width + " x " + height + ", image: " + w + " x " + h);
         if (width > 0 && height <= 0) {
             height = (int) Math.round(h * (double) w / (double) width);
         } else if (width <= 0 && height > 0) {
             width = (int) Math.round(w * (double) h / (double) height);
         } else if (width <= 0 && height <= 0) {
-            width = image.getWidth();
-            height = image.getHeight();
+            width = w;
+            height = h;
         }
+        // TEMP DEBUG for resize
+        mLogger.d(TAG, "@@ DEBUG: reisze to: " + width + " x " + height);
 
         ByteArrayOutputStream pngStream = new ByteArrayOutputStream();
         ByteArrayOutputStream jpgStream = new ByteArrayOutputStream();
