@@ -31,14 +31,14 @@ public class TemplaterTest {
     @Before
     public void setUp() throws Exception {
         mFlags = new Flags(mFileOps, mLogger);
-        mTemplater = new Templater(mFlags, mTiming);
+        mTemplater = new Templater(mFlags, mFileOps, mTiming);
         mTemplater.declareFlags();
     }
 
     @Test
     public void testVarReplacement() throws Exception {
         String template = "<h2> {{.SiteTitle}} - {{.PageTitle}} </h2>";
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
         String generated = templater.generate(new TestTemplateData("A Site Title", "A Page Title"));
         assertThat(generated).isEqualTo("<h2> A Site Title - A Page Title </h2>");
     }
@@ -46,7 +46,7 @@ public class TemplaterTest {
     @Test
     public void testVarReplacement_NullIsEmpty() throws Exception {
         String template = "<h2> {{.SiteTitle}} - {{.PageTitle}} </h2>";
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
         String generated = templater.generate(new TestTemplateData(null, ""));
         assertThat(generated).isEqualTo("<h2>  -  </h2>");
     }
@@ -54,7 +54,7 @@ public class TemplaterTest {
     @Test
     public void testIfEmpty() throws Exception {
         String template = "<h2> {{.SiteTitle}} {{If.PageTitle}}- {{.PageTitle}} {{Endif}}</h2>";
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
 
         String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
         assertThat(generated1).isEqualTo("<h2> A Site - A Page </h2>");
@@ -69,7 +69,7 @@ public class TemplaterTest {
     @Test
     public void testIfNegEmpty() throws Exception {
         String template = "<h2> {{.SiteTitle}} {{If!.PageTitle}}- {{.PageTitle}} {{Endif}}</h2>";
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
 
         String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
         assertThat(generated1).isEqualTo("<h2> A Site </h2>");
@@ -84,7 +84,7 @@ public class TemplaterTest {
     @Test
     public void testIfEqual() throws Exception {
         String template = "<h2> {{.SiteTitle}} {{If.PageTitle == .SiteTitle}}eq {{.PageTitle}} {{Endif}}</h2>";
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
 
         String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
         assertThat(generated1).isEqualTo("<h2> A Site </h2>");
@@ -96,7 +96,7 @@ public class TemplaterTest {
     @Test
     public void testIfNotEqual() throws Exception {
         String template = "<h2> {{.SiteTitle}} {{If.PageTitle != .SiteTitle}}+ {{.PageTitle}} {{Endif}}</h2>";
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
 
         String generated1 = templater.generate(new TestTemplateData("A Site", "A Page"));
         assertThat(generated1).isEqualTo("<h2> A Site + A Page </h2>");
@@ -123,7 +123,7 @@ public class TemplaterTest {
                 "{{.Content}}\n" +
                 "    gtag('config', '{{.GAUid}}');\n";
 
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
 
         String generated = templater.generate(new Templater.ArticleData(
                 "Site Title replacement",
@@ -173,7 +173,7 @@ public class TemplaterTest {
                 "{{if.content}}{{.Content}}{{endif}}\n" +
                 "{{if.GAUid}}gtag('config', '{{.GAUid}} is null');{{EndIf}}\n";
 
-        Templater templater = new Templater(mFlags, mTiming, template);
+        Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
 
         String generated = templater.generate(new Templater.ArticleData(
                 "Site Title replacement",
@@ -331,7 +331,7 @@ public class TemplaterTest {
         }
 
         @Override
-        public String getTemplate(Flags flags) throws IOException {
+        public String getTemplate(Flags flags, FileOps fileOps) throws IOException {
             fail("TestTemplateData.getTemplate is not defined in tests");
             return null;
         }

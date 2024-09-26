@@ -3,13 +3,16 @@ package com.alflabs.rig4.exp;
 import com.alflabs.annotations.NonNull;
 import com.alflabs.rig4.Timing;
 import com.alflabs.rig4.flags.Flags;
+import com.alflabs.utils.FileOps;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -28,18 +31,27 @@ public class Templater {
     private static final String EXP_TEMPLATE_BLOG_POST = "exp-template-blog-post";
 
     private final Flags mFlags;
+    private final FileOps mFileOps;
     private final Timing.TimeAccumulator mTiming;
 
     private Map<Class<?>, String> mTemplates = new HashMap<>();
 
     @Inject
-    public Templater(Flags flags, Timing timing) {
+    public Templater(
+            Flags flags,
+            FileOps fileOps,
+            Timing timing) {
         mFlags = flags;
+        mFileOps = fileOps;
         mTiming = timing.get("Templater");
     }
 
-    public Templater(Flags flags, Timing timing, String template) {
-        this(flags, timing);
+    public Templater(
+            Flags flags,
+            Timing timing,
+            FileOps fileOps,
+            String template) {
+        this(flags, fileOps, timing);
         mTemplates.put(null, template);  // set the default fallback template
     }
 
@@ -64,7 +76,7 @@ public class Templater {
         }
 
         // Get the template from the TemplateProvider and cache it.
-        template = data.getTemplate(mFlags);
+        template = data.getTemplate(mFlags, mFileOps);
         Preconditions.checkNotNull(template);
         mTemplates.put(clazz, template);
         return template;
@@ -233,7 +245,7 @@ public class Templater {
     }
 
     public interface TemplateProvider {
-        @NonNull String getTemplate(Flags flags) throws IOException;
+        @NonNull String getTemplate(Flags flags, FileOps fileOps) throws IOException;
     }
 
     @SuppressWarnings({"unused", "WeakerAccess"})
@@ -269,6 +281,22 @@ public class Templater {
             mAbsSiteLink = absSiteLink;
             mRevSiteLink = revSiteLink;
             mRelBannerLink = relBannerLink;
+        }
+
+        @NonNull
+        public String getTemplateFromFlag(String flagName, Flags flags, FileOps fileOps) throws IOException {
+            String path = flags.getString(flagName);
+
+            File f = new File(path);
+            if (fileOps.isFile(f)) {
+                byte[] content = fileOps.readBytes(f);
+                return new String(content, Charsets.UTF_8);
+            } else {
+                // It must be a resource
+                return Resources.toString(
+                        Resources.getResource(this.getClass(), path),
+                        Charsets.UTF_8);
+            }
         }
     }
 
@@ -310,10 +338,8 @@ public class Templater {
 
         @NonNull
         @Override
-        public String getTemplate(Flags flags) throws IOException {
-            return Resources.toString(
-                    Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_ARTICLE)),
-                    Charsets.UTF_8);
+        public String getTemplate(Flags flags, FileOps fileOps) throws IOException {
+            return getTemplateFromFlag(EXP_TEMPLATE_ARTICLE, flags, fileOps);
         }
     }
 
@@ -375,10 +401,8 @@ public class Templater {
 
         @NonNull
         @Override
-        public String getTemplate(Flags flags) throws IOException {
-            return Resources.toString(
-                    Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_PAGE)),
-                    Charsets.UTF_8);
+        public String getTemplate(Flags flags, FileOps fileOps) throws IOException {
+            return getTemplateFromFlag(EXP_TEMPLATE_BLOG_PAGE, flags, fileOps);
         }
     }
 
@@ -423,10 +447,8 @@ public class Templater {
 
         @NonNull
         @Override
-        public String getTemplate(Flags flags) throws IOException {
-            return Resources.toString(
-                    Resources.getResource(this.getClass(), flags.getString(EXP_TEMPLATE_BLOG_POST)),
-                    Charsets.UTF_8);
+        public String getTemplate(Flags flags, FileOps fileOps) throws IOException {
+            return getTemplateFromFlag(EXP_TEMPLATE_BLOG_POST, flags, fileOps);
         }
     }
 }
