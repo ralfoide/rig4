@@ -241,8 +241,62 @@ public class TemplaterTest {
     }
 
     @Test
+    public void testBlogPageTemplate_forIndex() throws Exception {
+        Templater.BlogPageData data = new Templater.BlogPageData(
+                /* isIndex= */ true,
+                "Site Title replacement",
+                "http://Site URL/replacement/",
+                "../../",
+                "blog/cat/",
+                "banner_image.jpg",
+                "CSS replacement",
+                "GA UID replacement",
+                "Page Index Title replacement",
+                "top_index.html",
+                "prev/page",
+                "next/page",
+                "<div>Blog Index Header as HTML</div>",
+                "",                 // no post title for an index
+                "",                 // no post date  for an index
+                "",                 // no post category for an index
+                "",                 // no post cat link for an index
+                "page_index.html",
+                "Multiple Posts Content replacement",
+                "Rig4j Gen info",
+                "main_image.jpg",
+                "head description");
+        String generated = mTemplater.generate(data);
+
+        // --- This part is common with an article page
+        assertThat(generated).containsMatch("property=\"og:url\"\\s+content=\"http://Site URL/replacement/blog/cat/page_index.html\"");
+        assertThat(generated).containsMatch("property=\"og:title\"\\s+content=\"Page Index Title replacement\"");
+        assertThat(generated).containsMatch("property=\"og:description\"\\s+content=\"head description\"");
+        assertThat(generated).containsMatch("property=\"og:image\"\\s+content=\"http://Site URL/replacement/blog/cat/main_image.jpg\"");
+
+        assertThat(generated).containsMatch("name=\"twitter:title\"\\s+content=\"Page Index Title replacement\"");
+        // We don't generate Twitter meta-data for these yet
+        assertThat(generated).containsMatch("name=\"twitter:description\"\\s+content=\"head description\"");
+        assertThat(generated).containsMatch("name=\"twitter:image\"\\s+content=\"http://Site URL/replacement/blog/cat/main_image.jpg\"");
+
+        assertThat(generated).contains("<title>Page Index Title replacement</title>");
+        assertThat(generated).contains("background-image: url(\"banner_image.jpg\");");
+        assertThat(generated).containsMatch("<style type=\"text/css\">[^<]+CSS replacement\\s*</style>");
+        assertThat(generated).contains("<a href=\"http://Site URL/replacement/\">Site Title replacement</a>");
+        assertThat(generated).contains("gtag('config', 'GA UID replacement');");
+
+        // --- This part is specific to a blog index page
+        assertThat(generated).contains("<div>Blog Index Header as HTML</div>");
+        assertThat(generated).doesNotContain("post-cat-text");
+        assertThat(generated).containsMatch("<a href=\"prev/page\">[^<]*Newer Posts</a>");
+        assertThat(generated).containsMatch("<a href=\"next/page\">[^<]*Older Posts[^<]*</a>");
+        assertThat(generated).doesNotContain("<h2");
+        assertThat(generated).containsMatch(">\\s+Multiple Posts Content replacement\\s+<");
+    }
+
+    @Test
     public void testBlogPageTemplate() throws Exception {
         Templater.BlogPageData data = new Templater.BlogPageData(
+                /* isIndex= */ false,
                 "Site Title replacement",
                 "http://Site URL/replacement/",
                 "../../",
@@ -286,8 +340,8 @@ public class TemplaterTest {
         // --- This part is specific to a blog page
         assertThat(generated).contains("<div>Blog Header as HTML</div>");
         assertThat(generated).containsMatch("<span class=\"post-cat-text\">A Category</span>");
-        assertThat(generated).containsMatch("<a href=\"prev/page\">[^<]*Previous Page</a>");
-        assertThat(generated).containsMatch("<a href=\"next/page\">[^<]*Next Page[^<]*</a>");
+        assertThat(generated).containsMatch("<a href=\"prev/page\">[^<]*Newer Post</a>");
+        assertThat(generated).containsMatch("<a href=\"next/page\">[^<]*Older Post[^<]*</a>");
         assertThat(generated).containsMatch("<h2[^>]*>2001-02-03 - Post Title replacement</h2>");
         assertThat(generated).containsMatch(">\\s+Content replacement\\s+<");
     }

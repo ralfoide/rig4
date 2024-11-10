@@ -222,8 +222,14 @@ td p {
 {{.BlogHeader}}
 
 <div class="prev-next-container">
-    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Previous Page</a><br/>{{Endif}}</span>
-    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Next Page ⇒</a><br/>{{Endif}}</span>
+{{If.IsIndex}}
+    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Newer Posts</a><br/>{{Endif}}</span>
+    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Older Posts ⇒</a><br/>{{Endif}}</span>
+{{Endif}}
+{{If!.IsIndex}}
+    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Newer Post</a><br/>{{Endif}}</span>
+    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Older Post ⇒</a><br/>{{Endif}}</span>
+{{Endif}}
 </div>
 
 {{If.PostTitle}}
@@ -244,8 +250,14 @@ td p {
 
 
 <div class="prev-next-container">
-    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Previous Page</a>{{Endif}}</span>
-    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Next Page ⇒</a>{{Endif}}</span>
+{{If.IsIndex}}
+    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Newer Posts</a><br/>{{Endif}}</span>
+    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Older Posts ⇒</a><br/>{{Endif}}</span>
+{{Endif}}
+{{If!.IsIndex}}
+    <span class="prev-page">{{If.RelPrevPageLink}}<a href="{{.RelPrevPageLink}}">⇐ Newer Post</a><br/>{{Endif}}</span>
+    <span class="next-page">{{If.RelNextPageLink}}<a href="{{.RelNextPageLink}}">Older Post ⇒</a><br/>{{Endif}}</span>
+{{Endif}}
 </div>
 
 </div> <!-- container -->

@@ -243,6 +243,7 @@ class PostTree {
 
 
             Templater.BlogPageData templateData = new Templater.BlogPageData(
+                    /* isIndex= */ true,
                     generator.getSiteTitle(),
                     generator.getAbsSiteLink(),
                     generator.getRevSiteLink(),
@@ -319,6 +320,7 @@ class PostTree {
             String headDescription = postData.mContent.getFormattedDescription();
 
             Templater.BlogPageData templateData = new Templater.BlogPageData(
+                    /* isIndex= */ false,
                     generator.getSiteTitle(),
                     generator.getAbsSiteLink(),
                     generator.getRevSiteLink(),

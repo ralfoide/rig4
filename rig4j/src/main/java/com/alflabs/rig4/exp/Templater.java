@@ -7,7 +7,6 @@ import com.alflabs.utils.FileOps;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
 import javax.inject.Inject;
@@ -23,6 +22,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static java.lang.Integer.min;
 
 @Singleton
 public class Templater {
@@ -126,7 +127,9 @@ public class Templater {
                 negate = true;
                 // explicit break-through
             case "if":
-                int endif = sourceLower.indexOf("{{endif}}", offset);
+                // read as many {{if | {{endif pairs till we close the current level.
+                int endif = findIndexEndif(offset, sourceLower);
+
                 if (endif < offset) {
                     throw new ParseException("Missing '{{EndIf}}' for '" + command + "' in template", offset);
                 }
@@ -185,6 +188,35 @@ public class Templater {
         }
 
         return result.toString();
+    }
+
+    private int findIndexEndif(int offset, String sourceLower) {
+        int levelif = 1;
+        int scanif = offset;
+        int endif = -1;
+        while (scanif > -1) {
+            int nextif = sourceLower.indexOf("{{if", scanif);
+            if (nextif == -1) nextif = Integer.MAX_VALUE;
+            int nextend = sourceLower.indexOf("{{endif}}", scanif);
+            if (nextend == -1) nextend = Integer.MAX_VALUE;
+            int first = min(nextif, nextend);
+            if (first == Integer.MAX_VALUE) {
+                scanif = -1; // end reached
+            } else {
+                scanif = first + 2;
+                if (first == nextend) {
+                    levelif--;
+                    if (levelif == 0) {
+                        endif = first;
+                        break;
+                    }
+                } else {
+                    levelif++;
+                }
+            }
+        }
+
+        return endif;
     }
 
     @NonNull
@@ -345,6 +377,7 @@ public class Templater {
 
     @SuppressWarnings({"unused", "WeakerAccess"})
     public static class BlogPageData extends ArticleData {
+        public final String mIsIndex;
         public final String mRelPrevPageLink;
         public final String mRelNextPageLink;
         public final String mBlogHeader;
@@ -355,6 +388,7 @@ public class Templater {
         public final String mRelPostFullLink;
 
         public BlogPageData(
+                boolean isIndex,
                 String siteTitle,
                 String absSiteLink,
                 String revSiteLink,
@@ -389,6 +423,7 @@ public class Templater {
                     relImageLink,
                     headDescription,
                     genInfo);
+            mIsIndex = isIndex ? "Index" : "";
             mRelPrevPageLink = relPrevPageLink;
             mRelNextPageLink = relNextPageLink;
             mBlogHeader = blogHeader;
@@ -421,7 +456,8 @@ public class Templater {
                 String relPostFullLink,
                 String relPostExtraLink,
                 String content) {
-            super(  "",
+            super(  /* isIndex= */ false,
+                    "",
                     absSiteLink,
                     relSiteLink,
                     fwdPageLink,
