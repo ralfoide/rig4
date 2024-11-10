@@ -4,3 +4,4 @@ build
 out
 .rig42rc
 header.jpg
+_clean*.sh

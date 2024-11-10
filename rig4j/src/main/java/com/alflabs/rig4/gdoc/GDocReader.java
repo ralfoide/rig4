@@ -122,6 +122,7 @@ public class GDocReader {
         String path = StringUtils.expandUserHome(
                 mFlags.getString(GDOC_PATH_DATA_STORE_DIR)
                     .replace("$GDOC_ROOT_DIR", mFlags.getString(GDOC_ROOT_DIR)));
+        mLogger.d(TAG, "Store located at " + path);
         try {
             return new FileDataStoreFactory(new File(path));
         } catch (IOException e) {
@@ -134,6 +135,7 @@ public class GDocReader {
         String path = StringUtils.expandUserHome(
                 mFlags.getString(GDOC_PATH_CLIENT_SECRET_JSON)
                     .replace("$GDOC_ROOT_DIR", mFlags.getString(GDOC_ROOT_DIR)));
+        mLogger.d(TAG, "Loading " + path);
         try {
             GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(mJsonFactory, new FileReader(path));
             return clientSecrets;
