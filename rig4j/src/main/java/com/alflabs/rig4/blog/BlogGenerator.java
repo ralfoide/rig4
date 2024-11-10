@@ -179,39 +179,48 @@ public class BlogGenerator {
         // EXPERIMENTAL SIMPLIFICATION
         // ---------------------------
         // This creates a "reversed date" order blog:
-        // - page 1 contains the oldest posts (sorted by date).
-        // - page N contains the newer posts.
-        // - index contains the most recent N posts and overlaps with page N/N-1 at any given time.
-        // - page N is not generated if it is not full (as its posts are duplicated in the index).
-        //
-        // The rationale for doing this is that the page number of older posts keeps stable
-        // as the blog grows, assuming there is no back-dating of posts.
+        // - index contains the most recent N posts.
+        // - page 1 contains next N oldest posts, after the index.
+        // - pages 1..M-1 contain N posts each.
+        // - page M contains the oldest of the oldest post. amd may have less than N posts.
 
-        int pageCount = 1;
+        int pageCount = 0;
         List<PostTree.BlogPage> pages = new ArrayList<>();
         List<SourceTree.BlogPost> indexPosts = new ArrayList<>();
         List<SourceTree.BlogPost> pendingPosts = new ArrayList<>();
         // Note: sourcePosts should be "naturally" ordered from older to newer due to the treemap.
         // See also the fixed postShorts order in BlogPage.
-        for (SourceTree.BlogPost sourcePost : sourceBlog.getPosts()) {
-            pendingPosts.add(sourcePost);
 
-            // Keep the last N items for the index
-            indexPosts.add(sourcePost);
-            if (indexPosts.size() > ITEM_PER_PAGE) {
-                indexPosts.remove(0);
+        // Get all the posts in reverse chronological order (newer first) by getting the posts
+        // in chronological order and then reading the list backwards.
+        ArrayList<SourceTree.BlogPost> posts = new ArrayList<>(sourceBlog.getPosts());
+        posts.sort(Comparator.naturalOrder());
+        int numPerPage = 0;
+        for (int i = posts.size() - 1; i >= 0; i--) {
+            SourceTree.BlogPost sourcePost = posts.get(i);
+            boolean isLast = i == 0;
+
+            if (pageCount == 0) {
+                indexPosts.add(sourcePost);
+            } else {
+                pendingPosts.add(sourcePost);
             }
 
-            // Generate page if pending list is full.
-            if (pendingPosts.size() == ITEM_PER_PAGE) {
-                // Keep the posts list reverse-ordered (from most recent to older one).
-                pendingPosts.sort(Comparator.reverseOrder());
+            numPerPage++;
+            if (numPerPage == ITEM_PER_PAGE || isLast) {
+                // Generate page when pending list is full or is the last post.
+                if (pageCount > 0) {
+                    // Keep the posts list reverse-ordered (from most recent to older one).
+                    pendingPosts.sort(Comparator.reverseOrder());
 
-                PostTree.BlogPage page = new PostTree.BlogPage(blog, blog.getBlogIndex(), pageCount++);
-                page.fillFrom(pendingPosts);
-                pendingPosts.clear();
-                // TODO delay this till next post is added, to avoid the case where index==page1.
-                pages.add(page);
+                    PostTree.BlogPage page = new PostTree.BlogPage(blog, blog.getBlogIndex(), pageCount);
+                    page.fillFrom(pendingPosts);
+                    pages.add(page);
+                    pendingPosts.clear();
+                }
+
+                pageCount++;
+                numPerPage = 0;
             }
         }
 
@@ -219,9 +228,9 @@ public class BlogGenerator {
         indexPosts.sort(Comparator.reverseOrder());
         blog.getBlogIndex().fillFrom(indexPosts);
 
-        // Add the pages in reverse order
-        for (int i = pages.size() - 1; i >= 0; i--) {
-            blog.getBlogPages().add(pages.get(i));
+        // Add the pages in normal order
+        for (PostTree.BlogPage page : pages) {
+            blog.getBlogPages().add(page);
         }
 
         mLogger.d(TAG, "Blog " + blog.getCategory()

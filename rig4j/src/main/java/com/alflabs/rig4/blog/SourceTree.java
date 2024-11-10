@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -22,7 +23,7 @@ import java.util.TreeMap;
  */
 class SourceTree {
     private final static String TAG = SourceTree.class.getSimpleName();
-    private Map<String, Blog> mBlogs = new TreeMap<>();
+    private final Map<String, Blog> mBlogs = new TreeMap<>();
     private boolean mModified;
 
     public boolean isModified() {
@@ -134,7 +135,7 @@ class SourceTree {
         private final String mCategory;
         private String mTitle;
         private Content mHeaderContent;
-        private Map<String, BlogPost> mPosts = new TreeMap<>();
+        private final SortedMap<String, BlogPost> mPosts = new TreeMap<>();
 
         public Blog(@NonNull String category) {
             mCategory = category;
