@@ -52,7 +52,7 @@ public class AtomWriter {
         tag(generated, "id", generator.getAbsSiteLink() + fileItem.getLeafFile());
 
         tag(generated, "generator", "Rig4j",
-                "uri", "https://bitbucket.org/ralfoide/rig4",
+                "uri", "https://github.com/ralfoide/rig4",
                 "version", EntryPoint.getVersion());
 
         Set<String> visited = new HashSet<>();
