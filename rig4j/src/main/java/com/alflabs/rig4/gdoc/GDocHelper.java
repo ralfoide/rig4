@@ -77,7 +77,7 @@ public class GDocHelper {
             String extension = "png";
             String destName;
             if (IMG_USE_SHA256) {
-                destName = "img" + DigestUtils.sha256Hex("_drawing_" + id) + "d";
+                destName = "img_" + DigestUtils.sha256Hex("_drawing_" + id) + "d";
             } else {
                 destName = destName.replace(".html", "_");
                 destName = destName.replace(".", "_");
@@ -266,7 +266,7 @@ public class GDocHelper {
 
             String destName;
             if (IMG_USE_SHA256) {
-                destName = "img" + DigestUtils.sha256Hex("_image_" + path) + "i";
+                destName = "img_" + DigestUtils.sha256Hex("_image_" + path) + "i";
             } else {
                 destName = destFile.getName();
                 destName = destName.replace(".html", "_");
