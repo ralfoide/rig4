@@ -186,7 +186,7 @@ public class GDocReader {
             Map<String, String> exportLinks = gfile.getExportLinks();
 
             String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
-            hash = DigestUtils.shaHex(hash);
+            hash = DigestUtils.sha1Hex(hash);
 
             return GDocMetadata.create(gfile.getName(), hash, exportLinks);
         } finally {

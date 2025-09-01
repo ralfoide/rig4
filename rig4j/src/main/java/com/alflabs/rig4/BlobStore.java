@@ -128,7 +128,7 @@ public class BlobStore {
     }
 
     private void store(@NonNull String descriptor, @NonNull String suffix, @NonNull byte[] content) throws IOException {
-        String key = DigestUtils.shaHex(descriptor) + suffix;
+        String key = DigestUtils.sha1Hex(descriptor) + suffix;
         File file = new File(StringUtils.expandUserHome(mFlags.getString(BLOB_STORE_DIR)), key);
         mFileOps.createParentDirs(file);
         mFileOps.writeBytes(content, file);
@@ -136,7 +136,7 @@ public class BlobStore {
     }
 
     private byte[] retrieve(@NonNull String descriptor, @NonNull String suffix) throws IOException {
-        String key = DigestUtils.shaHex(descriptor) + suffix;
+        String key = DigestUtils.sha1Hex(descriptor) + suffix;
         File file = new File(StringUtils.expandUserHome(mFlags.getString(BLOB_STORE_DIR)), key);
         if (!mFileOps.isFile(file)) return null;
         byte[] content = mFileOps.readBytes(file);

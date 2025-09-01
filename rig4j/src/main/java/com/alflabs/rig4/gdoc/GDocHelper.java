@@ -36,6 +36,7 @@ public class GDocHelper {
     private static final String TAG = GDocHelper.class.getSimpleName();
 
     private static final boolean COMPOSITE_GRAPHICS_TO_WHITE = true;
+    private static final boolean IMG_USE_SHA256 = true;
 
     private final ILogger mLogger;
     private final FileOps mFileOps;
@@ -74,18 +75,41 @@ public class GDocHelper {
             // Instead, we just download them every time the doc is generated.
 
             String extension = "png";
-            String destName = destFile.getName();
-            destName = destName.replace(".html", "_");
-            destName = destName.replace(".", "_");
-            destName += DigestUtils.shaHex("_drawing_" + id) + "d";
+            String destName;
+            if (IMG_USE_SHA256) {
+                destName = "img" + DigestUtils.sha256Hex("_drawing_" + id) + "d";
+            } else {
+                destName = destName.replace(".html", "_");
+                destName = destName.replace(".", "_");
+                destName += DigestUtils.sha1Hex("_drawing_" + id) + "d";
+            }
 
             mLogger.d(TAG, "         Drawing: " + destName + ", " + width + "x" + height);
 
             URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
             BufferedImage image;
             try {
-                InputStream stream = mGDocReader.getDataByUrl(url);
-                image = ImageIO.read(stream);
+                int timeoutSeconds = 30;
+                int retry = 0;
+                while (true) {
+                    try {
+                        InputStream stream = mGDocReader.getDataByUrl(url);
+                        image = ImageIO.read(stream);
+                        break;
+                    } catch (IOException e) {
+                        if (retry > 3) {
+                            throw e;
+                        }
+                        mLogger.d(TAG, e.getClass().getSimpleName() + " retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url);
+                        try {
+                            Thread.sleep(1000L * (timeoutSeconds / 2));
+                        } catch (InterruptedException ignore) {
+                            throw e;
+                        }
+                        timeoutSeconds *= 2;
+                        retry++;
+                    }
+                }
             } catch (Exception e) {
                 // If we fail with an exception, try to fall back on the last cache;
                 // only throw if we have nothing to use.
@@ -240,10 +264,15 @@ public class GDocHelper {
 
             String path = uri.getPath();
 
-            String destName = destFile.getName();
-            destName = destName.replace(".html", "_");
-            destName = destName.replace(".", "_");
-            destName += DigestUtils.shaHex("_image_" + path) + "i";
+            String destName;
+            if (IMG_USE_SHA256) {
+                destName = "img" + DigestUtils.sha256Hex("_image_" + path) + "i";
+            } else {
+                destName = destFile.getName();
+                destName = destName.replace(".html", "_");
+                destName = destName.replace(".", "_");
+                destName += DigestUtils.sha1Hex("_image_" + path) + "i";
+            }
             mLogger.d(TAG, "         Image  : " + destName + ", " + width + "x" + height);
 
             // Download the image, then compares whether a PNG or JPG would be more compact.
@@ -251,11 +280,31 @@ public class GDocHelper {
             // The gdoc exported images seem to always be PNG, even when copied from photos.
             // Drawings are fairly compact in PNG, but not photos.
 
+            URL url = uri.toURL();
             BufferedImage image;
             try {
                 // Direct reading can fail with a 403 (auth issue).
-                InputStream stream = mGDocReader.getDataByUrl(uri.toURL());
-                image = ImageIO.read(stream);
+                int timeoutSeconds = 30;
+                int retry = 0;
+                while (true) {
+                    try {
+                        InputStream stream = mGDocReader.getDataByUrl(url);
+                        image = ImageIO.read(stream);
+                        break;
+                    } catch (IOException e) {
+                        if (retry > 3) {
+                            throw e;
+                        }
+                        mLogger.d(TAG, e.getClass().getSimpleName() + " retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url);
+                        try {
+                            Thread.sleep(1000L * (timeoutSeconds / 2));
+                        } catch (InterruptedException ignore) {
+                            throw e;
+                        }
+                        timeoutSeconds *= 2;
+                        retry++;
+                    }
+                }
             } catch (Exception e) {
                 // If we still fail with an exception, try to fall back on the last cache;
                 // only throw if we have nothing to use.
