@@ -117,7 +117,7 @@ public class GDocHelper {
                 image = cropAndResizeDrawing(image, width, height);
             }
 
-            File imgFile = writeImageJpgOrPng(destFile, destName, image, width, height);
+            File imgFile = writeImageJpgOrPng(/*destDir=*/destFile, destName, image, width, height);
             destName = imgFile.getName();
 
             mHashStore.putString(cacheKey, imgFile.getPath());
@@ -333,6 +333,7 @@ public class GDocHelper {
      * @throws IOException
      */
     private File writeImageJpgOrPng(File destDir, String destName, BufferedImage image, int width, int height) throws IOException {
+        // FIXME: destDir is ill-named because really we use (destDir.parentDir + destName)
         Timing.TimeAccumulator timing = mTiming.get("Html.JpegOrPng").start();
         int w = image.getWidth();
         int h = image.getHeight();
@@ -368,7 +369,12 @@ public class GDocHelper {
         ByteArrayOutputStream result = pngSize < jpgSize ? pngStream : jpgStream;
         String extension = pngSize < jpgSize ? "png" : "jpg";
         destName += "." + extension;
-        File destFile = new File(destDir.getParentFile(), destName);
+        File parentDir = destDir.getParentFile();
+        if (!mFileOps.isDir(parentDir)) {
+            mLogger.d(TAG, "    Creating Dir: " + parentDir.getPath());
+            mFileOps.createParentDirs(destDir);
+        }
+        File destFile = new File(parentDir, destName);
 
         mLogger.d(TAG, "         Writing: " + destName
                 + ", " + width + "x" + height
