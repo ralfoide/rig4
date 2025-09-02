@@ -36,7 +36,6 @@ public class GDocHelper {
     private static final String TAG = GDocHelper.class.getSimpleName();
 
     private static final boolean COMPOSITE_GRAPHICS_TO_WHITE = true;
-    private static final boolean IMG_USE_SHA256 = true;
 
     private final ILogger mLogger;
     private final FileOps mFileOps;
@@ -75,15 +74,7 @@ public class GDocHelper {
             // Instead, we just download them every time the doc is generated.
 
             String extension = "png";
-            String destName;
-            if (IMG_USE_SHA256) {
-                destName = "img_" + DigestUtils.sha256Hex("_drawing_" + id) + "d";
-            } else {
-                destName = destName.replace(".html", "_");
-                destName = destName.replace(".", "_");
-                destName += DigestUtils.sha1Hex("_drawing_" + id) + "d";
-            }
-
+            String destName = "img_" + DigestUtils.sha256Hex("_drawing_" + id) + "d";
             mLogger.d(TAG, "         Drawing: " + destName + ", " + width + "x" + height);
 
             URL url = new URL("https://docs.google.com/drawings/d/" + id + "/export/" + extension);
@@ -158,7 +149,7 @@ public class GDocHelper {
         Timing.TimeAccumulator timing = mTiming.get("Html.Image.Hash").start();
         MessageDigest digest;
         try {
-            digest = MessageDigest.getInstance("SHA");
+            digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -264,17 +255,6 @@ public class GDocHelper {
 
             String path = uri.getPath();
 
-            String destName;
-            if (IMG_USE_SHA256) {
-                destName = "img_" + DigestUtils.sha256Hex("_image_" + path) + "i";
-            } else {
-                destName = destFile.getName();
-                destName = destName.replace(".html", "_");
-                destName = destName.replace(".", "_");
-                destName += DigestUtils.sha1Hex("_image_" + path) + "i";
-            }
-            mLogger.d(TAG, "         Image  : " + destName + ", " + width + "x" + height);
-
             // Download the image, then compares whether a PNG or JPG would be more compact.
             //
             // The gdoc exported images seem to always be PNG, even when copied from photos.
@@ -317,9 +297,20 @@ public class GDocHelper {
                 }
             }
 
+            String imageHash = computeImageHash(image, width, height);
+
+            // We used to compute the destination image filename based on the gdocs download URI.
+            // It turns out the image URI provided by gdocs are not "stable" and may change even
+            // when the source image has not changed. This tends to result in unnecessary image
+            // duplicates. So instead, we base the destination image filename on the hash of the
+            // content of the image (the actual pixels, not the jpg/png encoding).
+            // TBD The hash store usage below is a bit legacy/redundant and should be cleaned up
+            // later.
+            String destName = "img_" + imageHash + "i";
+            mLogger.d(TAG, "         Image  : " + destName + ", " + width + "x" + height);
+
             final String keyImageHash = destName;
             final String keyImageName = destName + "_name";
-            String imageHash = computeImageHash(image, width, height);
             String storedImageHash = mHashStore.getString(keyImageHash);
             if (imageHash.equals(storedImageHash)) {
                 String storedImageName = mHashStore.getString(keyImageName);
