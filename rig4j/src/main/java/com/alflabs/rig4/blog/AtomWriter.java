@@ -105,7 +105,8 @@ public class AtomWriter {
         // Right now, post's time is only a Date by design. Generate a time using 0 hour 0 minutes.
         // Set the seconds to the modulo 60 of the hash of the content -- this way an update will
         // potentially generate a slightly different update time. Wacky but good enough here.
-        byte[] bytes = DigestUtils.sha(content);
+        // SHA-1 is enough here as we just use the first byte of the hash.
+        byte[] bytes = DigestUtils.sha1(content);
         int seconds = bytes[0] & 0x00FF; // To avoid "negative byte" values due to lack of unsigned types
         seconds = seconds % 60;
         String updated = postFull.mDate

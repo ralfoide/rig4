@@ -14,7 +14,7 @@ import java.util.Map;
  * The hash store caches short opaque strings for the application.
  * <p/>
  * It is a specialization of the more generic {@link BlobStore} designed to only store short
- * strings for quick lookup -- typically SHA1 hashes. Anything bigger should go in the
+ * strings for quick lookup -- typically SHA256 hashes. Anything bigger should go in the
  * {@link BlobStore} directly.
  * <p/>
  * The difference between {@link HashStore} and {@link BlobStore} is essentially semantic.

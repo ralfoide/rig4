@@ -219,6 +219,11 @@ class SourceTree {
                         .replaceAll("[^a-z0-9_-]", "_")
                         .replaceAll("_+", "_");
 
+            // If the title is longer than the max length, truncate it and append the first few
+            // hex characters of the title hash. This ensures we have a reasonable length for the
+            // generated post filenames. SHA-1 is enough as collisions are unlikely and would only
+            // become relevant if the titles had the same 40 first characters (which is considered
+            // to be unlikely by itself).
             final int maxKeyLen = 48;
             final int maxShaLen =  8;
             if (key.length() > maxKeyLen) {
