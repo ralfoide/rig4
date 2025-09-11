@@ -2,7 +2,9 @@ package com.alflabs.rig4.blog;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.HashStore;
 import com.alflabs.rig4.exp.Templater;
+import com.alflabs.utils.FileOps;
 import com.google.common.base.Charsets;
 
 import java.io.File;
@@ -241,7 +243,6 @@ class PostTree {
                 nextPageLink = blogPages.get(index + 1).mFileItem.getName();
             }
 
-
             Templater.BlogPageData templateData = new Templater.BlogPageData(
                     /* isIndex= */ true,
                     generator.getSiteTitle(),
@@ -267,7 +268,22 @@ class PostTree {
                     headDescription);
 
             String generated = generator.getTemplater().generate(templateData);
-            generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
+            String genHash = generator.getTemplater().hashContent(generated);
+
+            FileOps fileOps = generator.getFileOps();
+            HashStore hashStore = generator.getHashStore();
+
+            // We need to write the file if it's missing or if it has changed.
+            boolean shouldWrite = !fileOps.isFile(destFile);
+            if (!shouldWrite) {
+                shouldWrite = !genHash.equals(hashStore.getString(destFile.getPath()));
+            }
+
+            if (shouldWrite) {
+                hashStore.putString(destFile.getPath(), genHash);
+                fileOps.writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
+                generator.getLogger().d(TAG, "        Write Page: file " + destFile);
+            }
 
             return destFile;
         }
@@ -345,7 +361,22 @@ class PostTree {
             );
 
             String generated = generator.getTemplater().generate(templateData);
-            generator.getFileOps().writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
+            String genHash = generator.getTemplater().hashContent(generated);
+
+            FileOps fileOps = generator.getFileOps();
+            HashStore hashStore = generator.getHashStore();
+
+            // We need to write the file if it's missing or if it has changed.
+            boolean shouldWrite = !fileOps.isFile(destFile);
+            if (!shouldWrite) {
+                shouldWrite = !genHash.equals(hashStore.getString(destFile.getPath()));
+            }
+
+            if (shouldWrite) {
+                hashStore.putString(destFile.getPath(), genHash);
+                fileOps.writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
+                generator.getLogger().d(TAG, "       Write  Full: " + destFile);
+            }
         }
     }
 

@@ -370,6 +370,27 @@ public class TemplaterTest {
 
     }
 
+    @Test
+    public void testHashContent() {
+        String original = "<div class=\"bottom-container\">\n" +
+                "    &nbsp;\n" +
+                "    First contentrg-excl(to be excluded)rg-exclfrom the output.\n" +
+                "    <!-- rg-excl( -->\n" +
+                "    Second Content to be excluded\n" +
+                "    <!-- )rg-excl -->\n" +
+                "    &nbsp;\n" +
+                "</div>\n";
+
+        String filtered = "<div class=\"bottom-container\">\n" +
+                "    &nbsp;\n" +
+                "    First contentfrom the output.\n" +
+                "    <!--  -->\n" +
+                "    &nbsp;\n" +
+                "</div>\n";
+
+        assertThat(mTemplater.hashContent(original)).isEqualTo(mTemplater.hashContent(filtered));
+    }
+
     public static class TestTemplateData extends Templater.BaseData {
 
         private TestTemplateData(String siteTitle, String pageTitle) {

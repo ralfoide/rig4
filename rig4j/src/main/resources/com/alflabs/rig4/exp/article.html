@@ -162,7 +162,13 @@ td p {
 
 <div class="sharethis-inline-share-buttons"></div>
 
-<div class="bottom-container">&nbsp;{{.GenInfo}}&nbsp;</div>
+<div class="bottom-container">
+    &nbsp;
+    <!-- rg-excl( -->
+    {{.GenInfo}}
+    <!-- )rg-excl -->
+    &nbsp;
+</div>
 
 <script async src="https://www.googletagmanager.com/gtag/js?id={{.GAUid}}"></script>
 <script>

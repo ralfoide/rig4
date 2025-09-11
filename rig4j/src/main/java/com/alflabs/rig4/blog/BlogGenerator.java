@@ -285,6 +285,10 @@ public class BlogGenerator {
             return mFileOps;
         }
 
+        public HashStore getHashStore() {
+            return mHashStore;
+        }
+
         public File getDestDir() {
             return new File(mFlags.getString(EXP_DEST_DIR));
         }
