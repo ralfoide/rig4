@@ -2,26 +2,26 @@
 
 ## Description
 
-`Rig4j` is an _experimental_ reimplementation of my site generator.
+**Rig4j** is an _experimental_ reimplementation of my site generator.
 
 The project is highly experimental and may change at any time.
 **Do not use for production.**
 
-The goal of `Rig4` is to produce a static version of an HTML web site based on some source files.
+The goal of **Rig4** is to produce a static version of an HTML web site based on some source files.
 This derives from an older site generator named
-[Izumi](https://www.alfray.com/labs/archived/Izumi/)
-that I wrote years ago. Izumi was using its own text-based syntax influenced by the early
-WikiWiki syntax. Each Izumi text file generated a single HTML file.
+[*Izumi*](https://www.alfray.com/labs/archived/Izumi/)
+that I wrote years ago. *Izumi* was using its own text-based syntax influenced by the early
+WikiWiki syntax. Each *Izumi* text file generated a single HTML file.
 
-`Rig4j` reuses that concept. However in this early experiment, the source files can be
-read locally (like `Izumi`) or pulled from a Google Docs repository. Each Google Doc is
-downloaded as an HTML rendition, which is then "cleaned up" as used as-is. Not every
+**Rig4j** reuses that concept. However in this early experiment, the source files can be
+read locally (like *Izumi*) or pulled from a Google Docs repository. Each Google Doc is
+downloaded as an HTML rendition, which is then "cleaned up" and used mostly as-is -- not every
 object included in the Google Docs can be rendered -- only images and drawings.
 
-Eventually, `Rig4j` was never totally finished -- it's still lacking a full `Izumi` 
-backward-compatible mode -- as I then explored a few other variations.
-`Rig4r` is an attempt at rebooting the project in Rust, which I quickly abandoned.
-`Rig4k` is a redesign written in Kotlin, which I never quite fully finished.
+**Rig4j** is still work in progress, and has never totally finished -- it's still
+lacking a full *Izumi* backward-compatible mode. I have explored a few other variations.
+**Rig4r** was an attempt at rebooting the project in Rust, which I quickly abandoned.
+**Rig4k** is a redesign written in Kotlin, which I never quite fully finished.
 
 
 ## Usage
