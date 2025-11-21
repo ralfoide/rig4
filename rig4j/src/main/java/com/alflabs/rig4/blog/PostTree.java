@@ -134,6 +134,10 @@ class PostTree {
             return mPostFulls;
         }
 
+        public List<PostShort> getPostShorts() {
+            return mPostShorts;
+        }
+
         /**
          * Fill the page with the given posts.
          * The input collection should already be ordered as it should be presented on the page.
@@ -381,12 +385,12 @@ class PostTree {
     }
 
     public static class PostShort implements Comparable<PostShort> {
+        public final SourceTree.Content mContent;
+        public final PostFull mPostFull;
         private final String mCategory;
         private final String mKey;
         private final LocalDate mDate;
         private final String mTitle;
-        private final SourceTree.Content mContent;
-        private final PostFull mPostFull;
         private final boolean mReadMoreLink;
 
         public PostShort(
@@ -409,6 +413,12 @@ class PostTree {
         @Override
         public int compareTo(PostShort other) {
             return mKey.compareTo(other.mKey);
+        }
+
+        public void prepareContent(
+                BlogGenerator.Generator generator,
+                @NonNull File destFile) {
+            this.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile, "postShort:" + mKey + ":"));
         }
     }
 

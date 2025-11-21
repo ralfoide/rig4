@@ -259,6 +259,13 @@ public class BlogGenerator {
             mPostTree = postTree;
         }
 
+        /**
+         * Generates a transformer to lazily transform the HTML later.
+         * <p>
+         * The "destFile" path is not used for actual writing -- instead, it is combined with
+         * "transformKey" to ensure that a cached content is regenerated if it's reused for a
+         * different path output.
+         */
         public HtmlTransformer.LazyTransformer getLazyHtmlTransformer(File destFile, @NonNull String transformKey) {
             HtmlTransformer.Callback callback = new HtmlTransformer.Callback() {
                 @Override

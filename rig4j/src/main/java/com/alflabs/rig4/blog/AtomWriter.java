@@ -20,6 +20,11 @@ import java.util.Set;
  * ATOM reference: https://tools.ietf.org/html/rfc4287
  */
 public class AtomWriter {
+    // Number of posts to include in full. All following posts use the short summary.
+    private static final int NUM_POST_FULL = 10;
+    // Max size of a full post in characters. Switch to short summary above this size.
+    private static final int POST_FULL_LENGTH = 100000;
+
     public void write(@NonNull PostTree.Blog blog,
                       @NonNull BlogGenerator.Generator generator,
                       @NonNull PostTree.FileItem fileItem)
@@ -55,15 +60,18 @@ public class AtomWriter {
                 "uri", "https://github.com/ralfoide/rig4",
                 "version", EntryPoint.getVersion());
 
+        int num = 0;
         Set<String> visited = new HashSet<>();
         for (PostTree.BlogPage blogPage : blog.getBlogPages()) {
-            for (PostTree.PostFull postFull : blogPage.getPostFulls()) {
+            for (PostTree.PostShort postShort : blogPage.getPostShorts()) {
+                PostTree.PostFull postFull = postShort.mPostFull;
                 if (visited.contains(postFull.mKey)) {
                     continue;
                 }
                 visited.add(postFull.mKey);
 
-                entry(generated, blog, generator, postFull);
+                entry(destFile, generated, blog, generator, postShort, postFull, num >= NUM_POST_FULL);
+                num++;
             }
         }
 
@@ -72,10 +80,13 @@ public class AtomWriter {
         generator.getFileOps().writeBytes(generated.toString().getBytes(Charsets.UTF_8), destFile);
     }
 
-    private void entry(@NonNull StringBuilder generated,
+    private void entry(@NonNull File destFile,
+                       @NonNull StringBuilder generated,
                        @NonNull PostTree.Blog blog,
                        @NonNull BlogGenerator.Generator generator,
-                       @NonNull PostTree.PostFull postFull) throws IOException, URISyntaxException {
+                       @NonNull PostTree.PostShort postShort,
+                       @NonNull PostTree.PostFull postFull,
+                       boolean usePostShort) throws IOException, URISyntaxException {
         generated.append("<entry>\n");
 
         generated.append("<author><name>Ralf</name></author>\n"); // TODO make configurable
@@ -93,8 +104,21 @@ public class AtomWriter {
                 "label", generator.categoryToHtml(postFull.mCategory));
 
         // Leaky abstraction: this is needed to setup the content formatter according to the post's HTML dest file.
-        postFull.prepareHtmlDestFile(blog, generator);
-        String content = postFull.mContent.getFormatted();
+        String content = null;
+        if (!usePostShort) {
+            // Generate the full content,
+            // then check if we need to switch to the short content if it's too large.
+            postFull.prepareHtmlDestFile(blog, generator);
+            String contentFull = postFull.mContent.getFormatted();
+            if (contentFull.length() <= POST_FULL_LENGTH) {
+                content = contentFull;
+            }
+        }
+        if (usePostShort || content == null) {
+            postShort.prepareContent(generator, destFile);
+            content = postShort.mContent.getFormatted()
+                + "<br><p>(Abridged version... follow web site link to read more)";
+        }
 
         tag(generated, "content",
                 content,
