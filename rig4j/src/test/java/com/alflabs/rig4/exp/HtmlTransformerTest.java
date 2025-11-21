@@ -57,7 +57,11 @@ public class HtmlTransformerTest {
 
             @Override
             public String processImage(URI uri, int width, int height, boolean useCache) throws IOException {
-                return "[image for " + uri.toString() + "]";
+                if (uri.getScheme().equals("data")) {
+                    return "[image for " + uri.getScheme() + "]";
+                } else {
+                    return "[image for " + uri.toString() + "]";
+                }
             }
         });
         return processor.lazyTransform(intermediary);

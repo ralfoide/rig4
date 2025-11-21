@@ -10,6 +10,7 @@ import com.alflabs.utils.FileOps;
 import com.alflabs.utils.ILogger;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteSink;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -27,6 +28,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
@@ -245,6 +247,11 @@ public class GDocHelper {
     }
 
     public String downloadImage(URI uri, File destFile, int width, int height, boolean useCache) throws IOException {
+        // The URI can be:
+        // - a valid data:image/[jpg|png];base64,<all image data>
+        // - a complex link to a GDoc exported image.
+        // Note that GDoc seems to always provide a PNG; however, we shall also handle an input JPG.
+
         Timing.TimeAccumulator timing = mTiming.get("Html.Image").start();
         try {
             String cacheKey = String.format("dl_image_fullpath_U%s_D%s_W%d_H%d", uri, destFile.getPath(), width, height);
@@ -253,37 +260,18 @@ public class GDocHelper {
                 if (cachedName != null) return cachedName;
             }
 
-            String path = uri.getPath();
+            BufferedImage image;
 
             // Download the image, then compares whether a PNG or JPG would be more compact.
             //
             // The gdoc exported images seem to always be PNG, even when copied from photos.
             // Drawings are fairly compact in PNG, but not photos.
 
-            URL url = uri.toURL();
-            BufferedImage image;
             try {
-                // Direct reading can fail with a 403 (auth issue).
-                int timeoutSeconds = 30;
-                int retry = 0;
-                while (true) {
-                    try {
-                        InputStream stream = mGDocReader.getDataByUrl(url);
-                        image = ImageIO.read(stream);
-                        break;
-                    } catch (IOException e) {
-                        if (retry > 3) {
-                            throw e;
-                        }
-                        mLogger.d(TAG, e.getClass().getSimpleName() + " retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url);
-                        try {
-                            Thread.sleep(1000L * (timeoutSeconds / 2));
-                        } catch (InterruptedException ignore) {
-                            throw e;
-                        }
-                        timeoutSeconds *= 2;
-                        retry++;
-                    }
+                if (uri.getScheme().equals("data")) {
+                    image = getImageFromDataBase64(uri);
+                } else {
+                    image = downloadImageFromLink(uri);
                 }
             } catch (Exception e) {
                 // If we still fail with an exception, try to fall back on the last cache;
@@ -333,6 +321,42 @@ public class GDocHelper {
             return destName;
         } finally {
             timing.end();
+        }
+    }
+
+    private BufferedImage getImageFromDataBase64(URI uri)
+            throws IndexOutOfBoundsException, IllegalArgumentException, IOException {
+        // Parse a data:image/[jpg|png];base64,<all image data> into an image buffer
+        String data = uri.getSchemeSpecificPart();
+        String base64 = data.substring(data.indexOf(',') + 1);
+        byte[] decoded = BaseEncoding.base64().decode(base64);
+        try (ByteArrayInputStream is = new ByteArrayInputStream(decoded)) {
+            return ImageIO.read(is);
+        }
+    }
+
+    private BufferedImage downloadImageFromLink(URI uri) throws IOException {
+        // Direct reading can fail with a 403 (auth issue).
+        URL url = uri.toURL();
+        int timeoutSeconds = 30;
+        int retry = 0;
+        while (true) {
+            try {
+                InputStream stream = mGDocReader.getDataByUrl(url);
+                return ImageIO.read(stream);
+            } catch (IOException e) {
+                if (retry > 3) {
+                    throw e;
+                }
+                mLogger.d(TAG, e.getClass().getSimpleName() + " retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url);
+                try {
+                    Thread.sleep(1000L * (timeoutSeconds / 2));
+                } catch (InterruptedException ignore) {
+                    throw e;
+                }
+                timeoutSeconds *= 2;
+                retry++;
+            }
         }
     }
 

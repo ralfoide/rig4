@@ -775,7 +775,7 @@ public class HtmlTransformer {
      * - Any untreated google.com link is an error that should be looked into.
      */
     private void rewriteUrls(Element root, String attrName, Callback callback, String transformKey)
-            throws IOException, URISyntaxException {
+            throws IOException {
 
         String contentHash = DigestUtils.sha256Hex(root.text());
         String contentKey = String.format("rewrite_url_hash_A%s_K%s", attrName, transformKey);
@@ -791,84 +791,97 @@ public class HtmlTransformer {
         }
 
         for (Element element : root.getElementsByAttribute(attrName)) {
-            String value = element.attr(attrName);
-            String newValue = null;
+            try {
+                String value = element.attr(attrName);
+                String newValue = null;
 
-            URI uri = new URI(value);
-            String host = uri.getHost();
-            String path = uri.getPath();
+                URI uri = new URI(value);
+                String scheme = uri.getScheme();
+                String host = uri.getHost();
+                String path = uri.getPath();
 
-            if (host == null || path == null) {
-                // This is typically the case with anchor references (e.g. <a href="#chapter">).
-                continue;
-            }
-
-            Map<String, String> queries = parseQuery(uri);
-
-            if (host.equals("www.google.com") && path.equals("/url")) {
-                // Bypass google URL redirector.
-                String q = queries.get(QUERY_Q);
-                if (q != null && !q.isEmpty()) {
-                    newValue = q;
-
-                    if (rewrittenBase != null && newValue.startsWith(rewrittenBase)) {
-                        newValue = siteBase + newValue.substring(rewrittenBase.length());
+                if (uri.getScheme().equals("data")) {
+                    // URL "data": RFC 2397
+                    // Syntax:  data:[<mediatype>][;base64],<data>
+                    // We will accept this only if it's image/png;base64 or image/jpg;base64.
+                    // Anything else is rejected.
+                    String data = uri.getSchemeSpecificPart();
+                    if (!data.startsWith("image/png;base64,") && !data.startsWith("image/jpg;base64,")) {
+                        continue;
                     }
+                    host = "";
+                    path = "";
+                } else if (host == null || path == null) {
+                    // This is typically the case with anchor references (e.g. <a href="#chapter">).
+                    continue;
                 }
-            } else if (host.equals("docs.google.com") && path.equals("/drawings/image")) {
-                // Old style of drawing URLs.
-                String id = queries.get("id");
-                int w = Integer.parseInt(queries.get(QUERY_W));
-                int h = Integer.parseInt(queries.get(QEURY_H));
-                newValue = callback.processDrawing(id, w, h, useImgCache);
 
-            } else if (host.equals("docs.google.com") && path.startsWith("/drawings/d/") && path.endsWith("/image")) {
-                // Current style of drawing URLs.
-                try {
-                    String id = path.substring("/drawings/d/".length());
-                    id = id.substring(0, id.length() - "/image".length());
+                Map<String, String> queries = parseQuery(uri);
+
+                if (host.equals("www.google.com") && path.equals("/url")) {
+                    // Bypass google URL redirector.
+                    String q = queries.get(QUERY_Q);
+                    if (q != null && !q.isEmpty()) {
+                        newValue = q;
+
+                        if (rewrittenBase != null && newValue.startsWith(rewrittenBase)) {
+                            newValue = siteBase + newValue.substring(rewrittenBase.length());
+                        }
+                    }
+                } else if (host.equals("docs.google.com") && path.equals("/drawings/image")) {
+                    // Old style of drawing URLs.
+                    String id = queries.get("id");
                     int w = Integer.parseInt(queries.get(QUERY_W));
                     int h = Integer.parseInt(queries.get(QEURY_H));
                     newValue = callback.processDrawing(id, w, h, useImgCache);
-                } catch (Throwable t) {
-                    throw new TransformerException("ERROR processing URI " + value
-                            + ", Error: " + t);
-                }
 
-            } else if (host.contains(".google.com")) {
-                // Whatever this is, we should probably do something with it.
-                throw new TransformerException("ERROR Unprocessed URL for " + host + ", Path: " + path);
-
-            } else if (attrName.equals(ATTR_SRC) && element.tagName().equals(ELEM_IMG)) {
-                CssStyles styles = new CssStyles(element.attr(ATTR_STYLE));
-                String sw = getStyleAttr(element, styles, ATTR_WIDTH, "");
-                String sh = getStyleAttr(element, styles, ATTR_HEIGHT, "");
-                if (sw.isEmpty()) {
-                    // Look for the size in the parent. The latest html format is
-                    // <span style="...width...height..."><img></span>
-                    Element parent = element.parent();
-                    if (parent != null && parent.tagName().equals(ELEM_SPAN)) {
-                        CssStyles pstyles = new CssStyles(parent.attr(ATTR_STYLE));
-                        sw = getStyleAttr(parent, pstyles, ATTR_WIDTH, sw);
-                        sh = getStyleAttr(parent, pstyles, ATTR_HEIGHT, sh);
+                } else if (host.equals("docs.google.com") && path.startsWith("/drawings/d/") && path.endsWith("/image")) {
+                    // Current style of drawing URLs.
+                    try {
+                        String id = path.substring("/drawings/d/".length());
+                        id = id.substring(0, id.length() - "/image".length());
+                        int w = Integer.parseInt(queries.get(QUERY_W));
+                        int h = Integer.parseInt(queries.get(QEURY_H));
+                        newValue = callback.processDrawing(id, w, h, useImgCache);
+                    } catch (Throwable t) {
+                        throw new TransformerException("ERROR processing URI " + value
+                                + ", Error: " + t);
                     }
+
+                } else if (host.contains(".google.com")) {
+                    // Whatever this is, we should probably do something with it.
+                    throw new TransformerException("ERROR Unprocessed URL for " + host + ", Path: " + path);
+
+                } else if (attrName.equals(ATTR_SRC) && element.tagName().equals(ELEM_IMG)) {
+                    CssStyles styles = new CssStyles(element.attr(ATTR_STYLE));
+                    String sw = getStyleAttr(element, styles, ATTR_WIDTH, "");
+                    String sh = getStyleAttr(element, styles, ATTR_HEIGHT, "");
+                    if (sw.isEmpty()) {
+                        // Look for the size in the parent. The latest html format is
+                        // <span style="...width...height..."><img></span>
+                        Element parent = element.parent();
+                        if (parent != null && parent.tagName().equals(ELEM_SPAN)) {
+                            CssStyles pstyles = new CssStyles(parent.attr(ATTR_STYLE));
+                            sw = getStyleAttr(parent, pstyles, ATTR_WIDTH, sw);
+                            sh = getStyleAttr(parent, pstyles, ATTR_HEIGHT, sh);
+                        }
+                    }
+                    int w = getIntValue(sw, 0);
+                    int h = getIntValue(sh, 0);
+
+                    // This also handles the case where the URI is a data:image/png;base64.
+                    newValue = callback.processImage(uri, w, h, useImgCache);
                 }
-                int w = getIntValue(sw, 0);
-                int h = getIntValue(sh, 0);
 
-                // TBD: If source starts with "data:image/png;base64,", we should extract the image,
-                // save it locally as either jpg or png, and update the src to a URL. That will make
-                // pages more cache-friendly and easier to load.
-
-                newValue = callback.processImage(uri, w, h, useImgCache);
-            }
-
-            if (newValue != null) {
-                element.attr(attrName, newValue);
-                // DEBUG
-                //System.out.println("element = " + element);
-                //System.out.println("- old val = " + value);
-                //System.out.println("+ new val = " + newValue);
+                if (newValue != null) {
+                    element.attr(attrName, newValue);
+                    // DEBUG
+                    //System.out.println("element = " + element);
+                    //System.out.println("- old val = " + value);
+                    //System.out.println("+ new val = " + newValue);
+                }
+            } catch (URISyntaxException e) {
+                System.out.println("URI parse failed: " + e);
             }
         }
 
@@ -979,6 +992,8 @@ public class HtmlTransformer {
         /**
          * Process an image by downloading it, adjusting it to change to the desired size and
          * returns the src for the new document.
+         *
+         * The URI can be a valid data:image/png;base64.
          */
         String processImage(URI uri, int width, int height, boolean useCache) throws IOException;
     }
