@@ -268,7 +268,7 @@ public class GDocHelper {
             // Drawings are fairly compact in PNG, but not photos.
 
             try {
-                if (uri.getScheme().equals("data")) {
+                if ("data".equals(uri.getScheme())) {
                     image = getImageFromDataBase64(uri);
                 } else {
                     image = downloadImageFromLink(uri);

@@ -796,17 +796,20 @@ public class HtmlTransformer {
                 String newValue = null;
 
                 URI uri = new URI(value);
-                String scheme = uri.getScheme();
                 String host = uri.getHost();
                 String path = uri.getPath();
 
-                if (uri.getScheme().equals("data")) {
+                if ("data".equals(uri.getScheme())) {
                     // URL "data": RFC 2397
                     // Syntax:  data:[<mediatype>][;base64],<data>
                     // We will accept this only if it's image/png;base64 or image/jpg;base64.
                     // Anything else is rejected.
                     String data = uri.getSchemeSpecificPart();
-                    if (!data.startsWith("image/png;base64,") && !data.startsWith("image/jpg;base64,")) {
+                    if (data == null) {
+                        continue;
+                    }
+                    if (!data.startsWith("image/png;base64,")
+                            && !data.startsWith("image/jpg;base64,")) {
                         continue;
                     }
                     host = "";
