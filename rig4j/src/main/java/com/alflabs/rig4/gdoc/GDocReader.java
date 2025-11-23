@@ -196,13 +196,15 @@ public class GDocReader {
 
     /**
      * Fetches data from a GDrive URL.
-     *
+     * <p>
      * This handles reties with increasing timeouts and should handle 403 auth access.
      */
     public InputStream getDataByUrl(URL url) throws IOException {
         mTiming.start();
         try {
-            int timeoutSeconds = 30;
+            // Only large pages with lots of images inlined as data: URIs, GDoc export now
+            // regularly takes 30-60 seconds.
+            int timeoutSeconds = 60;
             int retry = 0;
             while (true) {
                 try {

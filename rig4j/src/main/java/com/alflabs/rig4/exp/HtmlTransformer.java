@@ -808,8 +808,9 @@ public class HtmlTransformer {
                     if (data == null) {
                         continue;
                     }
-                    if (!data.startsWith("image/png;base64,")
-                            && !data.startsWith("image/jpg;base64,")) {
+                    if (!data.matches("^image/[^;]+;base64,.+")) {
+                        System.out.println("Warning: Unrecognized " + attrName + " URL with data scheme "
+                            + data.substring(0, Math.min(30, data.length())) + "...");
                         continue;
                     }
                     host = "";
