@@ -254,7 +254,8 @@ public class GDocHelper {
 
         Timing.TimeAccumulator timing = mTiming.get("Html.Image").start();
         try {
-            String cacheKey = String.format("dl_image_fullpath_U%s_D%s_W%d_H%d", uri, destFile.getPath(), width, height);
+            String uriHash = DigestUtils.sha256Hex(uri.toString());
+            String cacheKey = String.format("dl_image_fullpath_U%s_D%s_W%d_H%d", uriHash, destFile.getPath(), width, height);
             if (useCache) {
                 String cachedName = getCachedFilePath(width, height, cacheKey);
                 if (cachedName != null) return cachedName;

@@ -34,5 +34,5 @@ if [[ -n "$BUILD" ]]; then
     echo
 fi
 
-java -jar "$RIG4JAR" "$@"
+java $JAVA_OPT -jar "$RIG4JAR" "$@"
 
