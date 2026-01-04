@@ -175,20 +175,39 @@ public class GDocReader {
         // be missing (e.g. the md5 checksum on a gdoc).
         mTiming.start();
         try {
-            Drive.Files.Get get = mDrive.files()
-                    .get(fileId)
-                    .setFields("md5Checksum,modifiedTime,version,name,exportLinks");
-            com.google.api.services.drive.model.File gfile = get.execute();
+            int timeoutSeconds = 60;
+            int retry = 0;
+            while (true) {
+                try {
+                    Drive.Files.Get get = mDrive.files()
+                            .get(fileId)
+                            .setFields("md5Checksum,modifiedTime,version,name,exportLinks");
+                    com.google.api.services.drive.model.File gfile = get.execute();
 
-            Long version = gfile.getVersion();
-            String checksum = gfile.getMd5Checksum();
-            DateTime dateTime = gfile.getModifiedTime();
-            Map<String, String> exportLinks = gfile.getExportLinks();
+                    Long version = gfile.getVersion();
+                    String checksum = gfile.getMd5Checksum();
+                    DateTime dateTime = gfile.getModifiedTime();
+                    Map<String, String> exportLinks = gfile.getExportLinks();
 
-            String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
-            hash = DigestUtils.sha256Hex(hash);
+                    String hash = String.format("v:%s|d:%s|c:%s", version, dateTime, checksum);
+                    hash = DigestUtils.sha256Hex(hash);
 
-            return GDocMetadata.create(gfile.getName(), hash, exportLinks);
+                    return GDocMetadata.create(gfile.getName(), hash, exportLinks);
+                } catch (Exception e) {
+                    if (retry > 3) {
+                        throw e;
+                    }
+                    mLogger.d(TAG,
+                            "getMetadataById " + e.getClass().getSimpleName()
+                                    + " retry: " + retry
+                                    + ", timeout:" + timeoutSeconds + " seconds");
+                    try {
+                        Thread.sleep(1000L * (timeoutSeconds / 2));
+                    } catch (InterruptedException ignore) {}
+                    timeoutSeconds *= 2;
+                    retry++;
+                }
+            }
         } finally {
             mTiming.end();
         }
@@ -217,7 +236,11 @@ public class GDocReader {
                     if (retry > 3) {
                         throw e;
                     }
-                    mLogger.d(TAG, e.getClass().getSimpleName() + " retry: " + retry + ", timeout:" + timeoutSeconds + " seconds, URL:" + url.toString());
+                    mLogger.d(TAG,
+                            "getDataByUrl " + e.getClass().getSimpleName()
+                                    + " retry: " + retry
+                                    + ", timeout:" + timeoutSeconds + " seconds"
+                                    + ", URL:" + url.toString());
                     try {
                         Thread.sleep(1000L * (timeoutSeconds / 2));
                     } catch (InterruptedException ignore) {}
