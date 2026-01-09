@@ -120,7 +120,7 @@ public class TemplaterTest {
                 "{{.Css}}\n" +
                 "</head>\n" +
                 "        <a href=\"{{.AbsSiteLink}}\">{{.SiteTitle}}</a>\n" +
-                "{{.Content}}\n" +
+                "{{.SourceContent}}\n" +
                 "    gtag('config', '{{.GAUid}}');\n";
 
         Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
@@ -135,7 +135,7 @@ public class TemplaterTest {
                 "GA UID replacement",
                 "Page Title replacement",
                 "page_file.html",
-                "Content replacement\n" +
+                "SourceContent replacement\n" +
                 "Multiple content.",
                 "" /* relImageLink */,
                 "" /* headDescription */,
@@ -154,7 +154,7 @@ public class TemplaterTest {
                 "CSS replacement\n" +
                 "</head>\n" +
                 "        <a href=\"http://Site URL/replacement/\">Site Title replacement</a>\n" +
-                "Content replacement\n" +
+                "SourceContent replacement\n" +
                 "Multiple content.\n" +
                 "    gtag('config', 'GA UID replacement');\n");
 
@@ -170,7 +170,7 @@ public class TemplaterTest {
                 "<head>{{EndIf}}\n" +
                 "<meta property=\"og:title\"       content=\"{{.PageTitle}}\" />\n" +
                 "{{IF.Description}}<meta property=\"og:description\" content=\"{{.Description}}\" />{{ENDIF}}\n" +
-                "{{if.content}}{{.Content}}{{endif}}\n" +
+                "{{if.content}}{{.SourceContent}}{{endif}}\n" +
                 "{{if.GAUid}}gtag('config', '{{.GAUid}} is null');{{EndIf}}\n";
 
         Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
@@ -185,7 +185,7 @@ public class TemplaterTest {
                 null,           // If.Var accepts both null and empty strings
                 "Page Title replacement",
                 "page_file.html",
-                "Content replacement\n" +
+                "SourceContent replacement\n" +
                 "Multiple content.",
                 "" /* relImageLink */,
                 "" /* headDescription */,
@@ -195,7 +195,7 @@ public class TemplaterTest {
                 "\n" +
                 "<meta property=\"og:title\"       content=\"Page Title replacement\" />\n" +
                 "\n" +
-                "Content replacement\n" +
+                "SourceContent replacement\n" +
                 "Multiple content.\n" +
                 "\n");
 
@@ -213,8 +213,8 @@ public class TemplaterTest {
                 "GA UID replacement",
                 "Page Title replacement",
                 "page_file.html",
-                "Content replacement first line\n" +
-                "Content replacement second line.",
+                "SourceContent replacement first line\n" +
+                "SourceContent replacement second line.",
                 "" /* relImageLink */,
                 "" /* headDescription */,
                 "Rig4j Gen info");
@@ -255,13 +255,13 @@ public class TemplaterTest {
                 "top_index.html",
                 "prev/page",
                 "next/page",
-                "<div>Blog Index Header as HTML</div>",
+                "<div>SourceBlog Index Header as HTML</div>",
                 "",                 // no post title for an index
                 "",                 // no post date  for an index
                 "",                 // no post category for an index
                 "",                 // no post cat link for an index
                 "page_index.html",
-                "Multiple Posts Content replacement",
+                "Multiple Posts SourceContent replacement",
                 "Rig4j Gen info",
                 "main_image.jpg",
                 "head description");
@@ -285,7 +285,7 @@ public class TemplaterTest {
         assertThat(generated).contains("gtag('config', 'GA UID replacement');");
 
         // --- This part is specific to a blog index page
-        assertThat(generated).contains("<div>Blog Index Header as HTML</div>");
+        assertThat(generated).contains("<div>SourceBlog Index Header as HTML</div>");
         assertThat(generated).doesNotContain("post-cat-text");
         assertThat(generated).containsMatch("<a href=\"prev/page\">[^<]*Newer Posts</a>");
         assertThat(generated).containsMatch("<a href=\"next/page\">[^<]*Older Posts[^<]*</a>");
@@ -308,13 +308,13 @@ public class TemplaterTest {
                 "top_index.html",
                 "prev/page",
                 "next/page",
-                "<div>Blog Header as HTML</div>",
+                "<div>SourceBlog Header as HTML</div>",
                 "Post Title replacement",
                 "2001-02-03",
                 "A Category",
                 "category/link",
                 "page_file.html",
-                "Content replacement",
+                "SourceContent replacement",
                 "Rig4j Gen info",
                 "main_image.jpg",
                 "head description");
@@ -338,7 +338,7 @@ public class TemplaterTest {
         assertThat(generated).contains("gtag('config', 'GA UID replacement');");
 
         // --- This part is specific to a blog page
-        assertThat(generated).contains("<div>Blog Header as HTML</div>");
+        assertThat(generated).contains("<div>SourceBlog Header as HTML</div>");
         assertThat(generated).containsMatch("<span class=\"post-cat-text\">A Category</span>");
         assertThat(generated).containsMatch("<a href=\"prev/page\">[^<]*Newer Post</a>");
         assertThat(generated).containsMatch("<a href=\"next/page\">[^<]*Older Post[^<]*</a>");
@@ -358,7 +358,7 @@ public class TemplaterTest {
                 "category/link",
                 "full/link",
                 "extra/link",
-                "Post Content data"
+                "Post SourceContent data"
         );
         String generated = mTemplater.generate(data);
 
@@ -376,7 +376,7 @@ public class TemplaterTest {
                 "    &nbsp;\n" +
                 "    First contentrg-excl(to be excluded)rg-exclfrom the output.\n" +
                 "    <!-- rg-excl( -->\n" +
-                "    Second Content to be excluded\n" +
+                "    Second SourceContent to be excluded\n" +
                 "    <!-- )rg-excl -->\n" +
                 "    &nbsp;\n" +
                 "</div>\n";

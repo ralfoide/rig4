@@ -7,21 +7,22 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/** A blog in the PostTree. */
 public class Blog {
     private final static String TAG = Blog.class.getSimpleName();
     private final String mCategory;
     private final String mTitle;
-    private final SourceTree.Content mBlogHeader;
+    private final SourceContent mBlogHeader;
     /**
      * mBlogIndex is page in mBlogPages.
      */
     private final BlogPage mBlogIndex;
     private final List<BlogPage> mBlogPages = new ArrayList<>();
 
-    public Blog(@NonNull String category, @Null String title, @Null SourceTree.Content blogHeader) {
+    public Blog(@NonNull String category, @Null String title, @Null SourceContent blogHeader) {
         mCategory = category;
         mTitle = title == null ? "" : title;
-        mBlogHeader = blogHeader != null ? blogHeader : new SourceTree.Content();
+        mBlogHeader = blogHeader != null ? blogHeader : new SourceContent();
         mBlogIndex = new BlogPage(this, new File(PostTree.BLOG_ROOT, category));
         mBlogPages.add(mBlogIndex);
     }
@@ -47,7 +48,7 @@ public class Blog {
     }
 
     @NonNull
-    public SourceTree.Content getBlogHeader() {
+    public SourceContent getBlogHeader() {
         return mBlogHeader;
     }
 

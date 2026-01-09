@@ -48,11 +48,11 @@ public class BlogSourceParserTest {
                 + "Header content\n"
                 + "[izu:header:end]\n"
                 + "[s:1901-01-01] Title 1\n"
-                + "Post 1 Content\n"
+                + "Post 1 SourceContent\n"
                 + "[izu:break]\n"
                 + "Post 1 long version\n"
                 + "[s:1901-01-02:Title 2] Whatever\n"
-                + "Post 2 Content\n"
+                + "Post 2 SourceContent\n"
                 + "Post 2 is short\n"
                 + "[izu:blog:end]\n"
                 + "[s:1901-01-03:Title 3] Work in progress\n"
@@ -88,10 +88,10 @@ public class BlogSourceParserTest {
         assertThat(section1.getDate()).isEqualTo(LocalDate.of(1901, 1, 1));
         assertThat(section1.getTextTitle()).isEqualTo("Title 1");
         assertThat(section1.getIntermediaryShort().html()).isEqualTo(
-                "<span>Post 1 Content</span> " +
+                "<span>Post 1 SourceContent</span> " +
                 "<span>[izu:break]</span>");
         assertThat(section1.getIntermediaryFull().html()).isEqualTo(
-                "<span>Post 1 Content</span> " +
+                "<span>Post 1 SourceContent</span> " +
                 "<span>[izu:break]</span> " +
                 "<span>Post 1 long version</span>");
 
@@ -99,7 +99,7 @@ public class BlogSourceParserTest {
         assertThat(section2.getTextTitle()).isEqualTo("Title 2");
         assertThat(section2.getIntermediaryShort()).isNull();
         assertThat(section2.getIntermediaryFull().html()).isEqualTo(
-                "<span>Post 2 Content</span> " +
+                "<span>Post 2 SourceContent</span> " +
                 "<span>Post 2 is short</span> " +
                 "<span>[izu:blog:end]</span>");
     }

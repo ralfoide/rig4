@@ -6,7 +6,7 @@ import java.io.File;
 import java.time.LocalDate;
 
 public class PostShort implements Comparable<PostShort> {
-    public final SourceTree.Content mContent;
+    public final SourceContent mContent;
     public final PostFull mPostFull;
     public final String mCategory;
     public final String mKey;
@@ -19,7 +19,7 @@ public class PostShort implements Comparable<PostShort> {
             @NonNull String key,
             @NonNull LocalDate date,
             @NonNull String title,
-            @NonNull SourceTree.Content content,
+            @NonNull SourceContent content,
             @NonNull PostFull postFull,
             boolean readMoreLink) {
         mCategory = category;

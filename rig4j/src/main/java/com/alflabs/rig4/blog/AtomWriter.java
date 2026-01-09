@@ -144,7 +144,7 @@ public class AtomWriter {
 
     /**
      * Generates one {@code <tag>content</tag>} line.
-     * Content is XML escaped.
+     * SourceContent is XML escaped.
      */
     public static void tag(@NonNull StringBuilder generated,
                            @NonNull String tag,
@@ -164,7 +164,7 @@ public class AtomWriter {
 
     /**
      * Generates one {@code <tag attr1="value1" attr2="value2">content</tag>} line.
-     * Content is optional if null. Attributes are optional if null.
+     * SourceContent is optional if null. Attributes are optional if null.
      * Values & content are XML escaped.
      */
     public static void tag(@NonNull StringBuilder generated,

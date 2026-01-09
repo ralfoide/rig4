@@ -149,7 +149,7 @@ public class BlogGenerator {
 
         // Generate per-category blogs
         if (!blogConfig.getGenSingleFilter().isEmpty()) {
-            for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
+            for (SourceBlog sourceBlog : sourceTree.getBlogs().values()) {
                 if (blogConfig.getGenSingleFilter().matches(sourceBlog.getCategory())) {
                     Blog blog = createPostBlogFrom(sourceBlog);
                     postTree.add(blog);
@@ -159,7 +159,7 @@ public class BlogGenerator {
 
         // Generate mixed-categories blog
         if (!blogConfig.getGenMixedFilter().isEmpty()) {
-            SourceTree.Blog mixedSource = sourceTree.createMixedBlog(
+            SourceBlog mixedSource = sourceTree.createMixedBlog(
                     blogConfig.getMixedCat(),
                     blogConfig.getGenMixedFilter());
             Blog mixed = createPostBlogFrom(mixedSource);
@@ -170,7 +170,7 @@ public class BlogGenerator {
     }
 
     @NonNull
-    private Blog createPostBlogFrom(@NonNull SourceTree.Blog sourceBlog) {
+    private Blog createPostBlogFrom(@NonNull SourceBlog sourceBlog) {
         Blog blog = new Blog(
                 sourceBlog.getCategory(),
                 sourceBlog.getTitle(),
@@ -186,18 +186,18 @@ public class BlogGenerator {
 
         int pageCount = 0;
         List<BlogPage> pages = new ArrayList<>();
-        List<SourceTree.BlogPost> indexPosts = new ArrayList<>();
-        List<SourceTree.BlogPost> pendingPosts = new ArrayList<>();
+        List<SourceBlogPost> indexPosts = new ArrayList<>();
+        List<SourceBlogPost> pendingPosts = new ArrayList<>();
         // Note: sourcePosts should be "naturally" ordered from older to newer due to the treemap.
         // See also the fixed postShorts order in BlogPage.
 
         // Get all the posts in reverse chronological order (newer first) by getting the posts
         // in chronological order and then reading the list backwards.
-        ArrayList<SourceTree.BlogPost> posts = new ArrayList<>(sourceBlog.getPosts());
+        ArrayList<SourceBlogPost> posts = new ArrayList<>(sourceBlog.getPosts());
         posts.sort(Comparator.naturalOrder());
         int numPerPage = 0;
         for (int i = posts.size() - 1; i >= 0; i--) {
-            SourceTree.BlogPost sourcePost = posts.get(i);
+            SourceBlogPost sourcePost = posts.get(i);
             boolean isLast = i == 0;
 
             if (pageCount == 0) {
@@ -233,7 +233,7 @@ public class BlogGenerator {
             blog.getBlogPages().add(page);
         }
 
-        mLogger.d(TAG, "Blog " + blog.getCategory()
+        mLogger.d(TAG, "SourceBlog " + blog.getCategory()
                 + ", posts: " + sourceBlog.getPosts().size()
                 + ", pages: " + blog.getBlogPages().size());
         return blog;

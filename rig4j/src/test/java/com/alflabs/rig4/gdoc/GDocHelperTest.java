@@ -61,7 +61,7 @@ public class GDocHelperTest {
         when(mHashStore.getString(anyString())).thenThrow(new FileNotFoundException());
 
         GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", Collections.emptyMap());
-        byte[] contentBytes = "GDoc File Content".getBytes(Charsets.UTF_8);
+        byte[] contentBytes = "GDoc File SourceContent".getBytes(Charsets.UTF_8);
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);
         when(mGDocReader.readFileById("gdoc id", "text/html"))
@@ -87,7 +87,7 @@ public class GDocHelperTest {
 
     @Test
     public void testGetGDocSync_cachedAndSame() throws Exception {
-        byte[] contentBytes = "GDoc File Content".getBytes(Charsets.UTF_8);
+        byte[] contentBytes = "GDoc File SourceContent".getBytes(Charsets.UTF_8);
         when(mBlobStore.getBytes("gdoc-content-gdoc id-text/html")).thenReturn(contentBytes);
         when(mHashStore.getString("gdoc-hash-gdoc id")).thenReturn("gdoc content hash");
 
@@ -117,8 +117,8 @@ public class GDocHelperTest {
 
     @Test
     public void testGetGDocSync_cachedAndDifferent() throws Exception {
-        byte[] oldContentBytes = "OLD GDoc File Content".getBytes(Charsets.UTF_8);
-        byte[] newContentBytes = "NEW GDoc File Content".getBytes(Charsets.UTF_8);
+        byte[] oldContentBytes = "OLD GDoc File SourceContent".getBytes(Charsets.UTF_8);
+        byte[] newContentBytes = "NEW GDoc File SourceContent".getBytes(Charsets.UTF_8);
         final String oldContentHash = "OLD content hash";
         final String newContentHash = "NEW content hash";
         when(mBlobStore.getBytes("gdoc-content-gdoc id-text/html")).thenReturn(oldContentBytes);
@@ -165,7 +165,7 @@ public class GDocHelperTest {
         when(mHashStore.getString(anyString())).thenThrow(new FileNotFoundException());
 
         GDocMetadata gDocMetadata = GDocMetadata.create("gdoc title", "gdoc content hash", Collections.emptyMap());
-        byte[] contentBytes = "GDoc File Content".getBytes(Charsets.UTF_8);
+        byte[] contentBytes = "GDoc File SourceContent".getBytes(Charsets.UTF_8);
 
         when(mGDocReader.getMetadataById("gdoc id")).thenReturn(gDocMetadata);
         when(mGDocReader.readFileById("gdoc id", "text/html"))
@@ -175,7 +175,7 @@ public class GDocHelperTest {
         assertThat(entity).isNotNull();
         assertThat(entity.getMetadata()).isSameAs(gDocMetadata);
 
-        // Content is not retrieved yet
+        // SourceContent is not retrieved yet
         verify(mGDocReader).getMetadataById("gdoc id");
         verify(mGDocReader, never()).readFileById(anyString(), anyString());
 

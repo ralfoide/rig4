@@ -50,7 +50,7 @@ public class BlogSourceParser {
         Element body = mHtmlTransformer.simplifyForProcessing(content);
 
         // Iterate on the top-level elements and keeps a state:
-        // - Blog parsing starts as soon as [izu:blog] is found.
+        // - SourceBlog parsing starts as soon as [izu:blog] is found.
         // - Everything after till the first [s:] or [izu:header:end] is the header.
         // - A new section each time [s:] is seen. It's a parse error if something looks like
         //      an [s:] tag but isn't.

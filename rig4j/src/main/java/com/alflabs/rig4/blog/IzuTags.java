@@ -11,7 +11,7 @@ public final class IzuTags {
     public static final String PREFIX = "izu:";
     public static final String PARAM_SEP = ":";
 
-    // -- Blog Header Tags
+    // -- SourceBlog Header Tags
 
     /** Tag: [izu:blog] -- Indicates this a blog. */
     public static final String IZU_BLOG = "izu:blog";
@@ -38,7 +38,7 @@ public final class IzuTags {
     /** Tag: [izu:blog:end] -- Indicates this is the end of the parsed section of a blog file. */
     public static final String IZU_BLOG_END = "izu:blog:end";
 
-    // -- Blog Posts Tags
+    // -- SourceBlog Posts Tags
 
     /** Tag: [izu:break] -- Indicates the break between short/full text in a blog post. */
     public static final String IZU_BREAK = "izu:break";

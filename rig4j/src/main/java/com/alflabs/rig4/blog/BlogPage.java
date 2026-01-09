@@ -54,10 +54,10 @@ public class BlogPage {
      * Fill the page with the given posts.
      * The input collection should already be ordered as it should be presented on the page.
      */
-    public void fillFrom(@NonNull Collection<SourceTree.BlogPost> sourcePosts) {
-        for (SourceTree.BlogPost sourcePost : sourcePosts) {
-            SourceTree.Content fullContent = sourcePost.getFullContent();
-            SourceTree.Content shortContent = sourcePost.getShortContent();
+    public void fillFrom(@NonNull Collection<SourceBlogPost> sourcePosts) {
+        for (SourceBlogPost sourcePost : sourcePosts) {
+            SourceContent fullContent = sourcePost.getFullContent();
+            SourceContent shortContent = sourcePost.getShortContent();
             boolean readMoreLink = true;
             if (shortContent == null) {
                 shortContent = fullContent;
@@ -128,7 +128,7 @@ public class BlogPage {
         generator.getLogger().d(TAG, "--- Generate  Page: " + generator.categoryToHtml(mBlog.getCategory())
                 + ", file: " + destFile);
 
-        SourceTree.Content blogHeader = mBlog.getBlogHeader();
+        SourceContent blogHeader = mBlog.getBlogHeader();
         blogHeader.setTransformer(generator.getLazyHtmlTransformer(destFile, "pageHeader:" + index + ":"));
         // This is an index page so we get the description & images from the blog header if any
         // and as a fall-back get them from the posts content.
@@ -237,6 +237,8 @@ public class BlogPage {
             @NonNull File mainFile)
             throws Exception {
         File destFile = postData.prepareHtmlDestFile(mBlog, generator);
+
+        // TBD: generate redirector if blog post has izu:old_s...?
 
         generator.getLogger().d(TAG, "    Generate  Full: " + postData.mKey);
 

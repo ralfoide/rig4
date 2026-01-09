@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 public class PostFull implements Comparable<PostFull> {
     public final PostTree.FileItem mFileItem;
-    public final SourceTree.Content mContent;
+    public final SourceContent mContent;
     public final String mCategory;
     public final String mKey;
     public final LocalDate mDate;
@@ -23,7 +23,7 @@ public class PostFull implements Comparable<PostFull> {
             @NonNull String key,
             @NonNull LocalDate date,
             @NonNull String title,
-            @NonNull SourceTree.Content content) {
+            @NonNull SourceContent content) {
         mCategory = category;
         mKey = key;
         mDate = date;

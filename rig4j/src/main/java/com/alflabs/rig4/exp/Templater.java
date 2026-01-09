@@ -62,8 +62,8 @@ public class Templater {
 
     public void declareFlags() {
         mFlags.addString(EXP_TEMPLATE_ARTICLE, "article.html", "Exp Template Article");
-        mFlags.addString(EXP_TEMPLATE_BLOG_PAGE, "blog_page.html", "Exp Template Blog Page");
-        mFlags.addString(EXP_TEMPLATE_BLOG_POST, "blog_post.html", "Exp Template Blog Post Fragment");
+        mFlags.addString(EXP_TEMPLATE_BLOG_PAGE, "blog_page.html", "Exp Template SourceBlog Page");
+        mFlags.addString(EXP_TEMPLATE_BLOG_POST, "blog_post.html", "Exp Template SourceBlog Post Fragment");
     }
 
     private String getTemplate(TemplateProvider data) throws IOException {

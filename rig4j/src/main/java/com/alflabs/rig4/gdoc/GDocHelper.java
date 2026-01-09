@@ -528,7 +528,7 @@ public class GDocHelper {
 
     /**
      * Retrieves only the metadata for the given GDoc id immediately.
-     * Content retrieval is deferred till actually needed.
+     * SourceContent retrieval is deferred till actually needed.
      * The freshness "up-to-date" flag is computed only using the metadata.
      * <p/>
      * The content fetcher also tries to use the blog store's content if available and the
