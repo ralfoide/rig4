@@ -282,7 +282,7 @@ class SourceTree {
                     section.getDate(),
                     section.getTextTitle(),
                     Content.from(section.getIntermediaryShort()),
-                    Content.from(section.getIntermediaryfull()));
+                    Content.from(section.getIntermediaryFull()));
         }
 
         @Override

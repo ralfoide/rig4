@@ -172,7 +172,7 @@ public class BlogSourceParser {
         LocalDate date;
         String textTitle = "";
         Element intermediaryShort;
-        Element intermediaryfull;
+        Element intermediaryFull;
 
         String tagS = section.tagS;
         int pos = tagS.indexOf(":");
@@ -199,7 +199,7 @@ public class BlogSourceParser {
         }
 
         // Get the content.
-        intermediaryfull = combineElements(section.start, section.end);
+        intermediaryFull = combineElements(section.start, section.end);
 
         if (section.break_ != null) {
             intermediaryShort = combineElements(section.start, section.break_);
@@ -207,7 +207,7 @@ public class BlogSourceParser {
             intermediaryShort = combineElements(null, null);
         }
 
-        return new ParsedSection(date, textTitle, intermediaryShort, intermediaryfull, section.izuTags);
+        return new ParsedSection(date, textTitle, intermediaryShort, intermediaryFull, section.izuTags);
     }
 
     @Null
@@ -319,25 +319,25 @@ public class BlogSourceParser {
     }
 
     /**
-     * Represents one section from the a parsed blog with its date/title and formatted content.
+     * Represents one section from a parsed blog with its date/title and formatted content.
      */
     public static class ParsedSection {
         private final List<String> mIzuTags;
         private final LocalDate mDate;
         private final String mTextTitle;
         private final Element mIntermediaryShort;
-        private final Element mIntermediaryfull;
+        private final Element mIntermediaryFull;
 
         public ParsedSection(
                 @NonNull LocalDate date,
                 @NonNull String textTitle,
                 @NonNull Element intermediaryShort,
-                @NonNull Element intermediaryfull,
+                @NonNull Element intermediaryFull,
                 @Null List<String> izuTags) {
             mDate = date;
             mTextTitle = textTitle;
             mIntermediaryShort = intermediaryShort;
-            mIntermediaryfull = intermediaryfull;
+            mIntermediaryFull = intermediaryFull;
             mIzuTags = izuTags == null ? Collections.emptyList() : izuTags;
         }
 
@@ -378,8 +378,8 @@ public class BlogSourceParser {
          * Can not be empty neither null.
          */
         @NonNull
-        public Element getIntermediaryfull() {
-            return mIntermediaryfull;
+        public Element getIntermediaryFull() {
+            return mIntermediaryFull;
         }
 
         /** Optional tags defined while parsing this section. */

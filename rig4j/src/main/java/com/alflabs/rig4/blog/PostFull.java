@@ -56,10 +56,10 @@ public class PostFull implements Comparable<PostFull> {
     }
 
     public File prepareHtmlDestFile(Blog blog, BlogGenerator.Generator generator) throws IOException {
-        File destFile = new File(generator.getDestDir(), this.mFileItem.getLeafFile());
+        File destFile = new File(generator.getDestDir(), mFileItem.getLeafFile());
         generator.getFileOps().createParentDirs(destFile);
 
-        this.mContent.setTransformer(generator.getLazyHtmlTransformer(destFile, "postFull:"));
+        mContent.setTransformer(generator.getLazyHtmlTransformer(destFile, "postFull:"));
         blog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile, "postFullHeader:"));
         return destFile;
     }
