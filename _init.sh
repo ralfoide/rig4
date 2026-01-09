@@ -27,3 +27,4 @@ LIB_BRANCH="android-lib-v2"
     $DRY git checkout $LIB_BRANCH
 )
 
+$DRY git config submodule.recurse true

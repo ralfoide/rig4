@@ -25,7 +25,7 @@ public class AtomWriter {
     // Max size of a full post in characters. Switch to short summary above this size.
     private static final int POST_FULL_LENGTH = 100000;
 
-    public void write(@NonNull PostTree.Blog blog,
+    public void write(@NonNull Blog blog,
                       @NonNull BlogGenerator.Generator generator,
                       @NonNull PostTree.FileItem fileItem)
             throws IOException, URISyntaxException {
@@ -62,9 +62,9 @@ public class AtomWriter {
 
         int num = 0;
         Set<String> visited = new HashSet<>();
-        for (PostTree.BlogPage blogPage : blog.getBlogPages()) {
-            for (PostTree.PostShort postShort : blogPage.getPostShorts()) {
-                PostTree.PostFull postFull = postShort.mPostFull;
+        for (BlogPage blogPage : blog.getBlogPages()) {
+            for (PostShort postShort : blogPage.getPostShorts()) {
+                PostFull postFull = postShort.mPostFull;
                 if (visited.contains(postFull.mKey)) {
                     continue;
                 }
@@ -82,10 +82,10 @@ public class AtomWriter {
 
     private void entry(@NonNull File destFile,
                        @NonNull StringBuilder generated,
-                       @NonNull PostTree.Blog blog,
+                       @NonNull Blog blog,
                        @NonNull BlogGenerator.Generator generator,
-                       @NonNull PostTree.PostShort postShort,
-                       @NonNull PostTree.PostFull postFull,
+                       @NonNull PostShort postShort,
+                       @NonNull PostFull postFull,
                        boolean usePostShort) throws IOException, URISyntaxException {
         generated.append("<entry>\n");
 

@@ -151,7 +151,7 @@ public class BlogGenerator {
         if (!blogConfig.getGenSingleFilter().isEmpty()) {
             for (SourceTree.Blog sourceBlog : sourceTree.getBlogs().values()) {
                 if (blogConfig.getGenSingleFilter().matches(sourceBlog.getCategory())) {
-                    PostTree.Blog blog = createPostBlogFrom(sourceBlog);
+                    Blog blog = createPostBlogFrom(sourceBlog);
                     postTree.add(blog);
                 }
             }
@@ -162,7 +162,7 @@ public class BlogGenerator {
             SourceTree.Blog mixedSource = sourceTree.createMixedBlog(
                     blogConfig.getMixedCat(),
                     blogConfig.getGenMixedFilter());
-            PostTree.Blog mixed = createPostBlogFrom(mixedSource);
+            Blog mixed = createPostBlogFrom(mixedSource);
             postTree.add(mixed);
         }
 
@@ -170,8 +170,8 @@ public class BlogGenerator {
     }
 
     @NonNull
-    private PostTree.Blog createPostBlogFrom(@NonNull SourceTree.Blog sourceBlog) {
-        PostTree.Blog blog = new PostTree.Blog(
+    private Blog createPostBlogFrom(@NonNull SourceTree.Blog sourceBlog) {
+        Blog blog = new Blog(
                 sourceBlog.getCategory(),
                 sourceBlog.getTitle(),
                 sourceBlog.getHeaderContent());
@@ -185,7 +185,7 @@ public class BlogGenerator {
         // - page M contains the oldest of the oldest post. amd may have less than N posts.
 
         int pageCount = 0;
-        List<PostTree.BlogPage> pages = new ArrayList<>();
+        List<BlogPage> pages = new ArrayList<>();
         List<SourceTree.BlogPost> indexPosts = new ArrayList<>();
         List<SourceTree.BlogPost> pendingPosts = new ArrayList<>();
         // Note: sourcePosts should be "naturally" ordered from older to newer due to the treemap.
@@ -213,7 +213,7 @@ public class BlogGenerator {
                     // Keep the posts list reverse-ordered (from most recent to older one).
                     pendingPosts.sort(Comparator.reverseOrder());
 
-                    PostTree.BlogPage page = new PostTree.BlogPage(blog, blog.getBlogIndex(), pageCount);
+                    BlogPage page = new BlogPage(blog, blog.getBlogIndex(), pageCount);
                     page.fillFrom(pendingPosts);
                     pages.add(page);
                     pendingPosts.clear();
@@ -229,7 +229,7 @@ public class BlogGenerator {
         blog.getBlogIndex().fillFrom(indexPosts);
 
         // Add the pages in normal order
-        for (PostTree.BlogPage page : pages) {
+        for (BlogPage page : pages) {
             blog.getBlogPages().add(page);
         }
 
@@ -353,7 +353,7 @@ public class BlogGenerator {
          */
         @Null
         public String linkForCategory(@NonNull String category) {
-            PostTree.Blog blog = mPostTree.get(category);
+            Blog blog = mPostTree.get(category);
             if (blog == null) {
                 return  null;
             }
