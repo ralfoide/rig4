@@ -1,7 +1,10 @@
-package com.alflabs.rig4.blog;
+package com.alflabs.rig4.blog.posttree;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.blog.AtomWriter;
+import com.alflabs.rig4.blog.BlogGenerator;
+import com.alflabs.rig4.blog.sourcetree.SourceContent;
 
 import java.io.File;
 import java.util.ArrayList;

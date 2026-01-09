@@ -1,7 +1,9 @@
-package com.alflabs.rig4.blog;
+package com.alflabs.rig4.blog.sourcetree;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.blog.BlogSourceParser;
+import com.alflabs.rig4.blog.IzuTags;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.time.LocalDate;

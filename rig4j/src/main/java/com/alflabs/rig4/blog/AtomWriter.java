@@ -4,6 +4,11 @@ import autovalue.shaded.org.apache.commons.lang.StringEscapeUtils;
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
 import com.alflabs.rig4.EntryPoint;
+import com.alflabs.rig4.blog.posttree.Blog;
+import com.alflabs.rig4.blog.posttree.BlogPage;
+import com.alflabs.rig4.blog.posttree.PostFull;
+import com.alflabs.rig4.blog.posttree.PostShort;
+import com.alflabs.rig4.blog.posttree.PostTree;
 import com.google.common.base.Charsets;
 import org.apache.commons.codec.digest.DigestUtils;
 

@@ -1,6 +1,9 @@
-package com.alflabs.rig4.blog;
+package com.alflabs.rig4.blog.sourcetree;
 
 import com.alflabs.annotations.NonNull;
+import com.alflabs.rig4.blog.BlogSourceParser;
+import com.alflabs.rig4.blog.CatFilter;
+import com.alflabs.rig4.blog.IzuTags;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,7 +12,7 @@ import java.util.TreeMap;
  * The source tree contains a model of the blog input: category & header for each blog
  * and its posts content list.
  */
-class SourceTree {
+public class SourceTree {
     private final static String TAG = SourceTree.class.getSimpleName();
     private final Map<String, SourceBlog> mBlogs = new TreeMap<>();
     private boolean mModified;

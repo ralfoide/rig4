@@ -1,11 +1,10 @@
-package com.alflabs.rig4.blog;
+package com.alflabs.rig4.blog.posttree;
 
 import com.alflabs.annotations.NonNull;
 import com.alflabs.annotations.Null;
+import com.alflabs.rig4.blog.BlogGenerator;
 
 import java.io.File;
-import java.io.IOException;
-import java.time.LocalDate;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -13,7 +12,7 @@ import java.util.TreeMap;
  * The post tree contains a model of files to be generated based on the input source.
  * Each blog is composed of one index file, paged files, and individual post files.
  */
-class PostTree {
+public class PostTree {
     private final static String TAG = PostTree.class.getSimpleName();
     final static String BLOG_ROOT = "blog";
     static final String HTML = ".html";
