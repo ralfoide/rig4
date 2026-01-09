@@ -120,7 +120,7 @@ public class TemplaterTest {
                 "{{.Css}}\n" +
                 "</head>\n" +
                 "        <a href=\"{{.AbsSiteLink}}\">{{.SiteTitle}}</a>\n" +
-                "{{.SourceContent}}\n" +
+                "{{.Content}}\n" +
                 "    gtag('config', '{{.GAUid}}');\n";
 
         Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
@@ -135,7 +135,7 @@ public class TemplaterTest {
                 "GA UID replacement",
                 "Page Title replacement",
                 "page_file.html",
-                "SourceContent replacement\n" +
+                "Content replacement\n" +
                 "Multiple content.",
                 "" /* relImageLink */,
                 "" /* headDescription */,
@@ -154,7 +154,7 @@ public class TemplaterTest {
                 "CSS replacement\n" +
                 "</head>\n" +
                 "        <a href=\"http://Site URL/replacement/\">Site Title replacement</a>\n" +
-                "SourceContent replacement\n" +
+                "Content replacement\n" +
                 "Multiple content.\n" +
                 "    gtag('config', 'GA UID replacement');\n");
 
@@ -170,7 +170,7 @@ public class TemplaterTest {
                 "<head>{{EndIf}}\n" +
                 "<meta property=\"og:title\"       content=\"{{.PageTitle}}\" />\n" +
                 "{{IF.Description}}<meta property=\"og:description\" content=\"{{.Description}}\" />{{ENDIF}}\n" +
-                "{{if.content}}{{.SourceContent}}{{endif}}\n" +
+                "{{if.content}}{{.Content}}{{endif}}\n" +
                 "{{if.GAUid}}gtag('config', '{{.GAUid}} is null');{{EndIf}}\n";
 
         Templater templater = new Templater(mFlags, mTiming, mFileOps, template);
@@ -185,7 +185,7 @@ public class TemplaterTest {
                 null,           // If.Var accepts both null and empty strings
                 "Page Title replacement",
                 "page_file.html",
-                "SourceContent replacement\n" +
+                "Content replacement\n" +
                 "Multiple content.",
                 "" /* relImageLink */,
                 "" /* headDescription */,
@@ -195,7 +195,7 @@ public class TemplaterTest {
                 "\n" +
                 "<meta property=\"og:title\"       content=\"Page Title replacement\" />\n" +
                 "\n" +
-                "SourceContent replacement\n" +
+                "Content replacement\n" +
                 "Multiple content.\n" +
                 "\n");
 
@@ -213,8 +213,8 @@ public class TemplaterTest {
                 "GA UID replacement",
                 "Page Title replacement",
                 "page_file.html",
-                "SourceContent replacement first line\n" +
-                "SourceContent replacement second line.",
+                "Content replacement first line\n" +
+                "Content replacement second line.",
                 "" /* relImageLink */,
                 "" /* headDescription */,
                 "Rig4j Gen info");
@@ -261,7 +261,7 @@ public class TemplaterTest {
                 "",                 // no post category for an index
                 "",                 // no post cat link for an index
                 "page_index.html",
-                "Multiple Posts SourceContent replacement",
+                "Multiple Posts Content replacement",
                 "Rig4j Gen info",
                 "main_image.jpg",
                 "head description");
@@ -314,7 +314,7 @@ public class TemplaterTest {
                 "A Category",
                 "category/link",
                 "page_file.html",
-                "SourceContent replacement",
+                "Content replacement",
                 "Rig4j Gen info",
                 "main_image.jpg",
                 "head description");
@@ -358,7 +358,7 @@ public class TemplaterTest {
                 "category/link",
                 "full/link",
                 "extra/link",
-                "Post SourceContent data"
+                "Post Content data"
         );
         String generated = mTemplater.generate(data);
 
@@ -376,7 +376,7 @@ public class TemplaterTest {
                 "    &nbsp;\n" +
                 "    First contentrg-excl(to be excluded)rg-exclfrom the output.\n" +
                 "    <!-- rg-excl( -->\n" +
-                "    Second SourceContent to be excluded\n" +
+                "    Second Content to be excluded\n" +
                 "    <!-- )rg-excl -->\n" +
                 "    &nbsp;\n" +
                 "</div>\n";

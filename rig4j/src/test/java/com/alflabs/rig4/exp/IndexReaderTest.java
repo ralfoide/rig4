@@ -78,10 +78,10 @@ public class IndexReaderTest {
     public void testReadBlogEntries() throws Exception {
         String content =
                 "blog           12345\n" +
-                "SourceBlog           23456\n" +
+                "Blog           23456\n" +
                 "blog (desc)    34567\n" +
                 "blog 1         45678\n" +
-                "SourceBlog 234       56789\n" +
+                "Blog 234       56789\n" +
                 "blog 56 (desc) 67890\n";
         GDocMetadata gDocMetadata = GDocMetadata.create("index", "index metadata hash", Collections.emptyMap());
         GDocEntity entity = new GDocEntity(gDocMetadata, false /* updateToDate */,

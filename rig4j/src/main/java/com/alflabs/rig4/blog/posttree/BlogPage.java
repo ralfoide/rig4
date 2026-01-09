@@ -73,6 +73,7 @@ public class BlogPage {
                     sourcePost.getKey(),
                     sourcePost.getDate(),
                     sourcePost.getTitle(),
+                    sourcePost.getRedirects(),
                     fullContent);
 
             PostShort postShort = new PostShort(
@@ -241,8 +242,6 @@ public class BlogPage {
             throws Exception {
         File destFile = postData.prepareHtmlDestFile(mBlog, generator);
 
-        // TBD: generate redirector if blog post has izu:old_s...?
-
         generator.getLogger().d(TAG, "    Generate  Full: " + postData.mKey);
 
         String prevPageLink = postData.getPrevFull() == null
@@ -297,6 +296,24 @@ public class BlogPage {
             hashStore.putString(destFile.getPath(), genHash);
             fileOps.writeBytes(generated.getBytes(Charsets.UTF_8), destFile);
             generator.getLogger().d(TAG, "       Write  Full: " + destFile);
+
+            for (PostTree.FileItem fileRedirect : postData.mFileRedirects) {
+                File file = postData.getHtmlDestFile(fileRedirect, generator);
+
+                String redirectContent = "<html lang=\"en\">\n" +
+                        "<head>\n" +
+                        "<meta charset=\"utf-8\">\n" +
+                        "<meta http-equiv=\"refresh\" content=\"0;url={{URL}}\">\n" +
+                        "</head>\n" +
+                        "<body>\n" +
+                        "Loading content...\n" +
+                        "</body>\n" +
+                        "</html>\n";
+                redirectContent = redirectContent.replace("{{URL}}", destFile.getName());
+                fileOps.writeBytes(redirectContent.getBytes(Charsets.UTF_8), file);
+
+                generator.getLogger().d(TAG, "    Write Redirect: " + file);
+            }
         }
     }
 }

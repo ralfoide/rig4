@@ -8,9 +8,12 @@ import com.alflabs.rig4.blog.sourcetree.SourceContent;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PostFull implements Comparable<PostFull> {
     public final PostTree.FileItem mFileItem;
+    public final List<PostTree.FileItem> mFileRedirects = new ArrayList<>();
     public final SourceContent mContent;
     public final String mCategory;
     public final String mKey;
@@ -25,13 +28,20 @@ public class PostFull implements Comparable<PostFull> {
             @NonNull String key,
             @NonNull LocalDate date,
             @NonNull String title,
+            @NonNull List<String> redirects,
             @NonNull SourceContent content) {
+        File dir = parent.getFileItem().getDir();
+
         mCategory = category;
         mKey = key;
         mDate = date;
         mTitle = title;
-        mFileItem = new PostTree.FileItem(parent.getFileItem().getDir(), mKey + PostTree.HTML);
+        mFileItem = new PostTree.FileItem(dir, mKey + PostTree.HTML);
         mContent = content;
+
+        for (String redirectKey : redirects) {
+            mFileRedirects.add(new PostTree.FileItem(dir, redirectKey + PostTree.HTML));
+        }
     }
 
     @Null
@@ -58,11 +68,15 @@ public class PostFull implements Comparable<PostFull> {
     }
 
     public File prepareHtmlDestFile(Blog blog, BlogGenerator.Generator generator) throws IOException {
-        File destFile = new File(generator.getDestDir(), mFileItem.getLeafFile());
-        generator.getFileOps().createParentDirs(destFile);
-
+        File destFile = getHtmlDestFile(mFileItem, generator);
         mContent.setTransformer(generator.getLazyHtmlTransformer(destFile, "postFull:"));
         blog.getBlogHeader().setTransformer(generator.getLazyHtmlTransformer(destFile, "postFullHeader:"));
+        return destFile;
+    }
+
+    public File getHtmlDestFile(PostTree.FileItem fileItem, BlogGenerator.Generator generator) throws IOException {
+        File destFile = new File(generator.getDestDir(), fileItem.getLeafFile());
+        generator.getFileOps().createParentDirs(destFile);
         return destFile;
     }
 }

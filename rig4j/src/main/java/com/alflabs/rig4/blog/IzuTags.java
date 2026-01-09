@@ -1,9 +1,10 @@
 package com.alflabs.rig4.blog;
 
 import com.alflabs.annotations.NonNull;
-import com.alflabs.annotations.Null;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public final class IzuTags {
     private IzuTags() {}
@@ -56,9 +57,13 @@ public final class IzuTags {
      * Inferred from content when not available. */
     public static final String IZU_DESC = "izu:desc:";
 
+    /** Tag: [izu:old_s:{date:old title}] -- In a blog post, indicates the older titles of
+     * that blog that must be used to create redirector full blog pages. */
+    public static final String IZU_OLD_S = "izu:old_s:";
+
 
     /**
-     * Indiciate if there's a tag starting with that prefix in that tag list/collection.
+     * Indicates if there's a tag starting with that prefix in that tag list/collection.
      *
      * @param izuTagPrefix A tag prefix ending with ":" such as {@link #IZU_BLOG_TITLE} or {@link #IZU_DESC}.
      * @param tags A list of tags, possibly empty.
@@ -93,5 +98,27 @@ public final class IzuTags {
             }
         }
         return "";
+    }
+
+    /**
+     * Extracts the values of an izu tag in a tag list/collection.
+     * If multiple occurrences of the tag are in the list, returns the them all in the same order.
+     *
+     * @param izuTagPrefix A tag prefix ending with ":" such as {@link #IZU_BLOG_TITLE} or {@link #IZU_DESC}.
+     * @param tags A list of tags, possibly empty.
+     * @return A non-null, possibly empty, list of valuestrings, each already trimmed.
+     */
+    @NonNull
+    public static List<String> getTagValues(@NonNull String izuTagPrefix, @NonNull Collection<String> tags) {
+        ArrayList<String> results = new ArrayList<>();
+        for (String izuTag : tags) {
+            if (izuTag.startsWith(izuTagPrefix)) {
+                String title = izuTag.substring(izuTagPrefix.length()).trim();
+                if (!title.isEmpty()) {
+                    results.add(title);
+                }
+            }
+        }
+        return results;
     }
 }
